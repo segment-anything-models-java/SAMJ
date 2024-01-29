@@ -5,25 +5,19 @@ import net.imglib2.type.numeric.RealType;
 import picocli.CommandLine;
 import java.io.File;
 
-public class CLI_SamJ {
+public class CLI_Server {
 /*
-"CLI local processor" -- stand-alone, all params given as input, it just then goes...
+"server" -- connects to local GUI and is controlled from there
 	--help - shows instructions "how to use" (and stops)
 
 	--list - shows available SAMJ NNs (and stops)
 	--sam  - chooses a SAMJ NN (required!)
 
-	--file - path to a file to operate on it
 	--noautoconvert  - don't attempt to auto-convert (channels, normalization) the image to meet particular SAMJ requirements
 
-	--rectangles - a list of bboxes
-	--points     - a list of points (probably better than bboxes)
-	(or)
-	--segment-everything-regime ?
-	(or)
-	--autocomplete-regime ?
+As args:  paths to files to operate on it, client then says "give me prev/next"
 
-No args (only params).
+	(exports and such are driven by the GUI)
 */
 
 	@CommandLine.Option(names = {"-j","--job","jobFile"}, description = "Path to a job file, the variant with weights.")
@@ -63,14 +57,14 @@ No args (only params).
 	}
 
 	public static void main(String[] args) {
-		CLI_SamJ samj;
+		CLI_Server samj;
 
 		//parse the command line and fill the object's attributes
-		try { samj = CommandLine.populateCommand(new CLI_SamJ(), args); }
+		try { samj = CommandLine.populateCommand(new CLI_Server(), args); }
 		catch (CommandLine.ParameterException pe) {
 			System.out.println(pe.getMessage());
 			System.out.println(); //intentional line separator
-			new CLI_SamJ().printHelp();
+			new CLI_Server().printHelp();
 			return;
 		}
 

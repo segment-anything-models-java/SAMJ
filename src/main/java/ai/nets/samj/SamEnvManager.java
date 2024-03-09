@@ -130,6 +130,10 @@ public class SamEnvManager {
 	 */
 	final static public String SAM_NAME = "SAM";
 	/**
+	 * Name of the folder that contains the code of Appose in Python
+	 */
+	final static public String APPOSE = "appose-python";
+	/**
 	 * URL to download the EfficientSAM model 
 	 */
 	final static public String ESAMS_URL = "https://raw.githubusercontent.com/yformer/EfficientSAM/main/weights/efficient_sam_vits.pt.zip";
@@ -554,7 +558,7 @@ public class SamEnvManager {
 			}
 			ArrayList<String> pipInstall = new ArrayList<String>();
 			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
-			for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
+			// TODO until appose new release for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
 			try {
 				Mamba.runPythonIn(Paths.get(path,  "envs", COMMON_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
 			} catch (IOException | InterruptedException e) {
@@ -565,6 +569,8 @@ public class SamEnvManager {
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- PYTHON ENVIRONMENT CREATED");
+        // TODO remove
+        installApposePackage(COMMON_ENV_NAME);
 	}
 	
 	/**
@@ -627,6 +633,8 @@ public class SamEnvManager {
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM PYTHON ENVIRONMENT CREATED");
+        // TODO remove
+        installApposePackage(EVITSAM_ENV_NAME);
 	}
 	
 	// TODO move this to mamba
@@ -636,7 +644,7 @@ public class SamEnvManager {
 			cmd.addAll( Arrays.asList( "cmd.exe", "/c" ) );
 		cmd.add( Paths.get( envFile.getAbsolutePath(), (PlatformDetection.isWindows() ? "python.exe" : "bin/python") ).toAbsolutePath().toString() );
 		cmd.addAll( Arrays.asList( new String[] {"-m", "pip", "install"} ) );
-		cmd.addAll( INSTALL_PIP_DEPS );
+		// TODO until appose new release cmd.addAll( INSTALL_PIP_DEPS );
 		cmd.addAll( INSTALL_EVSAM_PIP_DEPS );
 		final ProcessBuilder builder = new ProcessBuilder().directory( envFile );
 		//builder.inheritIO();
@@ -656,6 +664,62 @@ public class SamEnvManager {
 		}
 		if ( builder.command( cmd ).start().waitFor() != 0 )
 			throw new RuntimeException();
+	}
+	
+	/**
+	 * TODO keep until release of stable Appose
+	 * Install the Python package to run Appose in Python
+	 * @param envName
+	 * 	environment where Appose is going to be installed
+	 * @throws IOException if there is any file creation related issue
+	 * @throws InterruptedException if the package installation is interrupted
+	 * @throws MambaInstallException if there is any error with the Mamba installation
+	 */
+	private void installApposePackage(String envName) throws IOException, InterruptedException, MambaInstallException {
+		installApposePackage(envName, false);
+	}
+	
+	/**
+	 * TODO keep until release of stable Appose
+	 * Install the Python package to run Appose in Python
+	 * @param envName
+	 * 	environment where Appose is going to be installed
+	 * @param force
+	 * 	if the package already exists, whether to overwrite it or not
+	 * @throws IOException if there is any file creation related issue
+	 * @throws InterruptedException if the package installation is interrupted
+	 * @throws MambaInstallException if there is any error with the Mamba installation
+	 */
+	private void installApposePackage(String envName, boolean force) throws IOException, InterruptedException, MambaInstallException {
+		if (!checkMambaInstalled())
+			throw new IllegalArgumentException("Unable to SAM without first installing Mamba. ");
+		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'APPOSE' PYTHON PACKAGE");
+		String zipResourcePath = "appose-python.zip";
+        String outputDirectory = mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE;
+        try (
+        	InputStream zipInputStream = SamEnvManager.class.getResourceAsStream(zipResourcePath);
+        	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
+        		) {
+        	ZipEntry entry;
+        	while ((entry = zipInput.getNextEntry()) != null) {
+                File entryFile = new File(outputDirectory + File.separator + entry.getName());
+                entryFile.getParentFile().mkdirs();
+                try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = zipInput.read(buffer)) != -1) {
+                        entryOutput.write(buffer, 0, bytesRead);
+                    }
+                }
+            }
+        } catch (IOException e) {
+			thread.interrupt();
+			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'APPOSE' PYTHON PACKAGE INSTALLATION");
+			throw e;
+		}
+        mamba.runPython(new String[] {"-m", "pip", "install", mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
+		thread.interrupt();
+		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- 'APPOSE' PYTHON PACKAGE INSATLLED");
 	}
 	
 	/**

@@ -559,6 +559,7 @@ public class SamEnvManager {
 			ArrayList<String> pipInstall = new ArrayList<String>();
 			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
 			// TODO until appose new release for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
+			/*
 			try {
 				Mamba.runPythonIn(Paths.get(path,  "envs", COMMON_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
 			} catch (IOException | InterruptedException e) {
@@ -566,6 +567,7 @@ public class SamEnvManager {
 	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
 				throw e;
 			}
+			*/
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- PYTHON ENVIRONMENT CREATED");
@@ -695,29 +697,33 @@ public class SamEnvManager {
 			throw new IllegalArgumentException("Unable to SAM without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'APPOSE' PYTHON PACKAGE");
 		String zipResourcePath = "appose-python.zip";
-        String outputDirectory = mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE;
+        String outputDirectory = mamba.getEnvsDir() + File.separator + envName;
         try (
-        	InputStream zipInputStream = SamEnvManager.class.getResourceAsStream(zipResourcePath);
-        	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
-        		) {
-        	ZipEntry entry;
-        	while ((entry = zipInput.getNextEntry()) != null) {
-                File entryFile = new File(outputDirectory + File.separator + entry.getName());
-                entryFile.getParentFile().mkdirs();
-                try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-                    while ((bytesRead = zipInput.read(buffer)) != -1) {
-                        entryOutput.write(buffer, 0, bytesRead);
+            	InputStream zipInputStream = SamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+            	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
+            		) {
+            	ZipEntry entry;
+            	while ((entry = zipInput.getNextEntry()) != null) {
+                    File entryFile = new File(outputDirectory + File.separator + entry.getName());
+                    if (entry.isDirectory()) {
+                    	entryFile.mkdirs();
+                    	continue;
+                    }
+                	entryFile.getParentFile().mkdirs();
+                    try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = zipInput.read(buffer)) != -1) {
+                            entryOutput.write(buffer, 0, bytesRead);
+                        }
                     }
                 }
-            }
-        } catch (IOException e) {
-			thread.interrupt();
-			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'APPOSE' PYTHON PACKAGE INSTALLATION");
-			throw e;
-		}
-        mamba.runPython(new String[] {"-m", "pip", "install", mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
+            } catch (IOException e) {
+    			thread.interrupt();
+    			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'APPOSE' PYTHON PACKAGE INSTALLATION");
+    			throw e;
+    		}
+        mamba.pipInstallIn(envName, new String[] {mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
 		thread.interrupt();
 		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- 'APPOSE' PYTHON PACKAGE INSATLLED");
 	}

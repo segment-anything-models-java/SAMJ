@@ -42,6 +42,8 @@ import net.imglib2.type.numeric.RealType;
  */
 public interface SAMModel {
 	
+	public static String HTML_NOT_INSTALLED = "<br><p style=\"color: red;\">This model is not installed yet.</p>";
+	
 	/**
 	 * 
 	 * @return the name of the model architecture

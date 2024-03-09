@@ -84,7 +84,7 @@ public class EfficientViTSAML2 implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public String getDescription() {
-		return HTML_DESCRIPTION;
+		return HTML_DESCRIPTION + (this.installed ? SAMModel.HTML_NOT_INSTALLED : "");
 	}
 
 	@Override

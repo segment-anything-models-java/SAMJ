@@ -171,7 +171,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 			else if (model.getName().equals(EfficientViTSAMXL1.FULL_NAME))
 				model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
 						&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("xl1"));
-			JRadioButton rb = new JRadioButton(model.getName(), model.isInstalled());
+			JRadioButton rb = new JRadioButton(model.getName(), false);
 			rbModels.add(rb);
 			rb.addActionListener(this);
 			group.add(rb);
@@ -196,7 +196,38 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		bnInstall.addActionListener(this);
 		bnUninstall.addActionListener(this);
 		
-		updateInterface();
+		//updateInterface();
+	}
+	
+	private Thread checkInstalledModelsThread() {
+		Thread thread = new Thread(() -> {
+			for(SAMModel model : models) {
+				if (model.getName().equals(EfficientSAM.FULL_NAME)) 
+					model.setInstalled(manager.checkEfficientSAMPythonInstalled() 
+							&& manager.checkEfficientSAMSmallWeightsDownloaded() 
+							&& manager.checkEfficientSAMPackageInstalled());
+				else if (model.getName().equals(EfficientViTSAML0.FULL_NAME))
+					model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
+							&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("l0"));
+				else if (model.getName().equals(EfficientViTSAML1.FULL_NAME))
+					model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
+							&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("l1"));
+				else if (model.getName().equals(EfficientViTSAML2.FULL_NAME))
+					model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
+							&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("l2"));
+				else if (model.getName().equals(EfficientViTSAMXL0.FULL_NAME))
+					model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
+							&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("xl0"));
+				else if (model.getName().equals(EfficientViTSAMXL1.FULL_NAME))
+					model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
+							&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("xl1"));
+			}
+			SwingUtilities.invokeLater(() -> {
+				rbModels.get(0).setSelected(true);
+				updateInterface();
+			});
+		});
+		return thread;
 	}
 	
 	private void updateInterface() {

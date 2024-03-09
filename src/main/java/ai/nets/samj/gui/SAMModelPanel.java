@@ -316,12 +316,55 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 			Thread controlThread = createControlThread(installThread);
 			controlThread.start();
 		} else if (e.getSource() == bnUninstall) {
-			uninstallModel();
+			Thread uninstallThread = createUninstallThread();
+			uninstallThread.start();
+			Thread reportThread = reportUninstallThread(uninstallThread);
+			reportThread.start();
+			Thread controlThread = createControlThread(uninstallThread);
+			controlThread.start();
 		}
 		
 		updateInterface();
 		this.updateParent.task(modelChanged);
 		modelChanged = false;
+	}
+	
+	/**
+	 * Create thread in charge of reporting that there is an uninstallation in progress
+	 * @param importantThread
+	 * 	the thread where uninstallation happens
+	 * @return the thread that lets the user know that it is happening
+	 */
+	private Thread reportUninstallThread(Thread importantThread) {
+		
+		Thread t = new Thread(() -> {
+			addHtml("Uninstalling selected model");
+			while (importantThread.isAlive()) {
+				try { Thread.sleep(300); } catch (InterruptedException e) { return; }
+				addHtml("");
+			}
+		});
+		return t;
+	}
+	
+	/**
+	 * Create the Thread that is used to uninstall the selected model
+	 * @return the thread where the models will be installed
+	 */
+	private Thread createUninstallThread() {
+		Thread installThread = new Thread(() -> {
+			try {
+				SwingUtilities.invokeLater(() -> installationInProcess(true));
+				uninstallModel();
+				SwingUtilities.invokeLater(() -> {
+					installationInProcess(false);
+					this.updateParent.task(false);});
+			} catch (Exception e1) {
+				e1.printStackTrace();
+				SwingUtilities.invokeLater(() -> {installationInProcess(false); this.updateParent.task(false);});
+			}
+		});
+		return installThread;
 	}
 	
 	/**
@@ -368,6 +411,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	 * 	whether the installation is happening or it has finished already
 	 */
 	private void installationInProcess(boolean inProcess) {
+		info.clear();
 		this.bnUninstall.setEnabled(inProcess ? false : getSelectedModel().isInstalled());
 		this.bnInstall.setEnabled(inProcess ? false : !getSelectedModel().isInstalled());
 		this.rbModels.stream().forEach(btn -> btn.setEnabled(!inProcess));

@@ -196,12 +196,22 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		bnInstall.addActionListener(this);
 		bnUninstall.addActionListener(this);
 		
-		//updateInterface();
+		updateInterface();
+		Thread checkThread = checkInstalledModelsThread();
+		checkThread.start();
+		Thread reportThread = reportUninstallThread(checkThread);
+		reportThread.start();
 	}
 	
 	private Thread checkInstalledModelsThread() {
 		Thread thread = new Thread(() -> {
+			SwingUtilities.invokeLater(() -> {
+				this.info.clear();
+				this.addHtml("FINDING INSTALLED MODELS");
+				this.installationInProcess(false);
+			});
 			for(SAMModel model : models) {
+				if (Thread.currentThread().isInterrupted()) return;
 				if (model.getName().equals(EfficientSAM.FULL_NAME)) 
 					model.setInstalled(manager.checkEfficientSAMPythonInstalled() 
 							&& manager.checkEfficientSAMSmallWeightsDownloaded() 
@@ -223,6 +233,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 							&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("xl1"));
 			}
 			SwingUtilities.invokeLater(() -> {
+				this.installationInProcess(false);
 				rbModels.get(0).setSelected(true);
 				updateInterface();
 			});
@@ -344,15 +355,15 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		if (e.getSource() == bnInstall) {
 			Thread installThread = createInstallationThread();
 			installThread.start();
-			Thread controlThread = createControlThread(installThread);
-			controlThread.start();
+			// TODO remove Thread controlThread = createControlThread(installThread);
+			// TODO remove controlThread.start();
 		} else if (e.getSource() == bnUninstall) {
 			Thread uninstallThread = createUninstallThread();
 			uninstallThread.start();
 			Thread reportThread = reportUninstallThread(uninstallThread);
 			reportThread.start();
-			Thread controlThread = createControlThread(uninstallThread);
-			controlThread.start();
+			// TODO remove Thread controlThread = createControlThread(uninstallThread);
+			// TODO remove controlThread.start();
 		}
 		
 		updateInterface();

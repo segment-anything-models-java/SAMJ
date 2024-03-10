@@ -525,6 +525,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	public void close() {
 		if (display != null)
 			display.notifyNetToClose();
+		this.panelModel.interrupExistingThreads();
 		if (SwingUtilities.windowForComponent(this).isDisplayable())
 			SwingUtilities.windowForComponent(this).dispose();
 	}

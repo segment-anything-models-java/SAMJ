@@ -129,6 +129,14 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	 * Implementation of the interface {@link CallParent}
 	 */
 	private CallParent updateParent;
+	/**
+	 * Thread used to install a model
+	 */
+	protected Thread installationThread;
+	/**
+	 * Thread used to check the models that are installed
+	 */
+	protected Thread checkingThread;
 	
 	/**
 	 * Constructor of the class. Creates a panel that contains the selection of available models
@@ -152,25 +160,6 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		
 		ButtonGroup group = new ButtonGroup();
 		for(SAMModel model : models) {
-			if (model.getName().equals(EfficientSAM.FULL_NAME)) 
-				model.setInstalled(manager.checkEfficientSAMPythonInstalled() 
-						&& manager.checkEfficientSAMSmallWeightsDownloaded() 
-						&& manager.checkEfficientSAMPackageInstalled());
-			else if (model.getName().equals(EfficientViTSAML0.FULL_NAME))
-				model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
-						&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("l0"));
-			else if (model.getName().equals(EfficientViTSAML1.FULL_NAME))
-				model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
-						&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("l1"));
-			else if (model.getName().equals(EfficientViTSAML2.FULL_NAME))
-				model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
-						&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("l2"));
-			else if (model.getName().equals(EfficientViTSAMXL0.FULL_NAME))
-				model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
-						&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("xl0"));
-			else if (model.getName().equals(EfficientViTSAMXL1.FULL_NAME))
-				model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
-						&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("xl1"));
 			JRadioButton rb = new JRadioButton(model.getName(), false);
 			rbModels.add(rb);
 			rb.addActionListener(this);
@@ -197,18 +186,19 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		bnUninstall.addActionListener(this);
 		
 		updateInterface();
-		Thread checkThread = checkInstalledModelsThread();
-		checkThread.start();
-		Thread reportThread = reportUninstallThread(checkThread);
+		checkInstalledModelsThread();
+		checkingThread.start();
+		Thread reportThread = reportHelperThread(checkingThread);
 		reportThread.start();
 	}
 	
-	private Thread checkInstalledModelsThread() {
-		Thread thread = new Thread(() -> {
+	private void checkInstalledModelsThread() {
+		checkingThread= new Thread(() -> {
 			SwingUtilities.invokeLater(() -> {
 				this.info.clear();
 				this.addHtml("FINDING INSTALLED MODELS");
-				this.installationInProcess(false);
+				this.installationInProcess(true);
+				System.out.println("This happened");
 			});
 			for(SAMModel model : models) {
 				if (Thread.currentThread().isInterrupted()) return;
@@ -238,7 +228,6 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 				updateInterface();
 			});
 		});
-		return thread;
 	}
 	
 	private void updateInterface() {
@@ -297,10 +286,9 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	
 	/**
 	 * Create the Thread that is used to install the selected model using {@link SamEnvManager}
-	 * @return the thread where the models will be installed
 	 */
-	private Thread createInstallationThread() {
-		Thread installThread = new Thread(() -> {
+	private void createInstallationThread() {
+		this.installationThread = new Thread(() -> {
 			try {
 				SwingUtilities.invokeLater(() -> installationInProcess(true));
 				if (getSelectedModel().getName().equals(EfficientSAM.FULL_NAME))
@@ -326,7 +314,6 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 				SwingUtilities.invokeLater(() -> {installationInProcess(false); this.updateParent.task(false);});
 			}
 		});
-		return installThread;
 	}
 	
 	/**
@@ -353,14 +340,14 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		
 		if (e.getSource() == bnInstall) {
-			Thread installThread = createInstallationThread();
-			installThread.start();
+			createInstallationThread();
+			this.installationThread.start();
 			// TODO remove Thread controlThread = createControlThread(installThread);
 			// TODO remove controlThread.start();
 		} else if (e.getSource() == bnUninstall) {
 			Thread uninstallThread = createUninstallThread();
 			uninstallThread.start();
-			Thread reportThread = reportUninstallThread(uninstallThread);
+			Thread reportThread = reportHelperThread(uninstallThread);
 			reportThread.start();
 			// TODO remove Thread controlThread = createControlThread(uninstallThread);
 			// TODO remove controlThread.start();
@@ -372,15 +359,14 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	}
 	
 	/**
-	 * Create thread in charge of reporting that there is an uninstallation in progress
+	 * Create thread in charge of reporting that there is an action in progress
 	 * @param importantThread
-	 * 	the thread where uninstallation happens
-	 * @return the thread that lets the user know that it is happening
+	 * 	the thread where the process happens
+	 * @return the thread that keeps the reporting so the user does not think that the activity stopped
 	 */
-	private Thread reportUninstallThread(Thread importantThread) {
+	private Thread reportHelperThread(Thread importantThread) {
 		
 		Thread t = new Thread(() -> {
-			addHtml("Uninstalling selected model");
 			while (importantThread.isAlive()) {
 				try { Thread.sleep(300); } catch (InterruptedException e) { return; }
 				addHtml("");
@@ -396,7 +382,10 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	private Thread createUninstallThread() {
 		Thread installThread = new Thread(() -> {
 			try {
-				SwingUtilities.invokeLater(() -> installationInProcess(true));
+				SwingUtilities.invokeLater(() -> {
+					installationInProcess(true);
+					this.addHtml("UNINSTALL MODEL");
+				});
 				uninstallModel();
 				SwingUtilities.invokeLater(() -> {
 					installationInProcess(false);
@@ -590,6 +579,16 @@ public class SAMModelPanel extends JPanel implements ActionListener {
         	waitingIter += 1;
         }
     	return html;
+    }
+    
+    /**
+     * Tries to interrupt any thread that might be runnning
+     */
+    public void interrupExistingThreads() {
+    	if (this.checkingThread != null && this.checkingThread.isAlive())
+    		this.checkingThread.interrupt();
+    	if (this.installationThread != null && this.installationThread.isAlive())
+    		this.installationThread.interrupt();
     }
 }
 

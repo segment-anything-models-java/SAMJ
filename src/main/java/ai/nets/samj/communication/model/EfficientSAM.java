@@ -46,6 +46,7 @@ public class EfficientSAM implements SAMModel {
 	private EfficientSamJ efficientSamJ;
 	private SAMJLogger log;
 	private Boolean installed = false;
+	private boolean onlyBiggest = false;
 	/**
 	 * Name of the model
 	 */

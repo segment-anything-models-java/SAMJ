@@ -46,6 +46,7 @@ public class EfficientViTSAML1 implements SAMModel {
 	private EfficientViTSamJ efficientSamJ;
 	private SAMJLogger log;
 	private Boolean installed = false;
+	private boolean onlyBiggest = false;
 	/**
 	 * "Official" name of the model
 	 */

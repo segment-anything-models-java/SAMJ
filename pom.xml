@@ -140,7 +140,8 @@
 	<properties>
 		<package-name>ai.nets.samj</package-name>
 		<license.licenseName>apache_v2</license.licenseName>
-		<license.copyrightOwners>SAMJ developers</license.copyrightOwners>
+		<license.copyrightOwners>SAMJ developers.</license.copyrightOwners>
+		<license.projectName>Library to call models of the family of SAM (Segment Anything Model) from Java</license.projectName>
 		<license.excludes>**/*.json</license.excludes>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->

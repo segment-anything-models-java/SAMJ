@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
@@ -150,7 +151,6 @@ public class HTMLPane extends JEditorPane {
 		footer += "</body></html>\n";
 		setEditable(false);
 		setContentType("text/html; charset=ISO-8859-1");
-		
 		addHyperlinkListener(new HyperlinkListener() {
             @Override
             public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -189,11 +189,25 @@ public class HTMLPane extends JEditorPane {
 	 */
 	public void append(String tag, String content) {
 		html += "<" + tag + ">" + content + "</" + tag + ">";
-		setText(header + html + footer);
-		if (dim != null) {
-			setPreferredSize(dim);
+		if (SwingUtilities.isEventDispatchThread()) {
+			setText(header + html + footer);
+			if (dim != null) {
+				setPreferredSize(dim);
+			}
+			setCaretPosition(0);
+			this.validate();
+			this.repaint();
+		} else {
+			SwingUtilities.invokeLater(() -> {
+				setText(header + html + footer);
+				if (dim != null) {
+					setPreferredSize(dim);
+				}
+				setCaretPosition(0);
+				this.validate();
+				this.repaint();
+			});
 		}
-		setCaretPosition(0);
 	}
 
 	/**

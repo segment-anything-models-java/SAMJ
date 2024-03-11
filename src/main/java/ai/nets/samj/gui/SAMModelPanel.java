@@ -193,13 +193,19 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	}
 	
 	private void checkInstalledModelsThread() {
+		boolean isEDT = SwingUtilities.isEventDispatchThread();
 		checkingThread= new Thread(() -> {
-			SwingUtilities.invokeLater(() -> {
+			if (isEDT) {
+				SwingUtilities.invokeLater(() -> {
+					this.info.clear();
+					this.info.append("FINDING INSTALLED MODELS");
+					this.installationInProcess(true);
+				});
+			} else {
 				this.info.clear();
 				this.addHtml("FINDING INSTALLED MODELS");
 				this.installationInProcess(true);
-				System.out.println("This happened");
-			});
+			}
 			for(SAMModel model : models) {
 				if (Thread.currentThread().isInterrupted()) return;
 				if (model.getName().equals(EfficientSAM.FULL_NAME)) 
@@ -222,11 +228,21 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 					model.setInstalled(manager.checkEfficientViTSAMPythonInstalled() 
 							&& manager.checkEfficientViTSAMPackageInstalled() && manager.checkEfficientViTSAMWeightsDownloaded("xl1"));
 			}
-			SwingUtilities.invokeLater(() -> {
+			
+			if (isEDT) {
+				SwingUtilities.invokeLater(() -> {
+					this.installationInProcess(false);
+					rbModels.get(0).setSelected(true);
+					updateInterface();
+					this.updateParent.task(false);
+				});
+			} else {
 				this.installationInProcess(false);
 				rbModels.get(0).setSelected(true);
 				updateInterface();
-			});
+				this.updateParent.task(false);
+			}
+			
 		});
 	}
 	
@@ -368,8 +384,8 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		
 		Thread t = new Thread(() -> {
 			while (importantThread.isAlive()) {
-				try { Thread.sleep(300); } catch (InterruptedException e) { return; }
 				addHtml("");
+				try { Thread.sleep(300); } catch (InterruptedException e) { return; }
 			}
 		});
 		return t;

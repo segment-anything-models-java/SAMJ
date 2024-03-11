@@ -153,7 +153,7 @@ public class EfficientViTSAMXL0 implements SAMModel {
 			List<int[]> negList = listOfNegPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			if (negList.size() == 0) return efficientSamJ.processPoints(list);
-			else return efficientSamJ.processPoints(list, negList);
+			else return efficientSamJ.processPoints(list, negList, !onlyBiggest);
 		} catch (IOException | RuntimeException | InterruptedException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
@@ -174,7 +174,7 @@ public class EfficientViTSAMXL0 implements SAMModel {
 				(int)boundingBox2D.max(0),
 				(int)boundingBox2D.max(1)
 			};
-			return efficientSamJ.processBox(bbox);
+			return efficientSamJ.processBox(bbox, !onlyBiggest);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
@@ -188,7 +188,7 @@ public class EfficientViTSAMXL0 implements SAMModel {
 	public <T extends RealType<T> & NativeType<T>> List<Polygon> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) 
 			throws IOException, InterruptedException, RuntimeException {
 		try {
-			return efficientSamJ.processMask(rai);
+			return efficientSamJ.processMask(rai, !onlyBiggest);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
@@ -218,5 +218,10 @@ public class EfficientViTSAMXL0 implements SAMModel {
 	 */
 	public String getInputImageAxes() {
 		return INPUT_IMAGE_AXES;
+	}
+
+	@Override
+	public void setReturnOnlyBiggest(boolean onlyBiggest) {
+		this.onlyBiggest = onlyBiggest;
 	}
 }

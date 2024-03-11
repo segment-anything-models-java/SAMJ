@@ -93,16 +93,14 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 */
 	
 	private LoadingButton bnStart;
-	// TODO private JButton bnComplete = new JButton("Auto-Complete (soon...)");
-	// TODO private JButton bnRoi2Mask = new JButton("Create Mask (soon...)");
 	/** TODO will this ever happen?
 	 * Button for the auto-complete function, it is not ready yet
 	 */
 	private JButton bnComplete = new JButton("Coming soon...");
 	/**
-	 * Button to export the rois of an image to a instance segmentation mask
+	 * Button to export the ROIs of an image to a instance segmentation labeling
 	 */
-	private JButton bnRoi2Mask = new JButton("Coming soon...");
+	private JButton bnRoi2Labeling = new JButton("Export to Labeling...");
 	/**
 	 * Text field containing copyrigth info
 	 */
@@ -265,7 +263,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		pnStatus.add(bnClose, BorderLayout.WEST);
 
 		JPanel pnActions = new JPanel(new FlowLayout());
-		pnActions.add(bnRoi2Mask);
+		pnActions.add(bnRoi2Labeling);
 		pnActions.add(bnComplete);
 		pnActions.add(chkROIManager);
 		
@@ -304,9 +302,9 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		add(pn, BorderLayout.NORTH);		
 		add(pnStatus, BorderLayout.SOUTH);		
 
-		// TODO not ready yet bnRoi2Mask.addActionListener(this);		
+		bnRoi2Labeling.addActionListener(this);
 		// TODO not ready yet bnComplete.addActionListener(this);
-		bnRoi2Mask.setEnabled(false);
+		bnRoi2Labeling.setEnabled(false);
 		bnComplete.setEnabled(false);
 		bnClose.addActionListener(this);
 		bnHelp.addActionListener(this);
@@ -405,6 +403,8 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 this.display.improveExistingMask(fileChooser.getSelectedFile());
             }
+		} else if (e.getSource() == this.bnRoi2Labeling) {
+			this.display.exportImageLabeling();
 		}
 
 		updateInterface();
@@ -445,7 +445,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 			this.cmbImage.setEnabled(true);
 		}
 		// TODO not ready yet bnComplete.setEnabled(this.encodingsDone);
-		// TODO not ready yet bnRoi2Mask.setEnabled(this.encodingsDone);
+		bnRoi2Labeling.setEnabled(this.encodingsDone);
 		chkROIManager.setEnabled(this.encodingsDone);
 		bnRect.setEnabled(this.encodingsDone);
 		bnPoints.setEnabled(this.encodingsDone);

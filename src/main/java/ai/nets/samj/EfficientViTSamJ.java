@@ -450,7 +450,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException{
 		this.script = "";
-		processPointsWithSAM(pointsList.size(), 0);
+		processPointsWithSAM(pointsList.size(), 0, returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_points", pointsList);
 		printScript(script, "Points inference");
@@ -501,7 +501,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		this.script = "";
-		processPointsWithSAM(pointsList.size(), pointsNegList.size());
+		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_points", pointsList);
 		inputs.put("input_neg_points", pointsNegList);
@@ -547,7 +547,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		this.script = "";
-		processBoxWithSAM();
+		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_box", boundingBox);
 		printScript(script, "Rectangle inference");
@@ -688,7 +688,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 			  + "    multimask_output=False," + System.lineSeparator()
 			  + "    box=None,)" + System.lineSeparator()
 			  //+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
-			  + "  contours_x_val,contours_y_val = get_polygons_from_binary_mask(mask_val[0])" + System.lineSeparator()
+			  + "  contours_x_val,contours_y_val = get_polygons_from_binary_mask(mask_val[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 			  + "  contours_x += contours_x_val" + System.lineSeparator()
 			  + "  contours_y += contours_y_val" + System.lineSeparator()
 			  + "task.update('all contours traced')" + System.lineSeparator()
@@ -700,7 +700,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 		this.script = code;
 	}
 	
-	private void processPointsWithSAM(int nPoints, int nNegPoints) {
+	private void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll) {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
 				+ "input_points_list = []" + System.lineSeparator()
@@ -723,14 +723,14 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				//+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0])" + System.lineSeparator()
+				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
 		this.script = code;
 	}
 	
-	private void processBoxWithSAM() {
+	private void processBoxWithSAM(boolean returnAll) {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
 				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
@@ -742,7 +742,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				//+ "np.save('/home/carlos/git/mask.npy', mask)" + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0])" + System.lineSeparator()
+				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();

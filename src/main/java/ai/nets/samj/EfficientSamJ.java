@@ -427,7 +427,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 			  + "  predicted_iou = torch.take_along_dim(predicted_iou, sorted_ids, dim=2)" + System.lineSeparator()
 			  + "  predicted_logits = torch.take_along_dim(predicted_logits, sorted_ids[..., None, None], dim=2)" + System.lineSeparator()
 			  + "  mask_val = torch.ge(predicted_logits[0, 0, 0, :, :], 0).cpu().detach().numpy()" + System.lineSeparator()
-			  + "  cont_x_val,cont_y_val = get_polygons_from_binary_mask(mask_val)" + System.lineSeparator()
+			  + "  cont_x_val,cont_y_val = get_polygons_from_binary_mask(mask_val, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 			  + "  cont_x += cont_x_val" + System.lineSeparator()
 			  + "  cont_y += cont_y_val" + System.lineSeparator()
 			  + "task.update('all contours traced')" + System.lineSeparator()
@@ -475,7 +475,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException{
 		this.script = "";
-		processPointsWithSAM(pointsList.size(), 0);
+		processPointsWithSAM(pointsList.size(), 0, returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_points", pointsList);
 		printScript(script, "Points inference");
@@ -526,7 +526,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException{
 		this.script = "";
-		processPointsWithSAM(pointsList.size(), pointsNegList.size());
+		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_points", pointsList);
 		inputs.put("input_neg_points", pointsNegList);
@@ -574,7 +574,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		this.script = "";
-		processBoxWithSAM();
+		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_box", boundingBox);
 		printScript(script, "Rectangle inference");
@@ -621,7 +621,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		this.script += code;
 	}
 	
-	private void processPointsWithSAM(int nPoints, int nNegPoints) {
+	private void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll) {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
 				+ "input_points_list = []" + System.lineSeparator()
@@ -653,14 +653,14 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				//+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask)" + System.lineSeparator()
+				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
 		this.script = code;
 	}
 	
-	private void processBoxWithSAM() {
+	private void processBoxWithSAM(boolean returnAll) {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
 				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
@@ -682,7 +682,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				//+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask)" + System.lineSeparator()
+				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();

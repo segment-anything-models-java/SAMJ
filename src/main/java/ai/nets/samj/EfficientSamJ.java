@@ -323,7 +323,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * image {@link RandomAccessibleInterval} of the same x and y sizes as the image of interest, the image 
 	 * where the model is finding the segmentations.
 	 * Note that the quality of this prompting method is not good, it is still experimental as it barely works.
-	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM.
 	 * 
 	 * @param <T>
 	 * 	ImgLib2 datatype of the mask

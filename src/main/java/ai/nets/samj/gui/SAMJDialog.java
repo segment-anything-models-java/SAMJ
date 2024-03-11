@@ -325,6 +325,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		bnClose.addActionListener(this);
 		bnHelp.addActionListener(this);
 		chkROIManager.addActionListener(this);
+		cmbROIs.addPopupMenuListener(this);
 		
 		bnStart.addActionListener(this);
 		bnRect.addActionListener(this);
@@ -394,7 +395,6 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 					netAdapter = panelModel
 						.getSelectedModel()
 						.instantiate(display.giveProcessedSubImage(selecetdSAMModel), logForNetworks);
-					netAdapter.setReturnOnlyBiggest(this.cmbROIs.getSelectedItem().equals(ONLY_BIGGEST));
 				} catch (Exception ex) {
 					display.notifyException(SAMJException.ENCODING, ex);
 				}
@@ -552,6 +552,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 * Update the list of images opened once the combobox pop up is open
 	 */
 	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+		if (e.getSource() == this.cmbROIs) return;
 		Object item = this.cmbImage.getSelectedItem();
         List<ComboBoxItem> openSeqs = consumerMethods.getListOfOpenImages();
         ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
@@ -569,6 +570,11 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 * Check if the image selected has been changed once the combobox pop up is closed
 	 */
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+		if (e.getSource() == this.cmbROIs) {
+			if (display != null) 
+				display.getNetBeingUsed().setReturnOnlyBiggest(cmbROIs.getSelectedItem().equals(ONLY_BIGGEST));
+			return;
+		}
 		ComboBoxItem item = (ComboBoxItem) this.cmbImage.getSelectedItem();
 		if ( item == null || (item != null && item.getId() == -1) ) {
 			setEncodingsDone(false);

@@ -114,15 +114,28 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Button that activates the annotation with SAMJ models using point or multiple points prompts
 	 */
-	private ButtonIcon bnPoints = new ButtonIcon("Points", RESOURCES_FOLDER, "edit.png");
+	private ButtonIcon bnPoints = new ButtonIcon("Points", RESOURCES_FOLDER, "points.png");
 	/**
 	 * Button that activates the annotation with SAMJ models using freeline prompts drawn with a freeline
 	 */
-	private ButtonIcon bnBrush = new ButtonIcon("Brush", RESOURCES_FOLDER, "github.png");
+	private ButtonIcon bnBrush = new ButtonIcon("Brush", RESOURCES_FOLDER, "brush.png");
 	/**
 	 * Button that allows selecting a mask as a prompt for the image
 	 */
 	private ButtonIcon bnMask = new ButtonIcon("Mask", RESOURCES_FOLDER, "help.png");
+	/**
+	 * Key that specifies that the user only wants the model to return the biggest ROI
+	 */
+	private static final String ONLY_BIGGEST = "Only return biggest ROI";
+	/**
+	 * Key that specifies that the user wants to return every ROI produced by the model
+	 */
+	private static final String ALL = "Return all ROIs";
+	/**
+	 * Combobox to choose whether to return only the biggest ROI produced by a SAM-based model
+	 * or to return all what is outputed by the model
+	 */
+	private JComboBox<String> cmbROIs = new JComboBox<String>(new String[] {ALL, ONLY_BIGGEST});
 	/**
 	 * Checkbox that defines whether to add the segmentations to the roi manager or not
 	 */
@@ -267,6 +280,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		JPanel pnActions = new JPanel(new FlowLayout());
 		pnActions.add(bnRoi2Mask);
 		pnActions.add(bnComplete);
+		pnActions.add(cmbROIs);
 		pnActions.add(chkROIManager);
 		
 		List<ComboBoxItem> listImages = this.consumerMethods.getListOfOpenImages();
@@ -380,6 +394,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 					netAdapter = panelModel
 						.getSelectedModel()
 						.instantiate(display.giveProcessedSubImage(selecetdSAMModel), logForNetworks);
+					netAdapter.setReturnOnlyBiggest(this.cmbROIs.getSelectedItem().equals(ONLY_BIGGEST));
 				} catch (Exception ex) {
 					display.notifyException(SAMJException.ENCODING, ex);
 				}
@@ -435,6 +450,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 			this.bnStart.setEnabled(true);
 			this.cmbImage.setEnabled(true);
 			this.chkROIManager.setEnabled(true);
+			this.cmbROIs.setEnabled(true);
 		} else if (this.panelModel.isSelectedModelInstalled()
 				&& this.cmbImage.getSelectedItem() != null 
 				&& ((ComboBoxItem) this.cmbImage.getSelectedItem()).getId() != -1) {
@@ -447,6 +463,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		// TODO not ready yet bnComplete.setEnabled(this.encodingsDone);
 		// TODO not ready yet bnRoi2Mask.setEnabled(this.encodingsDone);
 		chkROIManager.setEnabled(this.encodingsDone);
+		cmbROIs.setEnabled(this.encodingsDone);
 		bnRect.setEnabled(this.encodingsDone);
 		bnPoints.setEnabled(this.encodingsDone);
 		bnBrush.setEnabled(this.encodingsDone);

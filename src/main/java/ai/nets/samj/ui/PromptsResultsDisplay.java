@@ -73,7 +73,14 @@ public interface PromptsResultsDisplay {
 	 * @return all the polygons created by SAMJ models for a give image
 	 */
 	List<Polygon> getPolygonsFromRoiManager();
-	
+
+	/**
+	 * Generate and display a labeling image in the consumer software.
+	 * Samples within each ROI will have a different integer value,
+	 * numbered from 1.
+	 */
+	void exportImageLabeling();
+
 	/**
 	 * Use a mask as a prompt for SAMJ models
 	 * @param mask

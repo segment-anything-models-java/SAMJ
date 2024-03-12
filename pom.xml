@@ -15,7 +15,7 @@
 
 	<name>SamJ</name>
 	<description>Segment Anything Model (SAM), and similar models, wrapper for Java based software.</description>
-	<url>https://github.com/carlosuc3m/samj</url>
+	<url>https://github.com/segment-anything-models-java/SAMJ</url>
 	<inceptionYear>2024</inceptionYear>
 	<organization>
 		<name>SAMJ</name>
@@ -108,13 +108,12 @@
 	</developers>
 	<contributors>
 		<contributor>
-			<name>Carlos Garcia</name>
-			<url>https://github.com/carlosuc3m</url>
-			<properties><id>carlosuc3m</id></properties>
-		</contributor>
-		<contributor>
+			<name>Curtis Rueden</name>
+			<url>https://github.com/ctrueden</url>
+			<properties><id>ctrueden</id></properties>
 		</contributor>
 	</contributors>
+
 	<mailingLists>
 		<mailingList>
 			<name>Image.sc Forum</name>
@@ -123,29 +122,34 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:https://github.com/carlosuc3m/samj</connection>
-		<developerConnection>scm:git:git@github.com:carlosuc3m/samj</developerConnection>
+		<connection>scm:git:https://github.com/segment-anything-models-java/SAMJ</connection>
+		<developerConnection>scm:git:git@github.com:segment-anything-models-java/SAMJ</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/carlosuc3m/samj</url>
+		<url>https://github.com/segment-anything-models-java/SAMJ</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/carlosuc3m/samj/issues</url>
+		<url>https://github.com/segment-anything-models-java/SAMJ/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<system>GitHub Actions</system>
-		<url>https://github.com/carlosuc3m/samj/actions</url>
+		<url>https://github.com/segment-anything-models-java/SAMJ/actions</url>
 	</ciManagement>
 
 	<properties>
 		<package-name>ai.nets.samj</package-name>
 		<license.licenseName>apache_v2</license.licenseName>
-		<license.copyrightOwners>SAMJ developers</license.copyrightOwners>
+		<license.copyrightOwners>SAMJ developers.</license.copyrightOwners>
+		<license.projectName>Library to call models of the family of SAM (Segment Anything Model) from Java</license.projectName>
 		<license.excludes>**/*.json</license.excludes>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
+		<!-- FIXME: use release version of dl-modelrunner for reproducible builds. -->
+		<dl-modelrunner.version>0.5.5-SNAPSHOT</dl-modelrunner.version>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>net.imglib2</groupId>
@@ -157,15 +161,16 @@
 			<version>0.1.1</version>
 		</dependency> -->
 		<dependency>
-    			<groupId>io.bioimage</groupId>
-    			<artifactId>dl-modelrunner</artifactId>
-    			<version>0.5.5-SNAPSHOT</version>
+			<groupId>io.bioimage</groupId>
+			<artifactId>dl-modelrunner</artifactId>
+			<version>${dl-modelrunner.version}</version>
 		</dependency>
 	</dependencies>
+
 	<repositories>
 		<repository>
-		  <id>scijava.public</id>
-		  <url>https://maven.scijava.org/content/groups/public</url>
+			<id>scijava.public</id>
+			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
 	</repositories>
 </project>

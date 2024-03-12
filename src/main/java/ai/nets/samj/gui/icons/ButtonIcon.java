@@ -21,7 +21,6 @@ package ai.nets.samj.gui.icons;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
@@ -59,6 +58,27 @@ public class ButtonIcon extends JButton {
 	 * Icon for when the button is pressed
 	 */
 	private ImageIcon pressedIcon;
+	/**
+	 * String that is displayed inside the button
+	 */
+	private String text;
+	/**
+	 * Original color of the buttons
+	 */
+	private Color color;
+	/**
+	 * HTML used to format the button label text. First the color needs to be specified, then the 
+	 * text that wants to be in the button
+	 */
+	private static final String BTN_TEXT_HTML = "<html><font color='%s'>%s</font></html>";
+	/**
+	 * Color code for the HTML String of the button for when the button is not pressed
+	 */
+	private static final String NOT_PRESSED_COLOR = "black";
+	/**
+	 * Color code for the HTML String of the button for when the button is pressed
+	 */
+	private static final String PRESSED_COLOR = "white";
 
 	/**
 	 * Constructor. Creates a button that has an icon inside. The icon changes when pressed.
@@ -71,6 +91,7 @@ public class ButtonIcon extends JButton {
 	 */
 	public ButtonIcon(String text, String filePath, String filename) {
 		super();
+		this.text = text;
 		try {
 			normalIcon = getIcon(filePath + "/" + filename);
 			pressedIcon = getIcon(filePath + "/" + PRESSED_PREFIX + filename);
@@ -82,7 +103,7 @@ public class ButtonIcon extends JButton {
 				setPreferredSize(new Dimension(58, 58));
 				setVerticalTextPosition(SwingConstants.BOTTOM);
 				setHorizontalTextPosition(SwingConstants.CENTER);
-				setText(text);
+				setText(String.format(BTN_TEXT_HTML, NOT_PRESSED_COLOR, text));
 			}
 			if (pressedIcon != null) {
 				this.setPressedIcon(pressedIcon);
@@ -91,6 +112,7 @@ public class ButtonIcon extends JButton {
 		catch (Exception ex) {
 			setText(text);
 		}
+		color = this.getBackground();
 	}
 	
 	private ImageIcon getIcon(String path) {
@@ -138,21 +160,18 @@ public class ButtonIcon extends JButton {
 	 * 	whether the button is pressed or not
 	 */
 	public void setPressed(boolean isPressed) {
-		if (isPressed) this.setIcon(pressedIcon);
-		else this.setIcon(normalIcon);
+		if (isPressed) {
+			this.setIcon(pressedIcon);
+			this.setBackground(Color.BLACK);
+			this.setOpaque(true);
+		} else {
+			this.setIcon(normalIcon);
+			this.setBackground(color);
+			this.setOpaque(false);
+		}
+
+		setText(String.format(BTN_TEXT_HTML, isPressed ? PRESSED_COLOR : NOT_PRESSED_COLOR, text));
 		
 		this.setSelected(isPressed);
 	}
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        if (getModel().isSelected() && isEnabled()) {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getWidth(), getHeight());
-            setForeground(Color.WHITE);
-        } else {
-            setForeground(Color.BLACK);
-        }
-        super.paintComponent(g);
-    }
 }

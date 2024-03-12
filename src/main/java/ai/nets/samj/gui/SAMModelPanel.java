@@ -79,20 +79,20 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	/**
 	 * Button that when clicked installs the model selected
 	 */
-	private JButton bnInstall = new JButton("Install");
+    protected JButton bnInstall = new JButton("Install");
 	/**
 	 * Button that when clicked uninstalls the model selected
 	 */
-	private JButton bnUninstall = new JButton("Uninstall");
+	protected JButton bnUninstall = new JButton("Uninstall");
 	/**
 	 * Progress bar used during the model installation. If the model is already installed it
 	 * is full, if it is not it is empty
 	 */
-	private JProgressBar progressInstallation = new JProgressBar();
+	protected JProgressBar progressInstallation = new JProgressBar();
 	/**
 	 * List of radio buttons that point to the models available
 	 */
-	private ArrayList<JRadioButton> rbModels = new ArrayList<JRadioButton>();
+	protected ArrayList<JRadioButton> rbModels = new ArrayList<JRadioButton>();
 	/**
 	 * Object contianing a list of the models available, and whether they are selected, installed...
 	 */

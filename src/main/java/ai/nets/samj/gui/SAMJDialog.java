@@ -389,6 +389,12 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 			this.bnStart.setPressed(true);
 			new Thread(() -> {
 				SAMModel netAdapter = null;
+				SwingUtilities.invokeLater(() -> {
+					panelModel.bnUninstall.setEnabled(false);
+					panelModel.bnInstall.setEnabled(false);
+					panelModel.rbModels.stream().forEach(btn -> btn.setEnabled(false));
+					panelModel.progressInstallation.setIndeterminate(true);
+				});
 				try {
 					netAdapter = panelModel
 						.getSelectedModel()
@@ -398,6 +404,11 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 				}
 				SwingUtilities.invokeLater(() -> {
 					this.bnStart.setPressed(false);
+					panelModel.bnUninstall.setEnabled(panelModel.getSelectedModel().isInstalled());
+					panelModel.bnInstall.setEnabled(panelModel.getSelectedModel().isInstalled());
+					panelModel.rbModels.stream().forEach(btn -> btn.setEnabled(true));
+					panelModel.progressInstallation.setIndeterminate(false);
+					panelModel.progressInstallation.setValue(100);
 				});
 				if (netAdapter == null) return;
 				display.switchToThisNet(netAdapter);

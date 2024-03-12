@@ -112,7 +112,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Button that activates the annotation with SAMJ models using point or multiple points prompts
 	 */
-	private ButtonIcon bnPoints = new ButtonIcon("Points", RESOURCES_FOLDER, "points.png");
+	private ButtonIcon bnPoints = new ButtonIcon("Points", RESOURCES_FOLDER, "points_samj.png");
 	/**
 	 * Button that activates the annotation with SAMJ models using freeline prompts drawn with a freeline
 	 */

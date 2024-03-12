@@ -387,6 +387,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 				addHtml("");
 				try { Thread.sleep(300); } catch (InterruptedException e) { return; }
 			}
+			SwingUtilities.invokeLater(() -> updateInterface());
 		});
 		return t;
 	}

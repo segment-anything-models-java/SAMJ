@@ -108,6 +108,13 @@ public interface SAMModel {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	List<Polygon> fetch2dSegmentation(Interval boundingBox2D) throws IOException, RuntimeException, InterruptedException;
+	
+	/**
+	 * Set whether SAMJ will only return the biggest ROI or all of them when several are obtained from the model
+	 * @param onlyBiggest
+	 * 	whether the ouput of SAMJ will only be the biggest ROI obtained or all of them.
+	 */
+	void setReturnOnlyBiggest(boolean onlyBiggest);
 
 	/**
 	 * Get a 2D segmentation/annotation using an existing mask as the prompt. 

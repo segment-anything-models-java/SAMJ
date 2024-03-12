@@ -143,4 +143,10 @@ public interface PromptsResultsDisplay {
 	 * 	the exception thrown by SAMJ
 	 */
 	void notifyException(SAMJException type, Exception ex);
+	
+	/**
+	 * Return the {@link SAMModel} that is being used
+	 * @return the {@link SAMModel} that is being used or false otherwise
+	 */
+	SAMModel getNetBeingUsed();
 }

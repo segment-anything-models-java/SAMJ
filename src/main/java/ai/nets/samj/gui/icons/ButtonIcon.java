@@ -19,7 +19,9 @@
  */
 package ai.nets.samj.gui.icons;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
@@ -141,4 +143,16 @@ public class ButtonIcon extends JButton {
 		
 		this.setSelected(isPressed);
 	}
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        if (getModel().isSelected() && isEnabled()) {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, getWidth(), getHeight());
+            setForeground(Color.WHITE);
+        } else {
+            setForeground(Color.BLACK);
+        }
+        super.paintComponent(g);
+    }
 }

@@ -405,7 +405,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 				SwingUtilities.invokeLater(() -> {
 					this.bnStart.setPressed(false);
 					panelModel.bnUninstall.setEnabled(panelModel.getSelectedModel().isInstalled());
-					panelModel.bnInstall.setEnabled(panelModel.getSelectedModel().isInstalled());
+					panelModel.bnInstall.setEnabled(!panelModel.getSelectedModel().isInstalled());
 					panelModel.rbModels.stream().forEach(btn -> btn.setEnabled(true));
 					panelModel.progressInstallation.setIndeterminate(false);
 					panelModel.progressInstallation.setValue(100);

@@ -383,6 +383,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	private Thread reportHelperThread(Thread importantThread) {
 		
 		Thread t = new Thread(() -> {
+			try { Thread.sleep(300); } catch (InterruptedException e) { return; }
 			while (importantThread.isAlive()) {
 				addHtml("");
 				try { Thread.sleep(300); } catch (InterruptedException e) { return; }
@@ -398,15 +399,17 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	 */
 	private Thread createUninstallThread() {
 		Thread installThread = new Thread(() -> {
+			this.getSelectedModel().setInstalled(false);
 			try {
 				SwingUtilities.invokeLater(() -> {
-					installationInProcess(true);
+					this.info.clear();
 					this.addHtml("UNINSTALL MODEL");
+					installationInProcess(true);
+					this.updateParent.task(true);
 				});
 				uninstallModel();
 				SwingUtilities.invokeLater(() -> {
-					installationInProcess(false);
-					this.updateParent.task(false);});
+					installationInProcess(false);});
 			} catch (Exception e1) {
 				e1.printStackTrace();
 				SwingUtilities.invokeLater(() -> {installationInProcess(false); this.updateParent.task(false);});
@@ -419,6 +422,12 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 	 * Uninstall the model from the user computer. Delete the required files
 	 */
 	private void uninstallModel() {
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if (getSelectedModel().getName().equals(EfficientSAM.FULL_NAME)) {
 			Files.deleteFolder(new File(manager.getEfficientSAMPythonEnv()));
 			Files.deleteFolder(new File(manager.getEfficientSamEnv()));

@@ -297,7 +297,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		gbc0.fill = GridBagConstraints.HORIZONTAL;
 		gbc0.gridx = 0;
 		gbc0.insets = new Insets(5, 5, 5, 0);
-		bnStart = new LoadingButton("Start/Encode", RESOURCES_FOLDER, "loading_animation.gif", 20);
+		bnStart = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation.gif", 20);
 		panelImage.add(bnStart, gbc0);
 		GridBagConstraints gbc1 = new GridBagConstraints();
 		gbc1.fill = GridBagConstraints.HORIZONTAL;

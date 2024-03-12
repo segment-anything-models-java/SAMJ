@@ -128,7 +128,7 @@ public class ButtonIcon extends JButton {
 			}
 		}
 		if (url != null) {
-			ImageIcon img = new ImageIcon(url, "") ;  
+			ImageIcon img = new ImageIcon(url) ;  
 			Image image = img.getImage();
 			Image scaled = image.getScaledInstance(32, 32, Image.SCALE_SMOOTH);
 			return new ImageIcon(scaled);

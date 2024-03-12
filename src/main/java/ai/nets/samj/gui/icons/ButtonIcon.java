@@ -164,6 +164,7 @@ public class ButtonIcon extends JButton {
 			this.setIcon(pressedIcon);
 			this.setBackground(Color.BLACK);
 			this.setOpaque(true);
+			this.setContentAreaFilled(true);
 		} else {
 			this.setIcon(normalIcon);
 			this.setBackground(color);
@@ -173,5 +174,7 @@ public class ButtonIcon extends JButton {
 		setText(String.format(BTN_TEXT_HTML, isPressed ? PRESSED_COLOR : NOT_PRESSED_COLOR, text));
 		
 		this.setSelected(isPressed);
+		this.validate();
+		this.repaint();
 	}
 }

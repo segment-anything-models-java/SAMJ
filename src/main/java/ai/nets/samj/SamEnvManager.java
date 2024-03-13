@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -101,6 +102,22 @@ public class SamEnvManager {
 	 * Byte size of the weights of SAM Huge
 	 */
 	final public static long SAM_BYTE_SIZE = 375042383;
+	/**
+	 * Byte size of the weights of EfficientSAM Small
+	 */
+	final public static long EFFICIENTSAM_BYTE_SIZE = 375042383;
+	/**
+	 * Byte sizes of all the EfficientViTSAM options
+	 */
+	final public static HashMap<String, Long> EFFICIENTVITSAM_BYTE_SIZES_MAP;
+	static {
+		EFFICIENTVITSAM_BYTE_SIZES_MAP = new HashMap<String, Long>();
+		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("l0", (long) 139410184);
+		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("l1", (long) 190916834);
+		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("l2", (long) 245724244);
+		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("xl0", (long) 814022923);
+		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("xl1", (long) 814022923);
+	}
 	/**
 	 * Name that will be given to the environment that contains the dependencies needed to load EfficientSAM or SAM
 	 */
@@ -330,8 +347,10 @@ public class SamEnvManager {
 	 * downloaded and installed or not
 	 */
 	public boolean checkEfficientSAMSmallWeightsDownloaded() {
-		File weigthsFile = Paths.get(this.path, "envs", ESAM_ENV_NAME, ESAM_NAME, "weights", ESAM_SMALL_WEIGHTS_NAME).toFile();
-		return weigthsFile.isFile();
+		File weightsFile = Paths.get(this.path, "envs", ESAM_ENV_NAME, ESAM_NAME, "weights", ESAM_SMALL_WEIGHTS_NAME).toFile();
+		if (!weightsFile.isFile()) return false;
+		if (weightsFile.length() != EFFICIENTSAM_BYTE_SIZE) return false;
+		return true;
 	}
 
 	/**
@@ -346,8 +365,10 @@ public class SamEnvManager {
 		if (!EfficientViTSamJ.getListOfSupportedEfficientViTSAM().contains(modelType))
 			throw new IllegalArgumentException("The provided model is not one of the supported EfficientViT models: " 
 												+ EfficientViTSamJ.getListOfSupportedEfficientViTSAM());
-		File weigthsFile = Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", modelType + ".pt").toFile();
-		return weigthsFile.isFile();
+		File weightsFile = Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", modelType + ".pt").toFile();
+		if (!weightsFile.isFile()) return false;
+		if (weightsFile.length() != EFFICIENTVITSAM_BYTE_SIZES_MAP.get(modelType)) return false;
+		return true;
 	}
 	
 	/**
@@ -390,8 +411,9 @@ public class SamEnvManager {
 	 * Install the weights of EfficientSAM Small.
 	 * @param force
 	 * 	whether to overwrite the weights file if it already exists
+	 * @throws InterruptedException if the download of weights is interrupted
 	 */
-	public void downloadESAMSmallWeights(boolean force) throws IOException {
+	public void downloadESAMSmallWeights(boolean force) throws IOException, InterruptedException {
 		if (!force && checkEfficientSAMSmallWeightsDownloaded())
 			return;
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTSAM WEIGHTS");
@@ -410,6 +432,7 @@ public class SamEnvManager {
                 }
             	entryFile.getParentFile().mkdirs();
                 try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
+                	if (Thread.interrupted()) throw new InterruptedException("EfficientSAM download interrupted");
                     byte[] buffer = new byte[1024];
                     int bytesRead;
                     while ((bytesRead = zipInput.read(buffer)) != -1) {
@@ -478,10 +501,11 @@ public class SamEnvManager {
     		File file = Paths.get(path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", DownloadModel.getFileNameFromURLString(String.format(EVITSAM_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();
     		URL url = MambaInstallerUtils.redirectedURL(new URL(String.format(EVITSAM_URL, modelType)));
+    		Thread parentThread = Thread.currentThread();
     		Thread downloadThread = new Thread(() -> {
     			try {
-    				downloadFile(url.toString(), file);
-    			} catch (IOException | URISyntaxException e) {
+    				downloadFile(url.toString(), file, parentThread);
+    			} catch (IOException | URISyntaxException | InterruptedException e) {
     				e.printStackTrace();
     			}
             });
@@ -1130,9 +1154,11 @@ public class SamEnvManager {
 	 * @param targetFile
 	 * 	file where the file from the url will be downloaded too
 	 * @throws IOException if there si any error downloading the file
-	 * @throws URISyntaxException 
+	 * @throws URISyntaxException if there is any error in the URL syntax
+	 * @throws InterruptedException if the parent thread is stopped and the download stopped
 	 */
-	public void downloadFile(String downloadURL, File targetFile) throws IOException, URISyntaxException {
+	public void downloadFile(String downloadURL, File targetFile, Thread parentThread) 
+								throws IOException, URISyntaxException, InterruptedException {
 		FileOutputStream fos = null;
 		ReadableByteChannel rbc = null;
 		try {
@@ -1142,7 +1168,7 @@ public class SamEnvManager {
 			fos = new FileOutputStream(targetFile);
 			// Send the correct parameters to the progress screen
 			FileDownloader downloader = new FileDownloader(rbc, fos);
-			downloader.call();
+			downloader.call(parentThread);
 		} finally {
 			if (fos != null)
 				fos.close();

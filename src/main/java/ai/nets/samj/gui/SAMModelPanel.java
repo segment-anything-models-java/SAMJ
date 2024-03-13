@@ -198,8 +198,8 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 			if (isEDT) {
 				SwingUtilities.invokeLater(() -> {
 					this.info.clear();
-					this.info.append("FINDING INSTALLED MODELS");
 					this.installationInProcess(true);
+					this.info.append("FINDING INSTALLED MODELS");
 				});
 			} else {
 				this.info.clear();

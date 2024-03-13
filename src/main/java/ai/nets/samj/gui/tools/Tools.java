@@ -34,7 +34,7 @@ public class Tools {
 	 * @return true if the method was able to access the website or false otherwise
 	 */
 	static public boolean help() {
-		String url = "https://github.com/segment-anything-models-java/SAMJ"; 
+		String url = "https://github.com/segment-anything-models-java/SAMJ-IJ"; 
 		Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
 		if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
 			try {

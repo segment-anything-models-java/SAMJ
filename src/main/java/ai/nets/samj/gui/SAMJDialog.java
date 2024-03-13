@@ -79,7 +79,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Name of the folder where the icon images for the dialog buttons are within the resources folder
 	 */
-	private static final String RESOURCES_FOLDER = "icons/";
+	private static final String RESOURCES_FOLDER = "icons_samj/";
 	/**
 	 * Button that closes the GUI
 	 */
@@ -108,7 +108,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Button that activates the annotation with SAMJ models using bounding box prompts
 	 */
-	private ButtonIcon bnRect = new ButtonIcon("Rect", RESOURCES_FOLDER, "rect.png");
+	private ButtonIcon bnRect = new ButtonIcon("Rect", RESOURCES_FOLDER, "rect_samj.png");
 	/**
 	 * Button that activates the annotation with SAMJ models using point or multiple points prompts
 	 */
@@ -116,11 +116,11 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Button that activates the annotation with SAMJ models using freeline prompts drawn with a freeline
 	 */
-	private ButtonIcon bnBrush = new ButtonIcon("Brush", RESOURCES_FOLDER, "brush.png");
+	private ButtonIcon bnBrush = new ButtonIcon("Brush", RESOURCES_FOLDER, "brush_samj.png");
 	/**
 	 * Button that allows selecting a mask as a prompt for the image
 	 */
-	private ButtonIcon bnMask = new ButtonIcon("Mask", RESOURCES_FOLDER, "help.png");
+	private ButtonIcon bnMask = new ButtonIcon("Mask", RESOURCES_FOLDER, "help_samj.png");
 	/**
 	 * Key that specifies that the user only wants the model to return the biggest ROI
 	 */
@@ -297,7 +297,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		gbc0.fill = GridBagConstraints.HORIZONTAL;
 		gbc0.gridx = 0;
 		gbc0.insets = new Insets(5, 5, 5, 0);
-		bnStart = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation.gif", 20);
+		bnStart = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation_samj.gif", 20);
 		panelImage.add(bnStart, gbc0);
 		GridBagConstraints gbc1 = new GridBagConstraints();
 		gbc1.fill = GridBagConstraints.HORIZONTAL;

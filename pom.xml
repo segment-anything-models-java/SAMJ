@@ -147,7 +147,7 @@
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 
 		<!-- FIXME: use release version of dl-modelrunner for reproducible builds. -->
-		<dl-modelrunner.version>0.5.5-SNAPSHOT</dl-modelrunner.version>
+		<dl-modelrunner.version>0.5.5</dl-modelrunner.version>
 	</properties>
 
 	<dependencies>

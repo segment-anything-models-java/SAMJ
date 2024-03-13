@@ -332,23 +332,6 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		});
 	}
 	
-	/**
-	 * Create a thread that is used to monitor the installation and provide some feedback to the user
-	 * @param installThread
-	 * 	the thread where the installation is being done
-	 * @return the thread used to control the installation thread
-	 */
-	private Thread createControlThread(Thread installThread) {
-		Thread currentThread = Thread.currentThread();
-		Thread controlThread = new Thread(() -> {
-			while (currentThread.isAlive() && installThread.isAlive()) {
-				try{ Thread.sleep(50); } catch(Exception ex) {}
-			}
-			if (!currentThread.isAlive()) installThread.interrupt();
-		});
-		return controlThread;
-	}
-	
 	@Override
 	/**
 	 * Mange the interface actions and logic

@@ -91,8 +91,9 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	public static final String IMPORTS = ""
 			+ "task.update('start')" + System.lineSeparator()
-			+ "from skimage import measure" + System.lineSeparator()
 			+ "import numpy as np" + System.lineSeparator()
+			+ "from skimage import measure" + System.lineSeparator()
+			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
 			+ "import os" + System.lineSeparator()

@@ -80,7 +80,6 @@ public class PythonMethods {
 			+ "    return x_coords,y_coords" + System.lineSeparator()
 			+ "" + System.lineSeparator()
 			+ "def get_polygons_from_binary_mask(sam_result, at_least_of_this_size = 3, only_biggest=False):" + System.lineSeparator()
-			// TODO the line below causes some overhead because of regioprops, mayube initialize in encoding
 			+ "    labels = measure.regionprops( measure.label(sam_result,connectivity=1) )" + System.lineSeparator()
 			+ "    x_contours = []" + System.lineSeparator()
 			+ "    y_contours = []" + System.lineSeparator()

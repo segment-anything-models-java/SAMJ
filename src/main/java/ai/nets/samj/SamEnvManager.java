@@ -105,7 +105,7 @@ public class SamEnvManager {
 	/**
 	 * Byte size of the weights of EfficientSAM Small
 	 */
-	final public static long EFFICIENTSAM_BYTE_SIZE = 375042383;
+	final public static long EFFICIENTSAM_BYTE_SIZE = 105742022 ;
 	/**
 	 * Byte sizes of all the EfficientViTSAM options
 	 */
@@ -115,7 +115,7 @@ public class SamEnvManager {
 		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("l0", (long) 139410184);
 		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("l1", (long) 190916834);
 		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("l2", (long) 245724244);
-		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("xl0", (long) 814022923);
+		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("xl0", (long) 468211343);
 		EFFICIENTVITSAM_BYTE_SIZES_MAP.put("xl1", (long) 814022923);
 	}
 	/**

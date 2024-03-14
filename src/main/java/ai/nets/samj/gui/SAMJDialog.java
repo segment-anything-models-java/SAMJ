@@ -100,7 +100,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Button to export the ROIs of an image to a instance segmentation labeling
 	 */
-	private JButton bnRoi2Labeling = new JButton("Export to Labeling...");
+	private JButton bnRoi2Labeling = new JButton("Export as Label");
 	/**
 	 * Text field containing copyrigth info
 	 */
@@ -122,9 +122,9 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 */
 	private ButtonIcon bnMask = new ButtonIcon("Mask", RESOURCES_FOLDER, "help_samj.png");
 	/**
-	 * Key that specifies that the user only wants the model to return the biggest ROI
+	 * Key that specifies that the user only wants the model to return the largest ROI
 	 */
-	private static final String ONLY_BIGGEST = "Only return biggest ROI";
+	private static final String ONLY_BIGGEST = "Only return largest ROI";
 	/**
 	 * Key that specifies that the user wants to return every ROI produced by the model
 	 */

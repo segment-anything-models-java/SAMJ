@@ -551,8 +551,11 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 * Close the panel and the plugin, deleting the python process if it exists
 	 */
 	public void close() {
-		if (display != null)
+		if (display != null) {
 			display.notifyNetToClose();
+			display.switchToNone();
+		}
+		display = null;
 		this.panelModel.interrupExistingThreads();
 		if (SwingUtilities.windowForComponent(this).isDisplayable())
 			SwingUtilities.windowForComponent(this).dispose();

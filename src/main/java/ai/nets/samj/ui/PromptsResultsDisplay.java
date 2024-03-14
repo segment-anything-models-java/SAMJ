@@ -131,11 +131,6 @@ public interface PromptsResultsDisplay {
 	Object getFocusedImage();
 	
 	/**
-	 * Uses the created ROIs to create an instance segmentation mask
-	 */
-	void createInstanceSegmentationMask();
-	
-	/**
 	 * This method uses the exception launched by SAMJ to display an understandable error message in the consumer software
 	 * @param type
 	 * 	which kind of exception is being throw from the possibilities of {@link SAMJException}

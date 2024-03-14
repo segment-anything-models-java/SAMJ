@@ -570,7 +570,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
         for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
         DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
         this.cmbImage.setModel(comboBoxModel);
-        if (item != null) 
+        if (item != null && objects.length != 0) 
         	this.cmbImage.setSelectedIndex(
         			IntStream.range(0, objects.length).filter(i -> objects[i].getId() == ((ComboBoxItem) item).getId()).findFirst().orElse(0)
         			);

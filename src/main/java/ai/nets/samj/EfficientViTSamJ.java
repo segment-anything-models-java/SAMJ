@@ -192,7 +192,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 
 	/**
-	 * Create an EfficientViTSAMJ instance that allows to use EfficientViTSAM on an image.
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time
 	 * 
@@ -208,7 +208,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @return an instance of {@link EfficientViTSAMJ} that allows running EfficienTViTSAM on an image
+	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
@@ -231,7 +231,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 
 	/**
-	 * Create an EfficientViTSAMJ instance that allows to use EfficientViTSAM on an image.
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time
 	 * 
@@ -243,7 +243,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param image
 	 * 	the image where SAM is going to be run on
-	 * @return an instance of {@link EfficientViTSAMJ} that allows running EfficienTViTSAM on an image
+	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
@@ -263,7 +263,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 
 	/**
-	 * Create an EfficientViTSAMJ instance that allows to use EfficientViTSAM on an image.
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time.
 	 * 
@@ -279,7 +279,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @return an instance of {@link EfficientViTSAMJ} that allows running EfficienTViTSAM on an image
+	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
@@ -294,7 +294,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 
 	/**
-	 * Create an EfficientViTSAMJ instance that allows to use EfficientViTSAM on an image.
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time.
 	 * 
@@ -306,11 +306,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param image
 	 * 	the image where SAM is going to be run on
-	 * @param debugPrinter
-	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
-	 * @param printPythonCode
-	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @return an instance of {@link EfficientViTSAMJ} that allows running EfficienTViTSAM on an image
+	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code

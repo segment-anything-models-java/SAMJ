@@ -400,8 +400,7 @@ public class SamEnvManager {
 	
 	/**
 	 * Install the weights of EfficientSAM Small.
-	 * @param force
-	 * 	whether to overwrite the weights file if it already exists
+	 * Does not overwrite the weights file if it already exists.
 	 */
 	public void downloadESAMSmallWeights() throws IOException, InterruptedException {
 		downloadESAMSmallWeights(false);
@@ -555,8 +554,6 @@ public class SamEnvManager {
 	 * 
 	 * @throws IOException if there is any file error installing any of the requirements
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if there is any downloading Micromamba
-	 * @throws URISyntaxException if there is any error witht the URL to download micromamba
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installEfficientSAMPython(boolean force) throws IOException, InterruptedException, MambaInstallException {
@@ -623,8 +620,6 @@ public class SamEnvManager {
 	 * 
 	 * @throws IOException if there is any file error installing any of the requirements
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if there is any downloading Micromamba
-	 * @throws URISyntaxException if there is any error witht the URL to download micromamba
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installEfficientViTSAMPython(boolean force) throws IOException, InterruptedException, MambaInstallException {
@@ -815,9 +810,8 @@ public class SamEnvManager {
 	}
 	
 	/**
-	 * Install the Python package to run EfficientSAM
-	 * @param force
-	 * 	if the package already exists, whether to overwrite it or not
+	 * Install the Python package to run EfficientSAM.
+	 * Does not overwrite the package if it already exists.
 	 * @throws IOException if there is any file creation related issue
 	 * @throws InterruptedException if the package installation is interrupted
 	 * @throws MambaInstallException if there is any error with the Mamba installation

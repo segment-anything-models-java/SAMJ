@@ -159,7 +159,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 
 	/**
-	 * Create an EfficientSAMJ instance that allows to use EfficientSAM on an image.
+	 * Create an EfficientSamJ instance that allows to use EfficientSAM on an image.
 	 * This method encodes the image provided, so depending on the computer
 	 * it might take some time
 	 * 
@@ -169,7 +169,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param image
 	 * 	the image where SAM is going to be run on
-	 * @return an instance of {@link EfficientSAMJ} that allows running EfficientSAM on an image
+	 * @return an instance of {@link EfficientSamJ} that allows running EfficientSAM on an image
 	 * @param debugPrinter
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
@@ -195,7 +195,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 
 	/**
-	 * Create an EfficientSAMJ instance that allows to use EfficientSAM on an image.
+	 * Create an EfficientSamJ instance that allows to use EfficientSAM on an image.
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time.
 	 * 
@@ -206,7 +206,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param image
 	 * 	the image where SAM is going to be run on
-	 * @return an instance of {@link EfficientSAMJ} that allows running EfficientSAM on an image
+	 * @return an instance of {@link EfficientSamJ} that allows running EfficientSAM on an image
 	 * 	with the image already encoded
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code

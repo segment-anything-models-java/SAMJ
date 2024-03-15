@@ -148,7 +148,7 @@ public class EfficientSAM implements SAMModel {
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			List<int[]> negList = listOfNegPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
-			if (negList.size() == 0) return efficientSamJ.processPoints(list);
+			if (negList.size() == 0) return efficientSamJ.processPoints(list, !onlyBiggest);
 			else return efficientSamJ.processPoints(list, negList, !onlyBiggest);
 		} catch (IOException | RuntimeException | InterruptedException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());

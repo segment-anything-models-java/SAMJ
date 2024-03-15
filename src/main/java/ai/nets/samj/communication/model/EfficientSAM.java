@@ -64,6 +64,8 @@ public class EfficientSAM implements SAMModel {
 	        + "<strong>Paper:</strong> <a href=\"https://arxiv.org/pdf/2312.00863.pdf\">EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment\n"
 	        + "Anything</a>";
 	
+	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is computationally heavy. It is not recommended to use it on lower-end computers.</p>";
+	
 	public EfficientSAM() {}
 
 	/**
@@ -102,7 +104,7 @@ public class EfficientSAM implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.installed ? SAMModel.HTML_NOT_INSTALLED : "");
+		return HTML_DESCRIPTION + (!this.installed ? SAMModel.HTML_NOT_INSTALLED : "") + CAUTION_STRING;
 	}
 
 	@Override

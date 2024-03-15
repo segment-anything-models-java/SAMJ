@@ -399,6 +399,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 					netAdapter = panelModel
 						.getSelectedModel()
 						.instantiate(display.giveProcessedSubImage(selectedSAMModel), logForNetworks);
+					netAdapter.setReturnOnlyBiggest(cmbROIs.getSelectedItem().equals(ONLY_BIGGEST));
 				} catch (Exception ex) {
 					display.notifyException(SAMJException.ENCODING, ex);
 				}

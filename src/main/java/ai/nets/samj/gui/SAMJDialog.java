@@ -280,6 +280,8 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		pnActions.add(bnComplete);
 		pnActions.add(cmbROIs);
 		pnActions.add(chkROIManager);
+		// TODO think what to do with "add to roimanager" cehckbox
+		chkROIManager.setEnabled(false);
 		
 		List<ComboBoxItem> listImages = this.consumerMethods.getListOfOpenImages();
 		for(ComboBoxItem item : listImages)
@@ -461,7 +463,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 				&& ((ComboBoxItem) this.cmbImage.getSelectedItem()).getId() != -1) {
 			this.bnStart.setEnabled(true);
 			this.cmbImage.setEnabled(true);
-			this.chkROIManager.setEnabled(true);
+			// TODO think what to do this.chkROIManager.setEnabled(true);
 			this.cmbROIs.setEnabled(true);
 		} else if (this.panelModel.isSelectedModelInstalled()
 				&& this.cmbImage.getSelectedItem() != null 
@@ -474,7 +476,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		}
 		// TODO not ready yet bnComplete.setEnabled(this.encodingsDone);
 		bnRoi2Labeling.setEnabled(this.encodingsDone);
-		chkROIManager.setEnabled(this.encodingsDone);
+		// TODO think what to do chkROIManager.setEnabled(this.encodingsDone);
 		cmbROIs.setEnabled(this.encodingsDone);
 		bnRect.setEnabled(this.encodingsDone);
 		bnPoints.setEnabled(this.encodingsDone);

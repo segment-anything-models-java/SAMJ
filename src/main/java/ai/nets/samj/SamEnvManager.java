@@ -84,7 +84,8 @@ public class SamEnvManager {
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
 	 */
-	final public static List<String> INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", "scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly"});
+	final public static List<String> INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
+			"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly", "mkl=2024.0.0"});
 	/**
 	 * Dependencies that have to be installed using Mamba or Conda in environments that are going
 	 * to be used to run EfficientViTSAM

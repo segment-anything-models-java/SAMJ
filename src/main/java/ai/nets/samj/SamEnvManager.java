@@ -76,6 +76,7 @@ public class SamEnvManager {
 	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
 	 * General for every supported model.
 	 */
+	// TODO update final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.0.1", "torchvision=0.15.2", "skimage", "mkl=2024.0.0"});
 	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch", "torchvision", "skimage"});
 	/**
 	 * Dependencies to be checked to make sure that an environment can run an EfficientViTSAM model

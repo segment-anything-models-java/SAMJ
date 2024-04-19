@@ -32,7 +32,10 @@ import net.imglib2.util.Cast;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
+import java.awt.Polygon;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Class that contains methods that can be sued by SAMJ models
@@ -269,5 +272,24 @@ public class AbstractSamJ {
 		posWrtBbox[2] = boundingBox[2] + (long) Math.floor(newSize[0] / 2);
 		posWrtBbox[3] = boundingBox[3] + (long) Math.floor(newSize[1] / 2);
 		return posWrtBbox;
+	}
+	
+	/**
+	 * Method that recalculates the coordinates of the polygons outputed by SAMJ.
+	 * 
+	 * This method is usually for big images. In order to create encoding with enough resolution
+	 * to detect small objects compared to the size of the whole image, SAMJ might encode crops of
+	 * the total image, thus the coordinates of the polygons obtained need to be shifted in order
+	 * to match the original image.
+	 * @param polys
+	 * 	polys obtained by SAMJ on the encoded crop
+	 * @param encodeCoords
+	 * 	position of the crop in the total image
+	 */
+	protected void recalculatePolys(List<Polygon> polys, long[] encodeCoords) {
+		polys.stream().forEach(pp -> {
+			pp.xpoints = Arrays.stream(pp.xpoints).map(x -> x + (int) encodeCoords[0]).toArray();
+			pp.ypoints = Arrays.stream(pp.ypoints).map(y -> y + (int) encodeCoords[0]).toArray();
+		});
 	}
 }

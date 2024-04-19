@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import java.awt.Polygon;
 import java.io.File;
 import java.io.IOException;
@@ -33,17 +34,19 @@ import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
-
+import io.bioimage.modelrunner.numpy.DecodeNumpy;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.loops.LoopBuilder;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
+import net.imglib2.util.Util;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -81,7 +84,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * Usually the vertex is at 0,0 and the encoded image is all the pixels. This feature is useful for when the image 
 	 * is big and reeconding needs to happen while the user pans and zooms in the image.
 	 */
-	private long[] encodeCoords = new long[] {0, 0, 0};
+	private long[] encodeCoords;
 	/**
 	 * Scale factor of x and y applied to the image that is going to be annotated. 
 	 * The image of interest does not need to be encoded normally. However, it is optimal to scale big images
@@ -620,13 +623,15 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		int[] adaptedBoundingBox = boundingBox;
+		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
+				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
 		if (needsMoreResolution(boundingBox)) {
-			long[] cropPosWrtBbox = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			this.encodeCoords = new long[] {boundingBox[0] + cropPosWrtBbox[0], boundingBox[1] + cropPosWrtBbox[1],
-											boundingBox[2] + cropPosWrtBbox[2], boundingBox[3] + cropPosWrtBbox[3]};
-			adaptedBoundingBox = new int[] {(int) -cropPosWrtBbox[0], (int) -cropPosWrtBbox[1],
-											(int) (boundingBox[2] + cropPosWrtBbox[2]), (int) (boundingBox[3] + cropPosWrtBbox[3])};
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop();
+		} else if (!isAreaEncoded(boundingBox)) {
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
+											(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};
 			reencodeCrop();
 		}
 		this.script = "";
@@ -638,6 +643,23 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
 		return polys;
+	}
+	
+	/**
+	 * Check whether the bounding box is inside the area that is encoded or not
+	 * @param boundingBox
+	 * 	the vertices of the bounding box
+	 * @return whether the bounding box is within the encoded area or not
+	 */
+	public boolean isAreaEncoded(int[] boundingBox) {
+		boolean upperLeftVertex = (boundingBox[0] > this.encodeCoords[0]) && (boundingBox[0] < this.encodeCoords[2]);
+		boolean upperRightVertex = (boundingBox[2] > this.encodeCoords[0]) && (boundingBox[2] < this.encodeCoords[2]);
+		boolean downLeftVertex = (boundingBox[1] > this.encodeCoords[1]) && (boundingBox[1] < this.encodeCoords[3]);
+		boolean downRightVertex = (boundingBox[3] > this.encodeCoords[1]) && (boundingBox[3] < this.encodeCoords[3]);
+		
+		if (upperLeftVertex && upperRightVertex && downLeftVertex && downRightVertex)
+			return true;
+		return false;
 	}
 
 	/**
@@ -711,11 +733,15 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	
 	private <T extends RealType<T> & NativeType<T>> 
 	void sendCropAsNp() {
-		long[] intervalSize = new long[] {encodeCoords[3] - encodeCoords[1], encodeCoords[2] - encodeCoords[0], img.dimensionsAsLongArray()[2]};
-		RandomAccessibleInterval<T> crop = Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, intervalSize );
+		long[] intervalMax = new long[] {encodeCoords[3] - encodeCoords[1], encodeCoords[2] - encodeCoords[0], 3};
+		RandomAccessibleInterval<T> crop = 
+				Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, intervalMax );
 		
-		shma = createEfficientSAMInputSHM(reescaleIfNeeded(crop));
-		adaptImageToModel(crop, shma.getSharedRAI());
+		crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, intervalMax);
+		targetDims = crop.dimensionsAsLongArray();
+		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {targetDims[0], targetDims[1], targetDims[2]}, 
+															Util.getTypeFromInterval(crop));
+		RealTypeConverters.copyFromTo(crop, shma.getSharedRAI());
 		String code = "";
 		// This line wants to recreate the original numpy array. Should look like:
 		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
@@ -732,6 +758,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		code += "])" + System.lineSeparator();
 		code += "input_h = im.shape[0]" + System.lineSeparator();
 		code += "input_w = im.shape[1]" + System.lineSeparator();
+		code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
 		code += "globals()['input_h'] = input_h" + System.lineSeparator();
 		code += "globals()['input_w'] = input_w" + System.lineSeparator();
 		code += "im = torch.from_numpy(np.transpose(im.astype('float32'), (2, 0, 1)))" + System.lineSeparator();
@@ -834,6 +861,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
 					+ "The image dimensions order should be 'yxc', first dimension height, second width and third channels.");
 		}
+		this.img = targetImg;
 		this.targetDims = targetImg.dimensionsAsLongArray();
 	}
 	

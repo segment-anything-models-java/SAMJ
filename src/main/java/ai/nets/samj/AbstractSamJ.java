@@ -46,6 +46,8 @@ public class AbstractSamJ {
 	
 	protected static int LOWER_REENCODE_THRESH = 50;
 	
+	protected static int OPTIMAL_BBOX_IM_RATIO = 10;
+	
 	protected static double UPPER_REENCODE_THRESH = 1.1;
 	
 	protected static long MAX_ENCODED_IMAGE_SIZE = 2048;
@@ -257,20 +259,20 @@ public class AbstractSamJ {
 	protected long[] calculateEncodingNewCoords(int[] boundingBox, long[] imageSize) {
 		long xSize = boundingBox[2] - boundingBox[0]; 
 		long ySize = boundingBox[3] - boundingBox[1];
-		long smallerSize = ySize < xSize ? ySize * LOWER_REENCODE_THRESH : xSize * LOWER_REENCODE_THRESH;
+		long smallerSize = ySize < xSize ? ySize * OPTIMAL_BBOX_IM_RATIO : xSize * OPTIMAL_BBOX_IM_RATIO;
 		long biggerSize = smallerSize * 3;
 		if ((ySize < xSize) && (ySize * 3 > xSize)) {
-			biggerSize = xSize * 3;
+			biggerSize = xSize * OPTIMAL_BBOX_IM_RATIO;
 		} else if ((ySize > xSize) && (xSize * 3 > ySize)) {
-			biggerSize = ySize * 3;
+			biggerSize = ySize * OPTIMAL_BBOX_IM_RATIO;
 		}
 		long[] newSize = new long[] {biggerSize, smallerSize};
 		if (ySize > xSize) newSize = new long[] {smallerSize, biggerSize};
 		long[] posWrtBbox = new long[4];
-		posWrtBbox[0] = boundingBox[0] - (long) Math.ceil(newSize[0] / 2);
-		posWrtBbox[1] = boundingBox[1] - (long) Math.ceil(newSize[1] / 2);
-		posWrtBbox[2] = boundingBox[2] + (long) Math.floor(newSize[0] / 2);
-		posWrtBbox[3] = boundingBox[3] + (long) Math.floor(newSize[1] / 2);
+		posWrtBbox[0] = (long) Math.ceil((boundingBox[0]  + xSize / 2) - newSize[0] / 2);
+		posWrtBbox[1] = (long) Math.ceil((boundingBox[1] + ySize / 2) - newSize[1] / 2);
+		posWrtBbox[2] = (long) Math.floor((boundingBox[2] + xSize / 2) + newSize[0] / 2);
+		posWrtBbox[3] = (long) Math.floor((boundingBox[3] + ySize / 2) + newSize[1] / 2);
 		return posWrtBbox;
 	}
 	
@@ -289,7 +291,7 @@ public class AbstractSamJ {
 	protected void recalculatePolys(List<Polygon> polys, long[] encodeCoords) {
 		polys.stream().forEach(pp -> {
 			pp.xpoints = Arrays.stream(pp.xpoints).map(x -> x + (int) encodeCoords[0]).toArray();
-			pp.ypoints = Arrays.stream(pp.ypoints).map(y -> y + (int) encodeCoords[0]).toArray();
+			pp.ypoints = Arrays.stream(pp.ypoints).map(y -> y + (int) encodeCoords[1]).toArray();
 		});
 	}
 }

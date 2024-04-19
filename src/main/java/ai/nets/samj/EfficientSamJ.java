@@ -623,17 +623,15 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
-				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
 		if (needsMoreResolution(boundingBox)) {
 			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
 			reencodeCrop();
 		} else if (!isAreaEncoded(boundingBox)) {
 			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
-											(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};
 			reencodeCrop();
 		}
+		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
+				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
 		this.script = "";
 		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();

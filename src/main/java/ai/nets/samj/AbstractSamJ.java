@@ -269,10 +269,10 @@ public class AbstractSamJ {
 		long[] newSize = new long[] {biggerSize, smallerSize};
 		if (ySize > xSize) newSize = new long[] {smallerSize, biggerSize};
 		long[] posWrtBbox = new long[4];
-		posWrtBbox[0] = (long) Math.ceil((boundingBox[0]  + xSize / 2) - newSize[0] / 2);
-		posWrtBbox[1] = (long) Math.ceil((boundingBox[1] + ySize / 2) - newSize[1] / 2);
-		posWrtBbox[2] = (long) Math.floor((boundingBox[2] + xSize / 2) + newSize[0] / 2);
-		posWrtBbox[3] = (long) Math.floor((boundingBox[3] + ySize / 2) + newSize[1] / 2);
+		posWrtBbox[0] = (long) Math.max(0, Math.ceil((boundingBox[0] + xSize / 2) - newSize[0] / 2));
+		posWrtBbox[1] = (long) Math.max(0, Math.ceil((boundingBox[1] + ySize / 2) - newSize[1] / 2));
+		posWrtBbox[2] = (long) Math.min(imageSize[1], Math.floor((boundingBox[2] + xSize / 2) + newSize[0] / 2));
+		posWrtBbox[3] = (long) Math.min(imageSize[0], Math.floor((boundingBox[3] + ySize / 2) + newSize[1] / 2));
 		return posWrtBbox;
 	}
 	

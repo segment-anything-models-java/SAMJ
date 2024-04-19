@@ -274,6 +274,9 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	private <T extends RealType<T> & NativeType<T>>
 	void addImage(RandomAccessibleInterval<T> rai) 
 			throws IOException, RuntimeException, InterruptedException{
+		if (rai.dimensionsAsLongArray()[0] * rai.dimensionsAsLongArray()[1] > MAX_ENCODED_IMAGE_SIZE * MAX_ENCODED_IMAGE_SIZE) {
+			this.targetDims = new long[] {0, 0, 0};
+		}
 		this.script = "";
 		sendImgLib2AsNp(rai);
 		this.script += ""
@@ -682,6 +685,11 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		return false;
 	}
 	
+	/**
+	 * TODO what to do, is there a bounding box that is too big with respect to the encoded crop?
+	 * @param boundingBox
+	 * @return
+	 */
 	public boolean boundingBoxTooBig(int[] boundingBox) {
 		long xSize = boundingBox[2] - boundingBox[0];
 		long ySize = boundingBox[3] - boundingBox[1];

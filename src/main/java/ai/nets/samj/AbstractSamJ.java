@@ -40,6 +40,12 @@ import java.time.LocalDateTime;
  * @author Carlos Garcia
  */
 public class AbstractSamJ {
+	
+	protected static int LOWER_REENCODE_THRESH = 50;
+	
+	protected static double UPPER_REENCODE_THRESH = 1.1;
+	
+	protected static long MAX_ENCODED_IMAGE_SIZE = 2048;
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface DebugTextPrinter { void printText(String text); }
@@ -214,5 +220,54 @@ public class AbstractSamJ {
 		debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ RGB, returning Converted view");
 		getMinMaxPixelValue(Views.iterable(inImg), minMax);
 		return convertViewToRGB(inImg, minMax);
+	}
+	
+	protected static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> 
+	reescaleIfNeeded(RandomAccessibleInterval<T> rai) {
+		if ((rai.dimensionsAsLongArray()[0] > rai.dimensionsAsLongArray()[1])
+				&& (rai.dimensionsAsLongArray()[0] > MAX_ENCODED_IMAGE_SIZE)) {
+			// TODO reescale
+			return rai;
+		} else if ((rai.dimensionsAsLongArray()[0] < rai.dimensionsAsLongArray()[1])
+				&& (rai.dimensionsAsLongArray()[1] > MAX_ENCODED_IMAGE_SIZE)) {
+			// TODO reescale
+			return rai;
+		} else {
+			return rai;
+		}
+	}
+	
+	/**
+	 * Calculate the coordinates of the encoded image with respect to the coordinates
+	 * of the bounding box that contain the area that we need to crop and encode for SAM to have
+	 * the needed resolution to sement properly the object of interest.
+	 * 
+	 * This will only be used on big images.
+	 * 
+	 * @param boundingBox
+	 * 	coordinates of the bounding box
+	 * @param imageSize
+	 * 	total size of the image that wants to be annotated
+	 * @return the distance in each direction with respect to the coordinates of the bounding box that
+	 * 	indicate the crop that needs to be encoded
+	 */
+	protected long[] calculateEncodingNewCoords(int[] boundingBox, long[] imageSize) {
+		long xSize = boundingBox[2] - boundingBox[0]; 
+		long ySize = boundingBox[3] - boundingBox[1];
+		long smallerSize = ySize < xSize ? ySize * LOWER_REENCODE_THRESH : xSize * LOWER_REENCODE_THRESH;
+		long biggerSize = smallerSize * 3;
+		if ((ySize < xSize) && (ySize * 3 > xSize)) {
+			biggerSize = xSize * 3;
+		} else if ((ySize > xSize) && (xSize * 3 > ySize)) {
+			biggerSize = ySize * 3;
+		}
+		long[] newSize = new long[] {biggerSize, smallerSize};
+		if (ySize > xSize) newSize = new long[] {smallerSize, biggerSize};
+		long[] posWrtBbox = new long[4];
+		posWrtBbox[0] = boundingBox[0] - (long) Math.ceil(newSize[0] / 2);
+		posWrtBbox[1] = boundingBox[1] - (long) Math.ceil(newSize[1] / 2);
+		posWrtBbox[2] = boundingBox[2] + (long) Math.floor(newSize[0] / 2);
+		posWrtBbox[3] = boundingBox[3] + (long) Math.floor(newSize[1] / 2);
+		return posWrtBbox;
 	}
 }

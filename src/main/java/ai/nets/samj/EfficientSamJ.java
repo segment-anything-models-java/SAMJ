@@ -75,6 +75,25 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	private long[] targetDims;
 	/**
+	 * Coordinates of the vertex of the crop/zoom of hte image of interest that has been encoded.
+	 * It is the closest vertex to the origin.
+	 * Usually the vertex is at 0,0 and the encoded image is all the pixels. This feature is useful for when the image 
+	 * is big and reeconding needs to happen while the user pans and zooms in the image.
+	 */
+	private long[] encodeCoords;
+	/**
+	 * Scale factor of x and y applied to the image that is going to be annotated. 
+	 * The image of interest does not need to be encoded normally. However, it is optimal to scale big images
+	 * as the resolution of the segmentation depends on the ratio between the size of the image and the size of
+	 * the object, thus 
+	 */
+	private double[] scale;
+	/**
+	 * Complete image being annotated. Usually this image is encoded completely 
+	 * but for larger images, zooms of it might be encoded instead of the whole image
+	 */
+	private RandomAccessibleInterval<?> img;
+	/**
 	 * All the Python imports and configurations needed to start using EfficientSAM.
 	 */
 	public static final String IMPORTS = ""
@@ -102,8 +121,6 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * paths and names
 	 */
 	private String IMPORTS_FORMATED;
-	
-	private static int REENCODE_THRESH = 50;
 
 	/**
 	 * Create an instance of the class to be able to run EfficientSAM in Java.
@@ -188,6 +205,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager, debugPrinter, printPythonCode);
+			sam.encodeCoords = new long[] {0, 0};
 			sam.addImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
@@ -220,6 +238,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		try{
 			sam = new EfficientSamJ(manager);
 			sam.addImage(image);
+			sam.img = image;
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -240,6 +259,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	public <T extends RealType<T> & NativeType<T>>
 	void updateImage(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
 		addImage(rai);
+		this.img = rai;
 	}
 	
 	/**
@@ -576,7 +596,11 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		needsMoreResolution(boundingBox);
+		if (needsMoreResolution(boundingBox)) {
+			long[] cropPosWrtBbox = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop(cropPosWrtBbox);
+		}
+		boundingBox = recalculateBbox(boundingBox);
 		this.script = "";
 		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
@@ -604,12 +628,18 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		long ySize = boundingBox[3] - boundingBox[1];
 		long encodedX = targetDims[1];
 		long encodedY = targetDims[0];
-		if (xSize * REENCODE_THRESH < encodedX && ySize * REENCODE_THRESH < encodedY)
+		if (xSize * LOWER_REENCODE_THRESH < encodedX && ySize * LOWER_REENCODE_THRESH < encodedY)
 			return true;
 		return false;
 	}
 	
-	public boolean checkBoundingBox() {
+	public boolean boundingBoxTooBig(int[] boundingBox) {
+		long xSize = boundingBox[2] - boundingBox[0];
+		long ySize = boundingBox[3] - boundingBox[1];
+		long encodedX = targetDims[1];
+		long encodedY = targetDims[0];
+		if (xSize * UPPER_REENCODE_THRESH > encodedX && ySize * UPPER_REENCODE_THRESH > encodedY)
+			return true;
 		return false;
 	}
 
@@ -624,7 +654,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	
 	private <T extends RealType<T> & NativeType<T>> 
 	void sendImgLib2AsNp(RandomAccessibleInterval<T> targetImg) {
-		shma = createEfficientSAMInputSHM(targetImg);
+		shma = createEfficientSAMInputSHM(reescaleIfNeeded(targetImg));
 		adaptImageToModel(targetImg, shma.getSharedRAI());
 		String code = "";
 		// This line wants to recreate the original numpy array. Should look like:

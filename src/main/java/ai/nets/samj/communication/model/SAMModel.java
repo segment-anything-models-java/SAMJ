@@ -20,6 +20,7 @@
 package ai.nets.samj.communication.model;
 
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
 
@@ -97,6 +98,22 @@ public interface SAMModel {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	List<Polygon> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) throws IOException, RuntimeException, InterruptedException;
+
+	/**
+	 * Get a 2D segmentation/annotation using two lists of points as the prompts. 
+	 * @param listOfPoints2D
+	 * 	List of points that make reference to the instance of interest
+	 * @param listOfNegPoints2D
+	 * 	list of points that makes reference to something that is not the instance of interest. This
+	 * 	points make reference to the background
+	 * @param zoomedRectangle
+	 * 	rectangle that specifies the area that is being zoomed in.It will be the area encoded.
+	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	List<Polygon> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D, Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using a bounding box as the prompt. 

@@ -27,6 +27,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -155,6 +156,22 @@ public class EfficientViTSAMXL1 implements SAMModel {
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			if (negList.size() == 0) return efficientSamJ.processPoints(list, !onlyBiggest);
 			else return efficientSamJ.processPoints(list, negList, !onlyBiggest);
+		} catch (IOException | RuntimeException | InterruptedException e) {
+			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
+			throw e;
+		}
+	}
+
+	@Override
+	public List<Polygon> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D,
+			Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException {
+		try {
+			List<int[]> list = listOfPoints2D.stream()
+					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
+			List<int[]> negList = listOfNegPoints2D.stream()
+					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
+			if (negList.size() == 0) return efficientSamJ.processPoints(list, zoomedRectangle, !onlyBiggest);
+			else return efficientSamJ.processPoints(list, negList, zoomedRectangle, !onlyBiggest);
 		} catch (IOException | RuntimeException | InterruptedException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;

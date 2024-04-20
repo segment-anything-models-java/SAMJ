@@ -305,6 +305,10 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 	
 	private void reencodeCrop() throws IOException, InterruptedException, RuntimeException {
+		reencodeCrop(null);
+	}
+	
+	private void reencodeCrop(long[] cropSize) throws IOException, InterruptedException, RuntimeException {
 		this.script = "";
 		sendCropAsNp();
 		this.script += ""
@@ -536,12 +540,12 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		return processPoints(pointsList, rect, returnAll);
 	}
 
-	public List<Polygon> processPoints(List<int[]> pointsList, Rectangle zoomedArea, boolean returnAll)
+	public List<Polygon> processPoints(List<int[]> pointsList, Rectangle encodingArea, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		Objects.requireNonNull(zoomedArea, "Second argument cannot be null. Use the method "
+		Objects.requireNonNull(encodingArea, "Second argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
-		return processPoints(pointsList, new ArrayList<int[]>(), zoomedArea, returnAll);
+		return processPoints(pointsList, new ArrayList<int[]>(), encodingArea, returnAll);
 	}
 	
 	/**
@@ -563,11 +567,21 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
-			Rectangle zoomedArea, boolean returnAll)
+			Rectangle encodingArea, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		Objects.requireNonNull(zoomedArea, "Third argument cannot be null. Use the method "
+		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
+
+		if (encodingArea.x == -1) {
+			encodingArea = getCurrentlyEncodedArea();
+		} else {
+			ArrayList<int[]> outsideP = getPointsNotInRect(pointsList, pointsNegList, encodingArea);
+			if (outsideP.size() != 0)
+				throw new IllegalArgumentException("The Rectangle containing the area to be encoded should "
+					+ "contain all the points. Point {x=" + outsideP.get(0)[0] + ", y=" + outsideP.get(0)[1] + "} is out of the region.");
+		}
+		evaluateReencodingNeeded(pointsList, pointsNegList, encodingArea);
 		this.script = "";
 		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
@@ -575,8 +589,133 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		inputs.put("input_neg_points", pointsNegList);
 		printScript(script, "Points and negative points inference");
 		List<Polygon> polys = processAndRetrieveContours(inputs);
+		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
 		return polys;
+	}
+	
+	private ArrayList<int[]> getPointsNotInRect(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle encodingArea) {
+		ArrayList<int[]> points = new ArrayList<int[]>();
+		ArrayList<int[]> not = new ArrayList<int[]>();
+		points.addAll(pointsNegList);
+		points.addAll(pointsList);
+		for (int[] pp : points) {
+			if (!encodingArea.contains(pp[0], pp[1]))
+				not.add(pp);
+		}
+		return not;
+	}
+	
+	public Rectangle getCurrentlyEncodedArea() {
+		int xMargin = (int) (targetDims[1] * 0.1);
+		int yMargin = (int) (targetDims[0] * 0.1);
+		Rectangle alreadyEncoded;
+		if (encodeCoords[0] != 0 || encodeCoords[1] != 0 || targetDims[1] != this.img.dimensionsAsLongArray()[1]) {
+			alreadyEncoded = new Rectangle((int) encodeCoords[0] + xMargin / 2, (int) encodeCoords[1] + yMargin / 2, 
+					(int) targetDims[1] - xMargin, (int) targetDims[0] - yMargin);
+		} else {
+			alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 
+					(int) targetDims[1], (int) targetDims[0]);
+		}
+		return alreadyEncoded;
+	}
+	
+	/**
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * @param pointsList
+	 * @param pointsNegList
+	 * @param rect
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws RuntimeException
+	 */
+	private void evaluateReencodingNeeded(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle rect) 
+			throws IOException, InterruptedException, RuntimeException {
+		Rectangle alreadyEncoded = getCurrentlyEncodedArea();
+		Rectangle neededArea = getApproximateAreaNeeded(pointsList, pointsNegList, rect);
+		ArrayList<int[]> notInRect = getPointsNotInRect(pointsList, pointsNegList, rect);
+		if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
+				&& alreadyEncoded.width <= rect.width && alreadyEncoded.height <= rect.width 
+				&& alreadyEncoded.width * 0.9 < rect.width && alreadyEncoded.height * 0.9 < rect.height
+				&& notInRect.size() == 0) {
+			return;
+		} else if (notInRect.size() != 0) {
+			this.encodeCoords = new long[] {rect.x, rect.y};
+			this.reencodeCrop(new long[] {rect.width, rect.height});
+		} else if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
+				&& alreadyEncoded.width <= rect.width && alreadyEncoded.height <= rect.width 
+				&& (alreadyEncoded.width * 0.9 > rect.width || alreadyEncoded.height * 0.9 > rect.height)) {
+			this.encodeCoords = new long[] {rect.x, rect.y};
+			this.reencodeCrop(new long[] {rect.width, rect.height});
+		} else if (alreadyEncoded.x <= neededArea.x && alreadyEncoded.y <= neededArea.y 
+				&& alreadyEncoded.width <= neededArea.width && alreadyEncoded.height <= neededArea.width 
+				&& alreadyEncoded.width * 0.9 < neededArea.width && alreadyEncoded.height * 0.9 < neededArea.height
+				&& notInRect.size() == 0) {
+			return;
+		} else {
+			this.encodeCoords = new long[] {rect.x, rect.y};
+			this.reencodeCrop(new long[] {rect.width, rect.height});
+		}
+	}
+	
+	private Rectangle getApproximateAreaNeeded(List<int[]> pointsList, List<int[]> pointsNegList) {
+		ArrayList<int[]> points = new ArrayList<int[]>();
+		points.addAll(pointsNegList);
+		points.addAll(pointsList);
+		int minY = Integer.MAX_VALUE;
+		int minX = Integer.MAX_VALUE;
+		int maxY = 0;
+		int maxX = 0;
+		for (int[] pp : points) {
+			if (pp[0] < minX)
+				minX = pp[0];
+			if (pp[0] > maxX)
+				maxX = pp[0];
+			if (pp[1] < minY)
+				minY = pp[1];
+			if (pp[1] > maxY)
+				maxY = pp[1];
+		}
+		minX = (int) Math.max(0,  minX - Math.max((maxX - minX) * 0.1, ENCODE_MARGIN));
+		minY = (int) Math.max(0,  minY - Math.max((maxY - minY) * 0.1, ENCODE_MARGIN));
+		Rectangle rect = new Rectangle();
+		rect.x = minX;
+		rect.y = minY;
+		rect.width = maxX - minY;
+		rect.height = maxY - minY;
+		return rect;
+	}
+	
+	private Rectangle getApproximateAreaNeeded(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle focusedArea) {
+		ArrayList<int[]> points = new ArrayList<int[]>();
+		points.addAll(pointsNegList);
+		points.addAll(pointsList);
+		int minY = Integer.MAX_VALUE;
+		int minX = Integer.MAX_VALUE;
+		int maxY = 0;
+		int maxX = 0;
+		for (int[] pp : points) {
+			if (pp[0] < minX)
+				minX = pp[0];
+			if (pp[0] > maxX)
+				maxX = pp[0];
+			if (pp[1] < minY)
+				minY = pp[1];
+			if (pp[1] > maxY)
+				maxY = pp[1];
+		}
+		minX = (int) Math.max(0,  minX - Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
+		minY = (int) Math.max(0,  minY - Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
+		Rectangle rect = new Rectangle();
+		rect.x = minX;
+		rect.y = minY;
+		rect.width = maxX - minY;
+		rect.height = maxY - minY;
+		return rect;
 	}
 	
 	/**
@@ -697,47 +836,6 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 	
 	/**
-	 * Method used that runs EfficientSAM using a bounding box as the prompt. The bounding box should
-	 * be a int array of length 4 of the form [x0, y0, x1, y1].
-	 * This method runs the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * 
-	 * @param boundingBox
-	 * 	the bounding box that serves as the prompt for EfficientSAM
-	 * @param encodingArea
-	 * 	rectangle that will be used to reencode the image. If this rectangle does not overlap
-	 * 	with the previous encoded area or the area is at a different scale (256x256 vs 2048x2048), this rectange will
-	 * 	be used to reencode the image.
-	 * @param returnAll
-	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processBox(int[] boundingBox, Rectangle encodingArea, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
-		if (needsMoreResolution(boundingBox)) {
-			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			reencodeCrop();
-		} else if (!isAreaEncoded(boundingBox)) {
-			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			reencodeCrop();
-		}
-		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
-				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
-		this.script = "";
-		processBoxWithSAM(returnAll);
-		HashMap<String, Object> inputs = new HashMap<String, Object>();
-		inputs.put("input_box", adaptedBoundingBox);
-		printScript(script, "Rectangle inference");
-		List<Polygon> polys = processAndRetrieveContours(inputs);
-		recalculatePolys(polys, encodeCoords);
-		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
-		return polys;
-	}
-	
-	/**
 	 * Check whether the bounding box is inside the area that is encoded or not
 	 * @param boundingBox
 	 * 	the vertices of the bounding box
@@ -830,11 +928,18 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	
 	private <T extends RealType<T> & NativeType<T>> 
 	void sendCropAsNp() {
-		long[] intervalMax = new long[] {encodeCoords[3] - encodeCoords[1], encodeCoords[2] - encodeCoords[0], 3};
-		RandomAccessibleInterval<T> crop = 
-				Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, intervalMax );
+		sendCropAsNp(null);
+	}
 		
-		crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, intervalMax);
+		private <T extends RealType<T> & NativeType<T>> 
+		void sendCropAsNp(long[] cropSize) {
+		if (cropSize == null)
+			cropSize = new long[] {encodeCoords[3] - encodeCoords[1], encodeCoords[2] - encodeCoords[0], 3};
+		//RandomAccessibleInterval<T> crop = 
+			//	Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize );
+		
+		//RandomAccessibleInterval<T> crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize);
+		RandomAccessibleInterval<T> crop = Views.offsetInterval(Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize);
 		targetDims = crop.dimensionsAsLongArray();
 		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {targetDims[0], targetDims[1], targetDims[2]}, 
 															Util.getTypeFromInterval(crop));

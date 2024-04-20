@@ -50,7 +50,9 @@ public class AbstractSamJ {
 	
 	protected static double UPPER_REENCODE_THRESH = 1.1;
 	
-	protected static long MAX_ENCODED_IMAGE_SIZE = 2048;
+	public static long MAX_ENCODED_IMAGE_SIZE = 2048;
+	
+	protected static long ENCODE_MARGIN = 20;
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface DebugTextPrinter { void printText(String text); }

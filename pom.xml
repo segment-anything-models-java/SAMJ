@@ -153,11 +153,16 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
 		</dependency>
-		<!--<dependency>
+		<!-- 
+		<dependency>
 			<groupId>org.apposed</groupId>
 			<artifactId>appose</artifactId>
 			<version>0.1.1</version>
-		</dependency> -->
+		</dependency>
+		NOTE: dl-modelrunner @ 0.5.5 (which is what is used here)
+		copied-in the apposed project and thus the dependency
+		on apposed is not necessary here.
+		-->
 		<dependency>
 			<groupId>io.bioimage</groupId>
 			<artifactId>dl-modelrunner</artifactId>

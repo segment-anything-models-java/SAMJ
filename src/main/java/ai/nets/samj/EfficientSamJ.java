@@ -275,8 +275,10 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	private <T extends RealType<T> & NativeType<T>>
 	void addImage(RandomAccessibleInterval<T> rai) 
 			throws IOException, RuntimeException, InterruptedException{
-		if (rai.dimensionsAsLongArray()[0] * rai.dimensionsAsLongArray()[1] > MAX_ENCODED_IMAGE_SIZE * MAX_ENCODED_IMAGE_SIZE) {
+		if (rai.dimensionsAsLongArray()[0] * rai.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
+				|| rai.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || rai.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
 			this.targetDims = new long[] {0, 0, 0};
+			return;
 		}
 		this.script = "";
 		sendImgLib2AsNp(rai);

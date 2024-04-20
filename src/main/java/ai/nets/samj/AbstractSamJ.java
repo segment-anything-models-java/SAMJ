@@ -50,7 +50,9 @@ public class AbstractSamJ {
 	
 	protected static double UPPER_REENCODE_THRESH = 1.1;
 	
-	public static long MAX_ENCODED_IMAGE_SIZE = 2048;
+	public static long MAX_ENCODED_AREA_RS = 1024;
+	
+	public static long MAX_ENCODED_SIDE = MAX_ENCODED_AREA_RS * 3;
 	
 	protected static long ENCODE_MARGIN = 20;
 
@@ -232,11 +234,11 @@ public class AbstractSamJ {
 	protected static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> 
 	reescaleIfNeeded(RandomAccessibleInterval<T> rai) {
 		if ((rai.dimensionsAsLongArray()[0] > rai.dimensionsAsLongArray()[1])
-				&& (rai.dimensionsAsLongArray()[0] > MAX_ENCODED_IMAGE_SIZE)) {
+				&& (rai.dimensionsAsLongArray()[0] > MAX_ENCODED_AREA_RS)) {
 			// TODO reescale
 			return rai;
 		} else if ((rai.dimensionsAsLongArray()[0] < rai.dimensionsAsLongArray()[1])
-				&& (rai.dimensionsAsLongArray()[1] > MAX_ENCODED_IMAGE_SIZE)) {
+				&& (rai.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE)) {
 			// TODO reescale
 			return rai;
 		} else {

@@ -557,6 +557,11 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 			throws IOException, RuntimeException, InterruptedException{
 		return processPoints(pointsList, pointsNegList, true);
 	}
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
+			boolean returnAll, int[] zoomedAreaCoords)
+			throws IOException, RuntimeException, InterruptedException{
+		return null;
+	}
 	
 	/**
 	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
@@ -764,7 +769,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		code += "])" + System.lineSeparator();
 		code += "input_h = im.shape[0]" + System.lineSeparator();
 		code += "input_w = im.shape[1]" + System.lineSeparator();
-		code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
+		//code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
 		code += "globals()['input_h'] = input_h" + System.lineSeparator();
 		code += "globals()['input_w'] = input_w" + System.lineSeparator();
 		code += "im = torch.from_numpy(np.transpose(im.astype('float32'), (2, 0, 1)))" + System.lineSeparator();

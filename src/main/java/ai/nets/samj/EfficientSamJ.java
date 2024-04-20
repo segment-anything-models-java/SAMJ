@@ -25,8 +25,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Objects;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 
@@ -534,6 +535,23 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		printScript(script, "Points inference");
 		List<Polygon> polys = processAndRetrieveContours(inputs);
 		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
+		Rectangle rect = new Rectangle();
+		rect.x = (int) this.encodeCoords[0];
+		rect.y = (int) this.encodeCoords[1];
+		rect.height = (int) this.targetDims[0];
+		rect.width = (int) this.targetDims[1];
+		return processPoints(pointsList, rect, returnAll);
+	}
+
+	public List<Polygon> processPoints(List<int[]> pointsList, Rectangle zoomedArea, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException{
+		this.script = "";
+		processPointsWithSAM(pointsList.size(), 0, returnAll);
+		HashMap<String, Object> inputs = new HashMap<String, Object>();
+		inputs.put("input_points", pointsList);
+		printScript(script, "Points inference");
+		List<Polygon> polys = processAndRetrieveContours(inputs);
+		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	
@@ -554,13 +572,19 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList)
-			throws IOException, RuntimeException, InterruptedException{
-		return processPoints(pointsList, pointsNegList, true);
+			throws IOException, RuntimeException, InterruptedException {
+		Rectangle rect = new Rectangle();
+		rect.x = (int) this.encodeCoords[0];
+		rect.y = (int) this.encodeCoords[1];
+		rect.height = (int) this.targetDims[0];
+		rect.width = (int) this.targetDims[1];
+		return processPoints(pointsList, pointsNegList, rect, true);
 	}
+	
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
-			boolean returnAll, int[] zoomedAreaCoords)
-			throws IOException, RuntimeException, InterruptedException{
-		return null;
+			Rectangle zoomedArea)
+			throws IOException, RuntimeException, InterruptedException {
+		return processPoints(pointsList, pointsNegList, zoomedArea, true);
 	}
 	
 	/**
@@ -582,7 +606,39 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException{
+			throws IOException, RuntimeException, InterruptedException {
+		Rectangle rect = new Rectangle();
+		rect.x = (int) this.encodeCoords[0];
+		rect.y = (int) this.encodeCoords[1];
+		rect.height = (int) this.targetDims[0];
+		rect.width = (int) this.targetDims[1];
+		return processPoints(pointsList, pointsNegList, rect, returnAll);
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
+	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
+	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @param pointsNegList
+	 * 	the list of points that does not point to the instance of interest, but the background
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
+			Rectangle zoomedArea, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException {
+		Objects.requireNonNull(zoomedArea, "Third argument cannot be null. Use the method "
+				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
+				+ " instead");
 		this.script = "";
 		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
@@ -630,6 +686,47 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException {
+		if (needsMoreResolution(boundingBox)) {
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop();
+		} else if (!isAreaEncoded(boundingBox)) {
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop();
+		}
+		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
+				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
+		this.script = "";
+		processBoxWithSAM(returnAll);
+		HashMap<String, Object> inputs = new HashMap<String, Object>();
+		inputs.put("input_box", adaptedBoundingBox);
+		printScript(script, "Rectangle inference");
+		List<Polygon> polys = processAndRetrieveContours(inputs);
+		recalculatePolys(polys, encodeCoords);
+		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
+		return polys;
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a bounding box as the prompt. The bounding box should
+	 * be a int array of length 4 of the form [x0, y0, x1, y1].
+	 * This method runs the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * 
+	 * @param boundingBox
+	 * 	the bounding box that serves as the prompt for EfficientSAM
+	 * @param encodingArea
+	 * 	rectangle that will be used to reencode the image. If this rectangle does not overlap
+	 * 	with the previous encoded area or the area is at a different scale (256x256 vs 2048x2048), this rectange will
+	 * 	be used to reencode the image.
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processBox(int[] boundingBox, Rectangle encodingArea, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		if (needsMoreResolution(boundingBox)) {
 			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());

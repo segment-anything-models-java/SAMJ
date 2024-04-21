@@ -35,12 +35,10 @@ import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
-import io.bioimage.modelrunner.numpy.DecodeNumpy;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.loops.LoopBuilder;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -274,7 +272,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	private <T extends RealType<T> & NativeType<T>>
 	void addImage(RandomAccessibleInterval<T> rai) 
-			throws IOException, RuntimeException, InterruptedException{
+			throws IOException, RuntimeException, InterruptedException {
 		if (rai.dimensionsAsLongArray()[0] * rai.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
 				|| rai.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || rai.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
 			this.targetDims = new long[] {0, 0, 0};
@@ -933,8 +931,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		sendCropAsNp(null);
 	}
 		
-		private <T extends RealType<T> & NativeType<T>> 
-		void sendCropAsNp(long[] cropSize) {
+	private <T extends RealType<T> & NativeType<T>> void sendCropAsNp(long[] cropSize) {
 		if (cropSize == null)
 			cropSize = new long[] {encodeCoords[3] - encodeCoords[1], encodeCoords[2] - encodeCoords[0], 3};
 		//RandomAccessibleInterval<T> crop = 

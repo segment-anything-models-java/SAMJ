@@ -25,8 +25,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 
@@ -42,7 +44,9 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
+import net.imglib2.util.Util;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -75,6 +79,25 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 * converted into a 3-channel image that EfficientViTSAM requires
 	 */
 	private long[] targetDims;
+	/**
+	 * Coordinates of the vertex of the crop/zoom of hte image of interest that has been encoded.
+	 * It is the closest vertex to the origin.
+	 * Usually the vertex is at 0,0 and the encoded image is all the pixels. This feature is useful for when the image 
+	 * is big and reeconding needs to happen while the user pans and zooms in the image.
+	 */
+	private long[] encodeCoords;
+	/**
+	 * Scale factor of x and y applied to the image that is going to be annotated. 
+	 * The image of interest does not need to be encoded normally. However, it is optimal to scale big images
+	 * as the resolution of the segmentation depends on the ratio between the size of the image and the size of
+	 * the object, thus 
+	 */
+	private double[] scale;
+	/**
+	 * Complete image being annotated. Usually this image is encoded completely 
+	 * but for larger images, zooms of it might be encoded instead of the whole image
+	 */
+	private RandomAccessibleInterval<?> img;
 	/**
 	 * Map that associates the key for each of the existing EfficientViTSAM models to its complete name
 	 */
@@ -344,7 +367,12 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	private <T extends RealType<T> & NativeType<T>>
 	void addImage(RandomAccessibleInterval<T> rai) 
-			throws IOException, RuntimeException, InterruptedException{
+			throws IOException, RuntimeException, InterruptedException {
+		if (rai.dimensionsAsLongArray()[0] * rai.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
+				|| rai.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || rai.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
+			this.targetDims = new long[] {0, 0, 0};
+			return;
+		}
 		this.script = "";
 		sendImgLib2AsNp(rai);
 		this.script += ""
@@ -369,6 +397,38 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 			}
 			throw e;
 		}
+	}
+	
+	private void reencodeCrop() throws IOException, InterruptedException, RuntimeException {
+		reencodeCrop(null);
+	}
+	
+	private void reencodeCrop(long[] cropSize) throws IOException, InterruptedException, RuntimeException {
+		this.script = "";
+		sendCropAsNp();
+		this.script += ""
+				+ "task.update(str(im.shape))" + System.lineSeparator()
+				+ "aa = predictor.get_image_embeddings(im[None, ...])";
+		try {
+			printScript(script, "Creation of the cropped embeddings");
+			Task task = python.task(script);
+			task.waitFor();
+			if (task.status == TaskStatus.CANCELED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.FAILED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.CRASHED)
+				throw new RuntimeException();
+			this.shma.close();
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			try {
+				this.shma.close();
+			} catch (IOException e1) {
+				throw new IOException(e.toString() + System.lineSeparator() + e1.toString());
+			}
+			throw e;
+		}
+		
 	}
 	
 	private List<Polygon> processAndRetrieveContours(HashMap<String, Object> inputs) 
@@ -446,14 +506,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Polygon> processPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException{
-		this.script = "";
-		processPointsWithSAM(pointsList.size(), 0, returnAll);
-		HashMap<String, Object> inputs = new HashMap<String, Object>();
-		inputs.put("input_points", pointsList);
-		printScript(script, "Points inference");
-		List<Polygon> polys = processAndRetrieveContours(inputs);
-		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
-		return polys;
+		return processPoints(pointsList, new ArrayList<int[]>(), returnAll);
 	}
 	
 	/**
@@ -509,6 +562,147 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	}
 	
 	/**
+	 * Method used that runs EfficientViTSAM using a list of points as the prompt. This method also accepts another
+	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
+	 * the prompt encoder and the EfficientViTSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientViTSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientViTSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @param pointsNegList
+	 * 	the list of points that does not point to the instance of interest, but the background
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientViTSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
+					Rectangle encodingArea, boolean returnAll) 
+					throws IOException, RuntimeException, InterruptedException {
+		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
+				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
+				+ " instead");
+
+		if (encodingArea.x == -1) {
+			encodingArea = getCurrentlyEncodedArea();
+		} else {
+			ArrayList<int[]> outsideP = getPointsNotInRect(pointsList, pointsNegList, encodingArea);
+			if (outsideP.size() != 0)
+				throw new IllegalArgumentException("The Rectangle containing the area to be encoded should "
+					+ "contain all the points. Point {x=" + outsideP.get(0)[0] + ", y=" + outsideP.get(0)[1] + "} is out of the region.");
+		}
+		evaluateReencodingNeeded(pointsList, pointsNegList, encodingArea);
+		this.script = "";
+		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
+		HashMap<String, Object> inputs = new HashMap<String, Object>();
+		inputs.put("input_points", pointsList);
+		inputs.put("input_neg_points", pointsNegList);
+		printScript(script, "Points and negative points inference");
+		List<Polygon> polys = processAndRetrieveContours(inputs);
+		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
+		return polys;
+	}
+	
+	private ArrayList<int[]> getPointsNotInRect(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle encodingArea) {
+		ArrayList<int[]> points = new ArrayList<int[]>();
+		ArrayList<int[]> not = new ArrayList<int[]>();
+		points.addAll(pointsNegList);
+		points.addAll(pointsList);
+		for (int[] pp : points) {
+			if (!encodingArea.contains(pp[0], pp[1]))
+				not.add(pp);
+		}
+		return not;
+	}
+	
+	public Rectangle getCurrentlyEncodedArea() {
+		int xMargin = (int) (targetDims[1] * 0.1);
+		int yMargin = (int) (targetDims[0] * 0.1);
+		Rectangle alreadyEncoded;
+		if (encodeCoords[0] != 0 || encodeCoords[1] != 0 || targetDims[1] != this.img.dimensionsAsLongArray()[1]) {
+			alreadyEncoded = new Rectangle((int) encodeCoords[0] + xMargin / 2, (int) encodeCoords[1] + yMargin / 2, 
+					(int) targetDims[1] - xMargin, (int) targetDims[0] - yMargin);
+		} else {
+			alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 
+					(int) targetDims[1], (int) targetDims[0]);
+		}
+		return alreadyEncoded;
+	}
+	
+	/**
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * TODO Explain reencoding logic
+	 * @param pointsList
+	 * @param pointsNegList
+	 * @param rect
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws RuntimeException
+	 */
+	private void evaluateReencodingNeeded(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle rect) 
+			throws IOException, InterruptedException, RuntimeException {
+		Rectangle alreadyEncoded = getCurrentlyEncodedArea();
+		Rectangle neededArea = getApproximateAreaNeeded(pointsList, pointsNegList, rect);
+		ArrayList<int[]> notInRect = getPointsNotInRect(pointsList, pointsNegList, rect);
+		if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
+				&& alreadyEncoded.width <= rect.width && alreadyEncoded.height <= rect.width 
+				&& alreadyEncoded.width * 0.9 < rect.width && alreadyEncoded.height * 0.9 < rect.height
+				&& notInRect.size() == 0) {
+			return;
+		} else if (notInRect.size() != 0) {
+			this.encodeCoords = new long[] {rect.x, rect.y};
+			this.reencodeCrop(new long[] {rect.width, rect.height});
+		} else if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
+				&& alreadyEncoded.width <= rect.width && alreadyEncoded.height <= rect.width 
+				&& (alreadyEncoded.width * 0.9 > rect.width || alreadyEncoded.height * 0.9 > rect.height)) {
+			this.encodeCoords = new long[] {rect.x, rect.y};
+			this.reencodeCrop(new long[] {rect.width, rect.height});
+		} else if (alreadyEncoded.x <= neededArea.x && alreadyEncoded.y <= neededArea.y 
+				&& alreadyEncoded.width <= neededArea.width && alreadyEncoded.height <= neededArea.width 
+				&& alreadyEncoded.width * 0.9 < neededArea.width && alreadyEncoded.height * 0.9 < neededArea.height
+				&& notInRect.size() == 0) {
+			return;
+		} else {
+			this.encodeCoords = new long[] {rect.x, rect.y};
+			this.reencodeCrop(new long[] {rect.width, rect.height});
+		}
+	}
+	
+	private Rectangle getApproximateAreaNeeded(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle focusedArea) {
+		ArrayList<int[]> points = new ArrayList<int[]>();
+		points.addAll(pointsNegList);
+		points.addAll(pointsList);
+		int minY = Integer.MAX_VALUE;
+		int minX = Integer.MAX_VALUE;
+		int maxY = 0;
+		int maxX = 0;
+		for (int[] pp : points) {
+			if (pp[0] < minX)
+				minX = pp[0];
+			if (pp[0] > maxX)
+				maxX = pp[0];
+			if (pp[1] < minY)
+				minY = pp[1];
+			if (pp[1] > maxY)
+				maxY = pp[1];
+		}
+		minX = (int) Math.max(0,  minX - Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
+		minY = (int) Math.max(0,  minY - Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
+		Rectangle rect = new Rectangle();
+		rect.x = minX;
+		rect.y = minY;
+		rect.width = maxX - minY;
+		rect.height = maxY - minY;
+		return rect;
+	}
+	
+	/**
 	 * Method used that runs EfficientViTSAM using a bounding box as the prompt. The bounding box should
 	 * be a int array of length 4 of the form [x0, y0, x1, y1].
 	 * This method runs the prompt encoder and the EfficientViTSAM decoder only, the image encoder was run when the model
@@ -543,14 +737,78 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
+		if (needsMoreResolution(boundingBox)) {
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop();
+		} else if (!isAreaEncoded(boundingBox)) {
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop();
+		}
+		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
+				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
 		this.script = "";
 		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_box", boundingBox);
 		printScript(script, "Rectangle inference");
 		List<Polygon> polys = processAndRetrieveContours(inputs);
+		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
 		return polys;
+	}
+	
+	/**
+	 * Check whether the bounding box is inside the area that is encoded or not
+	 * @param boundingBox
+	 * 	the vertices of the bounding box
+	 * @return whether the bounding box is within the encoded area or not
+	 */
+	public boolean isAreaEncoded(int[] boundingBox) {
+		boolean upperLeftVertex = (boundingBox[0] > this.encodeCoords[0]) && (boundingBox[0] < this.encodeCoords[2]);
+		boolean upperRightVertex = (boundingBox[2] > this.encodeCoords[0]) && (boundingBox[2] < this.encodeCoords[2]);
+		boolean downLeftVertex = (boundingBox[1] > this.encodeCoords[1]) && (boundingBox[1] < this.encodeCoords[3]);
+		boolean downRightVertex = (boundingBox[3] > this.encodeCoords[1]) && (boundingBox[3] < this.encodeCoords[3]);
+		
+		if (upperLeftVertex && upperRightVertex && downLeftVertex && downRightVertex)
+			return true;
+		return false;
+	}
+
+	/**
+	 * For bounding box masks, check whether the its size is too small compared to the size
+	 * of the encoded image.
+	 * 
+	 * Approximately, if the original image encoded is about 20 times bigger than the bounding box size,
+	 * the resolution of the SAM-based model encodings will not be enough to identify the object of interest,
+	 * thus re-encoding of a zoomed part of the image will be necessary.
+	 * 
+	 * @param boundingBox
+	 * 	bounding box of interest
+	 * @return whether the bounding box of interest is big enough to produce good results or not
+	 */
+	public boolean needsMoreResolution(int[] boundingBox) {
+		long xSize = boundingBox[2] - boundingBox[0];
+		long ySize = boundingBox[3] - boundingBox[1];
+		long encodedX = targetDims[1];
+		long encodedY = targetDims[0];
+		if (xSize * LOWER_REENCODE_THRESH < encodedX && ySize * LOWER_REENCODE_THRESH < encodedY)
+			return true;
+		return false;
+	}
+	
+	/**
+	 * TODO what to do, is there a bounding box that is too big with respect to the encoded crop?
+	 * @param boundingBox
+	 * @return
+	 */
+	public boolean boundingBoxTooBig(int[] boundingBox) {
+		long xSize = boundingBox[2] - boundingBox[0];
+		long ySize = boundingBox[3] - boundingBox[1];
+		long encodedX = targetDims[1];
+		long encodedY = targetDims[0];
+		if (xSize * UPPER_REENCODE_THRESH > encodedX && ySize * UPPER_REENCODE_THRESH > encodedY)
+			return true;
+		return false;
 	}
 
 
@@ -582,6 +840,48 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 		code = code.substring(0, code.length() - 2);
 		code += "])" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();
+		code += "im_shm.unlink()" + System.lineSeparator();
+		//code += "box_shm.close()" + System.lineSeparator();
+		this.script += code;
+	}
+	
+	private <T extends RealType<T> & NativeType<T>> 
+	void sendCropAsNp() {
+		sendCropAsNp(null);
+	}
+		
+	private <T extends RealType<T> & NativeType<T>> void sendCropAsNp(long[] cropSize) {
+		if (cropSize == null)
+			cropSize = new long[] {encodeCoords[3] - encodeCoords[1], encodeCoords[2] - encodeCoords[0], 3};
+		//RandomAccessibleInterval<T> crop = 
+			//	Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize );
+		
+		//RandomAccessibleInterval<T> crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize);
+		RandomAccessibleInterval<T> crop = Views.offsetInterval(Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize);
+		targetDims = crop.dimensionsAsLongArray();
+		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {targetDims[0], targetDims[1], targetDims[2]}, 
+															Util.getTypeFromInterval(crop));
+		RealTypeConverters.copyFromTo(crop, shma.getSharedRAI());
+		String code = "";
+		// This line wants to recreate the original numpy array. Should look like:
+		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
+		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
+		code += "im_shm = shared_memory.SharedMemory(name='"
+							+ shma.getNameForPython() + "', size=" + shma.getSize() 
+							+ ")" + System.lineSeparator();
+		int size = 1;
+		for (long l : targetDims) {size *= l;}
+		code += "im = np.ndarray(" + size + ", dtype='float32', buffer=im_shm.buf).reshape([";
+		for (long ll : targetDims)
+			code += ll + ", ";
+		code = code.substring(0, code.length() - 2);
+		code += "])" + System.lineSeparator();
+		code += "input_h = im.shape[0]" + System.lineSeparator();
+		code += "input_w = im.shape[1]" + System.lineSeparator();
+		//code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
+		code += "globals()['input_h'] = input_h" + System.lineSeparator();
+		code += "globals()['input_w'] = input_w" + System.lineSeparator();
+		code += "im = torch.from_numpy(np.transpose(im.astype('float32'), (2, 0, 1)))" + System.lineSeparator();
 		code += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
 		this.script += code;

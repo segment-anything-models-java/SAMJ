@@ -497,6 +497,24 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 * @param pointsList
 	 * 	the list of points that serve as a prompt for EfficientViTSAM. Each point is an int array
 	 * 	of length 2, first position is x-axis, second y-axis
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientViTSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, Rectangle encodingArea)
+			throws IOException, RuntimeException, InterruptedException{
+		return processPoints(pointsList, encodingArea, true);
+	}
+	
+	/**
+	 * Method used that runs EfficientViTSAM using a list of points as the prompt. This method runs
+	 * the prompt encoder and the EfficientViTSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientViTSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientViTSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
 	 * @param returnAll
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientViTSAM
@@ -507,6 +525,24 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException{
 		return processPoints(pointsList, new ArrayList<int[]>(), returnAll);
+	}
+	
+	/**
+	 * Method used that runs EfficientViTSAM using a list of points as the prompt. This method runs
+	 * the prompt encoder and the EfficientViTSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientViTSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientViTSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientViTSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, Rectangle encodingArea, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException{
+		return processPoints(pointsList, new ArrayList<int[]>(), encodingArea, returnAll);
 	}
 	
 	/**
@@ -541,6 +577,27 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 * 	of length 2, first position is x-axis, second y-axis
 	 * @param pointsNegList
 	 * 	the list of points that does not point to the instance of interest, but the background
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientViTSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle encodingArea)
+			throws IOException, RuntimeException, InterruptedException {
+		return processPoints(pointsList, pointsNegList, encodingArea, true);
+	}
+	
+	/**
+	 * Method used that runs EfficientViTSAM using a list of points as the prompt. This method also accepts another
+	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
+	 * the prompt encoder and the EfficientViTSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientViTSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientViTSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @param pointsNegList
+	 * 	the list of points that does not point to the instance of interest, but the background
 	 * @param returnAll
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientViTSAM
@@ -550,15 +607,12 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		this.script = "";
-		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
-		HashMap<String, Object> inputs = new HashMap<String, Object>();
-		inputs.put("input_points", pointsList);
-		inputs.put("input_neg_points", pointsNegList);
-		printScript(script, "Points and negative points inference");
-		List<Polygon> polys = processAndRetrieveContours(inputs);
-		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
-		return polys;
+		Rectangle rect = new Rectangle();
+		rect.x = (int) this.encodeCoords[0];
+		rect.y = (int) this.encodeCoords[1];
+		rect.height = (int) this.targetDims[0];
+		rect.width = (int) this.targetDims[1];
+		return processPoints(pointsList, pointsNegList, rect, returnAll);
 	}
 	
 	/**
@@ -602,6 +656,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 		inputs.put("input_neg_points", pointsNegList);
 		printScript(script, "Points and negative points inference");
 		List<Polygon> polys = processAndRetrieveContours(inputs);
+		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
 		return polys;
 	}
@@ -749,7 +804,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 		this.script = "";
 		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
-		inputs.put("input_box", boundingBox);
+		inputs.put("input_box", adaptedBoundingBox);
 		printScript(script, "Rectangle inference");
 		List<Polygon> polys = processAndRetrieveContours(inputs);
 		recalculatePolys(polys, encodeCoords);

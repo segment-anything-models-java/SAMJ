@@ -235,6 +235,7 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager);
+			sam.encodeCoords = new long[] {0, 0};
 			sam.addImage(image);
 			sam.img = image;
 		} catch (IOException | RuntimeException | InterruptedException ex) {
@@ -533,10 +534,10 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException{
 		Rectangle rect = new Rectangle();
-		rect.x = (int) this.encodeCoords[0];
-		rect.y = (int) this.encodeCoords[1];
-		rect.height = (int) this.targetDims[0];
-		rect.width = (int) this.targetDims[1];
+		rect.x = -1;
+		rect.y = -1;
+		rect.height = -1;
+		rect.width = -1;
 		return processPoints(pointsList, rect, returnAll);
 	}
 

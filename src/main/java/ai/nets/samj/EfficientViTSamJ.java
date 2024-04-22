@@ -245,6 +245,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 		EfficientViTSamJ sam = null;
 		try{
 			sam = new EfficientViTSamJ(manager, modelType, debugPrinter, printPythonCode);
+			sam.encodeCoords = new long[] {0, 0};
 			sam.addImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
@@ -277,6 +278,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 		EfficientViTSamJ sam = null;
 		try{
 			sam = new EfficientViTSamJ(manager, modelType);
+			sam.encodeCoords = new long[] {0, 0};
 			sam.addImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
@@ -608,10 +610,10 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		Rectangle rect = new Rectangle();
-		rect.x = (int) this.encodeCoords[0];
-		rect.y = (int) this.encodeCoords[1];
-		rect.height = (int) this.targetDims[0];
-		rect.width = (int) this.targetDims[1];
+		rect.x = -1;
+		rect.y = -1;
+		rect.height = -1;
+		rect.width = -1;
 		return processPoints(pointsList, pointsNegList, rect, returnAll);
 	}
 	
@@ -1127,6 +1129,7 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
 					+ "The image dimensions order should be 'yxc', first dimension height, second width and third channels.");
 		}
+		this.img = targetImg;
 		this.targetDims = targetImg.dimensionsAsLongArray();
 	}
 	

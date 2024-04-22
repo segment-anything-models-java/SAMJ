@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.Channels;
@@ -43,6 +44,7 @@ import java.util.zip.ZipInputStream;
 import io.bioimage.modelrunner.bioimageio.download.DownloadModel;
 import io.bioimage.modelrunner.engine.installation.FileDownloader;
 import io.bioimage.modelrunner.system.PlatformDetection;
+import io.bioimage.modelrunner.utils.CommonUtils;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
@@ -518,6 +520,8 @@ public class SamEnvManager {
         		if (progress < 0 || progress > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: UNKNOWN%");
         		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: " + progress + "%");
         	}
+        	if (size != file.length())
+        		throw new IOException("Model EfficientViTSAM-" + modelType + " was not correctly downloaded");
         } catch (IOException ex) {
             thread.interrupt();
             passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EFFICIENTVITSAM WEIGHTS INSTALLATION");
@@ -1159,7 +1163,11 @@ public class SamEnvManager {
 		ReadableByteChannel rbc = null;
 		try {
 			URL website = new URL(downloadURL);
-			rbc = Channels.newChannel(website.openStream());
+	        HttpURLConnection conn = (HttpURLConnection) website.openConnection();
+	        conn.setRequestMethod("GET");
+	        conn.setRequestProperty("User-Agent", CommonUtils.getJDLLUserAgent());//"jdll/0.5.6 (Linux; Java 1.8.0_292)");
+	        rbc = Channels.newChannel(conn.getInputStream());
+			// TODO rbc = Channels.newChannel(website.openStream());
 			// Create the new model file as a zip
 			fos = new FileOutputStream(targetFile);
 			// Send the correct parameters to the progress screen

@@ -47,6 +47,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -232,7 +233,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	public SAMJDialog(final SAMModels availableModel, UtilityMethods consumerMethods,
 	                  final SAMJLogger guilogger,
 	                  final SAMJLogger networkLogger) {
-		// TODO super(new JFrame(), "SAMJ Annotator");
+		super();
 		if (guilogger == null || networkLogger == null) {
 			throw new RuntimeException("Cannot execute the SAMJ without any logger.");
 		}
@@ -317,8 +318,16 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 		// TODO decide what to do bnMask.addActionListener(this);
 		// TODO decide what to do bnMask.setDropTarget(new LocalDropTarget());
 		
-		add(pn);
+		add(pn); //TODO: why added again??
 		updateInterface();
+
+		final JFrame frame = new JFrame("SAMJ Annotator");
+		frame.setResizable(true);
+		frame.setVisible(true);
+		frame.add(this);
+		frame.pack();
+
+		//when dialog closes, should also close the network
 	}
 	
 	/**

@@ -58,6 +58,7 @@ import ai.nets.samj.gui.components.GridPanel;
 import ai.nets.samj.gui.icons.ButtonIcon;
 import ai.nets.samj.gui.icons.LoadingButton;
 import ai.nets.samj.gui.tools.Tools;
+import ai.nets.samj.ui.NoOutputSAMJLogger;
 import ai.nets.samj.ui.PromptsResultsDisplay;
 import ai.nets.samj.ui.PromptsResultsDisplay.SAMJException;
 import ai.nets.samj.ui.SAMJLogger;
@@ -193,7 +194,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 * 	interface implementing methods on the consumer software
 	 */
 	public SAMJDialog(final SAMModels availableModel, UtilityMethods consumerMethods) {
-		this(availableModel, consumerMethods, null, null);
+		this(availableModel, consumerMethods, new NoOutputSAMJLogger(), new NoOutputSAMJLogger());
 	}
 
 	/**
@@ -206,12 +207,12 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 * @param consumerMethods
 	 * 	interface implementing methods on the consumer software
 	 * @param guilogger
-	 * 	interface implemented on the consumer software to log the events on the GUI
+	 * 	interface implemented on the consumer software to log all kinds of events on the GUI
 	 */
 	public SAMJDialog(final SAMModels availableModel,
-						UtilityMethods consumerMethods,
-	                    final SAMJLogger guilogger) {
-		this(availableModel, consumerMethods, guilogger, null);
+	                  UtilityMethods consumerMethods,
+	                  final SAMJLogger guilogger) {
+		this(availableModel, consumerMethods, guilogger, guilogger);
 	}
 
 	/**
@@ -232,30 +233,12 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	                  final SAMJLogger guilogger,
 	                  final SAMJLogger networkLogger) {
 		// TODO super(new JFrame(), "SAMJ Annotator");
-		if (guilogger == null) {
-			this.GUIsOwnLog = new SAMJLogger () {
-				@Override
-				public void info(String text) {}
-				@Override
-				public void warn(String text) {}
-				@Override
-				public void error(String text) {}
-			};
-		} else {
-			this.GUIsOwnLog = guilogger;
+		if (guilogger == null || networkLogger == null) {
+			throw new RuntimeException("Cannot execute the SAMJ without any logger.");
 		}
-		if (networkLogger == null) {
-			this.logForNetworks = new SAMJLogger () {
-				@Override
-				public void info(String text) {}
-				@Override
-				public void warn(String text) {}
-				@Override
-				public void error(String text) {}
-			};
-		} else {
-			this.logForNetworks = networkLogger;
-		}
+
+		this.GUIsOwnLog = guilogger;
+		this.logForNetworks = networkLogger;
 		this.consumerMethods = consumerMethods;
 
 		panelModel = new SAMModelPanel(availableModel, (boolean bol) -> this.updateInterface(bol));

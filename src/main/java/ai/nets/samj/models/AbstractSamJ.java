@@ -284,29 +284,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		//RandomAccessibleInterval<T> crop = Views.offsetInterval(Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize);
 		targetDims = crop.dimensionsAsLongArray();
 		createSHMArray(crop);
-		String code = "";
-		// This line wants to recreate the original numpy array. Should look like:
-		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
-		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
-		code += "im_shm = shared_memory.SharedMemory(name='"
-							+ shma.getNameForPython() + "', size=" + shma.getSize() 
-							+ ")" + System.lineSeparator();
-		int size = 1;
-		for (long l : targetDims) {size *= l;}
-		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(crop) + "', buffer=im_shm.buf).reshape([";
-		for (long ll : targetDims)
-			code += ll + ", ";
-		code = code.substring(0, code.length() - 2);
-		code += "])" + System.lineSeparator();
-		code += "input_h = im.shape[1]" + System.lineSeparator();
-		code += "input_w = im.shape[0]" + System.lineSeparator();
-		//code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
-		code += "globals()['input_h'] = input_h" + System.lineSeparator();
-		code += "globals()['input_w'] = input_w" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
-		code += "im_shm.unlink()" + System.lineSeparator();
-		//code += "box_shm.close()" + System.lineSeparator();
-		this.script += code;
 	}
 	
 	private List<Polygon> processAndRetrieveContours(HashMap<String, Object> inputs) 

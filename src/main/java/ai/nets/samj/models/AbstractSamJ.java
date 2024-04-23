@@ -59,6 +59,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	public static long MAX_ENCODED_AREA_RS = 1024;
 	
+	public static long MIN_ENCODED_AREA_SIDE = 128;
+	
 	public static long MAX_ENCODED_SIDE = MAX_ENCODED_AREA_RS * 3;
 	
 	protected static long ENCODE_MARGIN = 20;
@@ -637,6 +639,14 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		int xMargin = (int) (targetDims[0] * 0.1);
 		int yMargin = (int) (targetDims[1] * 0.1);
 		Rectangle alreadyEncoded;
+		alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 
+				(int) targetDims[0], (int) targetDims[1]);
+		return alreadyEncoded;
+		/** 
+		 * TODO
+		 * TODO
+		 * TODO
+		 * TODO
 		if (encodeCoords[0] != 0 || encodeCoords[1] != 0 || targetDims[1] != this.img.dimensionsAsLongArray()[1]
 				 || targetDims[0] != this.img.dimensionsAsLongArray()[0]) {
 			alreadyEncoded = new Rectangle((int) encodeCoords[0] + xMargin / 2, (int) encodeCoords[1] + yMargin / 2, 
@@ -646,6 +656,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 					(int) targetDims[0], (int) targetDims[1]);
 		}
 		return alreadyEncoded;
+		*/
 	}
 	
 	/**
@@ -670,7 +681,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				&& alreadyEncoded.width + alreadyEncoded.x >= rect.width + rect.x 
 				&& alreadyEncoded.height + alreadyEncoded.y >= rect.height + rect.y
 				&& alreadyEncoded.width * 0.9 < rect.width && alreadyEncoded.height * 0.9 < rect.height
-				&& notInRect.size() == 0) {
+				&& notInRect.size() == 0 && alreadyEncoded.contains(neededArea)) {
 			return;
 		} else if (notInRect.size() != 0) {
 			this.encodeCoords = new long[] {rect.x, rect.y};
@@ -746,8 +757,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		Rectangle rect = new Rectangle();
 		rect.x = minX;
 		rect.y = minY;
-		rect.width = maxX - minX;
-		rect.height = maxY - minY;
+		rect.width = (int) Math.max(maxX - minX, MIN_ENCODED_AREA_SIDE);
+		rect.height = (int) Math.max(maxY - minY, MIN_ENCODED_AREA_SIDE);
 		return rect;
 	}
 	
@@ -831,6 +842,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 		long[] newSize = new long[] {biggerSize, smallerSize};
 		if (ySize > xSize) newSize = new long[] {smallerSize, biggerSize};
+		newSize[0] = Math.max(MIN_ENCODED_AREA_SIDE, newSize[0]);
+		newSize[1] = Math.max(MIN_ENCODED_AREA_SIDE, newSize[1]);
 		long[] posWrtBbox = new long[4];
 		posWrtBbox[0] = (long) Math.max(0, Math.ceil((boundingBox[0] + xSize / 2) - newSize[0] / 2));
 		posWrtBbox[1] = (long) Math.max(0, Math.ceil((boundingBox[1] + ySize / 2) - newSize[1] / 2));

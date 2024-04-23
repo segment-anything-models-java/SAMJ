@@ -277,7 +277,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 							+ ")" + System.lineSeparator();
 		int size = 1;
 		for (long l : targetDims) {size *= l;}
-		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType((RandomAccessibleInterval<T>) img) 
+		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType(Util.getTypeFromInterval(shma.getSharedRAI())) 
 			  + "', buffer=im_shm.buf).reshape([";
 		for (long ll : targetDims)
 			code += ll + ", ";

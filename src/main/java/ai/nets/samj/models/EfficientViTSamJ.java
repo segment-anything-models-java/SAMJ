@@ -304,7 +304,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 
 	@Override
 	protected void createEncodeImageScript() {
-		this.script = ""
+		this.script += ""
 			+ "task.update(str(im.shape))" + System.lineSeparator()
 			+ "predictor.set_image(im)";
 	}

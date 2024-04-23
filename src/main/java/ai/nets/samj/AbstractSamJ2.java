@@ -29,37 +29,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import ai.nets.samj.AbstractSamJ.DebugTextPrinter;
 
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.io.File;
 import java.io.IOException;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
-import io.bioimage.modelrunner.numpy.DecodeNumpy;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.IterableInterval;
-import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
-import net.imglib2.converter.RealTypeConverters;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.loops.LoopBuilder;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
-import net.imglib2.util.Intervals;
 import net.imglib2.util.Util;
-import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 /**
@@ -166,9 +157,12 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 	private <T extends RealType<T> & NativeType<T>>
 	void addImage(RandomAccessibleInterval<T> rai) 
 			throws IOException, RuntimeException, InterruptedException {
-		adaptImage(rai);
+		setImageOfInterest(rai);
+		if (img.dimensionsAsLongArray()[0] * img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
+				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE)
+			return;
 		this.script = "";
-		sendImgLib2AsNp(rai);
+		sendImgLib2AsNp();
 		createEncodeImageScript();
 		try {
 			printScript(script, "Creation of initial embeddings");
@@ -191,9 +185,9 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		}
 	}
 	
-	protected abstract <T extends RealType<T> & NativeType<T>> void adaptImage(RandomAccessibleInterval<T> rai);
+	protected abstract <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai);
 	
-	protected abstract void createEncodeImageScript();
+	protected abstract <T extends RealType<T> & NativeType<T>> void createEncodeImageScript();
 	
 	private void reencodeCrop() throws IOException, InterruptedException, RuntimeException {
 		reencodeCrop(null);
@@ -742,10 +736,9 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		if (python != null) python.close();
 	}
 	
-	private <T extends RealType<T> & NativeType<T>> 
-	void sendImgLib2AsNp(RandomAccessibleInterval<T> targetImg) {
-		shma = createEfficientSAMInputSHM(reescaleIfNeeded(targetImg));
-		RealTypeConverters.copyFromTo( (RandomAccessible<T>) this.img, shma.getSharedRAI() );
+	protected <T extends RealType<T> & NativeType<T>> 
+	void sendImgLib2AsNp() {
+		createSHMArray((RandomAccessibleInterval<T>) this.img);
 		String code = "";
 		// This line wants to recreate the original numpy array. Should look like:
 		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
@@ -766,12 +759,14 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		code += "globals()['input_h'] = input_h" + System.lineSeparator();
 		code += "globals()['input_w'] = input_w" + System.lineSeparator();
 		code += "task.update(str(im.shape))" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im.astype('float32')))" + System.lineSeparator();
+		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
 		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
 		code += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
 		this.script += code;
 	}
+	
+	protected abstract <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared);
 		
 	private <T extends RealType<T> & NativeType<T>> void sendCropAsNp(long[] cropSize) {
 		if (cropSize == null)
@@ -786,9 +781,7 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		//RandomAccessibleInterval<T> crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize);
 		//RandomAccessibleInterval<T> crop = Views.offsetInterval(Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize);
 		targetDims = crop.dimensionsAsLongArray();
-		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {targetDims[0], targetDims[1], targetDims[2]}, 
-															Util.getTypeFromInterval(crop));
-		RealTypeConverters.copyFromTo(crop, shma.getSharedRAI());
+		createSHMArray(crop);
 		String code = "";
 		// This line wants to recreate the original numpy array. Should look like:
 		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
@@ -808,7 +801,7 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		//code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
 		code += "globals()['input_h'] = input_h" + System.lineSeparator();
 		code += "globals()['input_w'] = input_w" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im.astype('float32')))" + System.lineSeparator();
+		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
 		code += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
 		this.script += code;
@@ -817,37 +810,6 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
 	protected abstract void processBoxWithSAM(boolean returnAll);
-	
-	private <T extends RealType<T> & NativeType<T>>
-	SharedMemoryArray  createEfficientSAMInputSHM(final RandomAccessibleInterval<T> inImg) {
-		long[] dims = inImg.dimensionsAsLongArray();
-		if ((dims.length != 3 && dims.length != 2) || (dims.length == 3 && dims[2] != 3 && dims[2] != 1)){
-			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
-					+ "The image dimensions order should be 'yxc', first dimension height, second width and third channels.");
-		}
-		return SharedMemoryArray.buildMemorySegmentForImage(new long[] {dims[0], dims[1], 3}, 
-				Cast.unchecked(Util.getTypeFromInterval(img)));
-	}
-	
-	private <T extends RealType<T> & NativeType<T>>
-	void adaptImageToModel(final RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<FloatType> targetImg) {
-		if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 3) {
-			for (int i = 0; i < 3; i ++) 
-				RealTypeConverters.copyFromTo( normalizedView(Views.hyperSlice(ogImg, 2, i)), Views.hyperSlice(targetImg, 2, i) );
-		} else if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 1) {
-			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
-			IntervalView<FloatType> resIm = Views.interval( Views.expandMirrorDouble(normalizedView(ogImg), new long[] {0, 0, 2}), 
-					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0], ogImg.dimensionsAsLongArray()[1], 2}) );
-			RealTypeConverters.copyFromTo( resIm, targetImg );
-		} else if (ogImg.numDimensions() == 2) {
-			adaptImageToModel(Views.addDimension(ogImg, 0, 0), targetImg);
-		} else {
-			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
-					+ "The image dimensions order should be 'yxc', first dimension height, second width and third channels.");
-		}
-		this.img = targetImg;
-		this.targetDims = targetImg.dimensionsAsLongArray();
-	}
 
 	/**
 	 * Set an empty consumer as {@link DebugTextPrinter} to avoid the SAMJ model instance
@@ -898,134 +860,6 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		debugPrinter.printText(LocalDateTime.now().toString());
 		debugPrinter.printText(script);
 		debugPrinter.printText("END:   =========== "+designationOfTheScript+" ===========");
-	}
-
-	/**
-	 * Get the maximum and minimum pixel values of an {@link IterableInterval}
-	 * @param <T>
-	 * 	the ImgLib2 data types that the {@link IterableInterval} can have
-	 * @param inImg
-	 * 	the {@link IterableInterval} from which the max and min values are going to be found
-	 * @param outMinMax
-	 * 	double array where the max and min values of the {@link IterableInterval} will be written
-	 */
-	public static <T extends RealType<T> & NativeType<T>>
-	void getMinMaxPixelValue(final IterableInterval<T> inImg, final double[] outMinMax) {
-		double min = inImg.firstElement().getRealDouble();
-		double max = min;
-
-		for (T px : inImg) {
-			double val = px.getRealDouble();
-			min = Math.min(min,val);
-			max = Math.max(max,val);
-		}
-
-		if (outMinMax.length > 1) {
-			outMinMax[0] = min;
-			outMinMax[1] = max;
-		}
-	}
-
-	/**
-	 * Whether the values in the length 2 array are between 0 and 1
-	 * @param inMinMax
-	 * 	the interval to be evaluated
-	 * @return true if the values are between 0 and 1 and false otherwise
-	 */
-	public static boolean isNormalizedInterval(final double[] inMinMax) {
-		return (inMinMax[0] >= 0 && inMinMax[0] <= 1
-			&& inMinMax[1] >= 0 && inMinMax[1] <= 1);
-	}
-
-	/**
-	 * Normalize the {@link RandomAccessibleInterval} with the position 0 of the inMimMax array as the min
-	 * and the position 1 as the max
-	 * @param <T>
-	 * 	the ImgLib2 data types that the {@link RandomAccessibleInterval} can have
-	 * @param inImg
-	 *  {@link RandomAccessibleInterval} to be normalized
-	 * @param inMinMax
-	 * 	 the values to which the {@link RandomAccessibleInterval} will be normalized. Should be a double array of length
-	 *   2 with the smaller value at position 0
-	 * @return the normalized {@link RandomAccessibleInterval}
-	 */
-	private static <T extends RealType<T> & NativeType<T>>
-	RandomAccessibleInterval<FloatType> normalizedView(final RandomAccessibleInterval<T> inImg, final double[] inMinMax) {
-		final double min = inMinMax[0];
-		final double range = inMinMax[1] - min;
-		return Converters.convert(inImg, (i, o) -> o.setReal((i.getRealFloat() - min) / (range + 1e-9)), new FloatType());
-	}
-
-	/**
-	 * Checks the input RAI if its min and max pixel values are between [0,1].
-	 * If they are not, the RAI will be subject to {@link Converters#convert(RandomAccessibleInterval, Converter, Type)}
-	 * with here-created Converter that knows how to bring the pixel values into the interval [0,1].
-	 *
-	 * @param <T>
-	 * 	the ImgLib2 data types that the {@link RandomAccessibleInterval} can have
-	 * @param inImg
-	 *  RAI to be potentially normalized.
-	 * @return The input image itself or a View of it with {@link FloatType} data type
-	 */
-	public <T extends RealType<T> & NativeType<T>>
-	RandomAccessibleInterval<FloatType> normalizedView(final RandomAccessibleInterval<T> inImg) {
-		final double[] minMax = new double[2];
-		getMinMaxPixelValue(Views.iterable(inImg), minMax);
-		///debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ NORMALIZED, returning Converted view");
-		//return normalizedView(inImg, minMax);
-		if (isNormalizedInterval(minMax) && Util.getTypeFromInterval(inImg) instanceof FloatType) {
-			debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS NORMALIZED, returning directly itself");
-			return Cast.unchecked(inImg);
-		} else if (isNormalizedInterval(minMax)) {
-			debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS NORMALIZED, returning directly itself");
-			return  Converters.convert(inImg, (i, o) -> o.setReal(i.getRealFloat()), new FloatType());
-		} else {
-			debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ NORMALIZED, returning Converted view");
-			return normalizedView(inImg, minMax);
-		}
-	}
-
-	private static <T extends RealType<T> & NativeType<T>>
-	RandomAccessibleInterval<UnsignedByteType> convertViewToRGB(final RandomAccessibleInterval<T> inImg, final double[] inMinMax) {
-		final double min = inMinMax[0];
-		final double range = inMinMax[1] - min;
-		return Converters.convert(inImg, (i, o) -> o.setReal(255 * (i.getRealDouble() - min) / range), new UnsignedByteType());
-	}
-
-	/**
-	 * Checks the input RAI if its min and max pixel values are between [0,255] and if it is of {@link UnsignedByteType} type.
-	 * If they are not, the RAI will be subject to {@link Converters#convert(RandomAccessibleInterval, Converter, Type)}
-	 * with here-created Converter that knows how to bring the pixel values into the interval [0,255].
-	 *
-	 * @param inImg
-	 *  RAI to be potentially converted to RGB.
-	 * @return The input image itself or a View of it in {@link UnsignedByteType} data type
-	 */
-	public <T extends RealType<T> & NativeType<T>>
-	RandomAccessibleInterval<UnsignedByteType> convertViewToRGB(final RandomAccessibleInterval<T> inImg) {
-		if (Util.getTypeFromInterval(inImg) instanceof UnsignedByteType) {
-			debugPrinter.printText("IMAGE IS RGB, returning directly itself");
-			return Cast.unchecked(inImg);
-		}
-		final double[] minMax = new double[2];
-		debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ RGB, returning Converted view");
-		getMinMaxPixelValue(Views.iterable(inImg), minMax);
-		return convertViewToRGB(inImg, minMax);
-	}
-	
-	protected static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> 
-	reescaleIfNeeded(RandomAccessibleInterval<T> rai) {
-		if ((rai.dimensionsAsLongArray()[0] > rai.dimensionsAsLongArray()[1])
-				&& (rai.dimensionsAsLongArray()[0] > MAX_ENCODED_AREA_RS)) {
-			// TODO reescale
-			return rai;
-		} else if ((rai.dimensionsAsLongArray()[0] < rai.dimensionsAsLongArray()[1])
-				&& (rai.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE)) {
-			// TODO reescale
-			return rai;
-		} else {
-			return rai;
-		}
 	}
 	
 	/**
@@ -1079,21 +913,5 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 			pp.xpoints = Arrays.stream(pp.xpoints).map(x -> x + (int) encodeCoords[0]).toArray();
 			pp.ypoints = Arrays.stream(pp.ypoints).map(y -> y + (int) encodeCoords[1]).toArray();
 		});
-	}
-	
-	/**
-	 * MEthod used during development to test features
-	 * @param args
-	 * 	nothing
-	 * @throws IOException nothing
-	 * @throws RuntimeException nothing
-	 * @throws InterruptedException nothing
-	 */
-	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
-		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
-		img = Views.addDimension(img, 1, 2);
-		try (AbstractSamJ2 sam = initializeSam(SamEnvManager.create(), img)) {
-			sam.processBox(new int[] {0, 5, 10, 26});
-		}
 	}
 }

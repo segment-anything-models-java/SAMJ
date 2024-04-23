@@ -19,35 +19,24 @@
  */
 package ai.nets.samj;
 
-import java.lang.AutoCloseable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
-import java.awt.Polygon;
-import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
-import io.bioimage.modelrunner.apposed.appose.Service;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
-import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
-import net.imglib2.util.Util;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -206,7 +195,7 @@ public class EfficientViTSamJ extends AbstractSamJ2 {
 		try{
 			sam = new EfficientViTSamJ(manager, modelType, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.addImage(image);
+			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -239,7 +228,7 @@ public class EfficientViTSamJ extends AbstractSamJ2 {
 		try{
 			sam = new EfficientViTSamJ(manager, modelType);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.addImage(image);
+			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -301,86 +290,28 @@ public class EfficientViTSamJ extends AbstractSamJ2 {
 	initializeSam(SamEnvManager manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
 		return initializeSam(SamEnvManager.DEFAULT_EVITSAM, manager, image);
 	}
-	
-	/**
-	 * Encode an image (n-dimensional array) with an EfficientViTSAM model
-	 * @param <T>
-	 * 	ImgLib2 data type of the image of interest
-	 * @param rai
-	 * 	image (n-dimensional array) that is going to be encoded as a {@link RandomAccessibleInterval}
-	 * @throws IOException if any of the files to run a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
-	 * @throws InterruptedException if the process is interrupted
-	 */
-	private <T extends RealType<T> & NativeType<T>>
-	void addImage(RandomAccessibleInterval<T> rai) 
-			throws IOException, RuntimeException, InterruptedException {
-		if (rai.dimensionsAsLongArray()[0] * rai.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
-				|| rai.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || rai.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
-			this.targetDims = new long[] {0, 0, 0};
-			this.img = rai;
-			return;
-		}
-		this.script = "";
-		sendImgLib2AsNp(rai);
-		this.script += ""
-				+ "task.update(str(im.shape))" + System.lineSeparator()
-				+ "predictor.set_image(im)";
-		try {
-			printScript(script, "Creation of initial embeddings");
-			Task task = python.task(script);
-			task.waitFor();
-			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
-			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
-			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
-			this.shma.close();
-		} catch (IOException | InterruptedException | RuntimeException e) {
-			try {
-				this.shma.close();
-			} catch (IOException e1) {
-				throw new IOException(e.toString() + System.lineSeparator() + e1.toString());
-			}
-			throw e;
-		}
+
+	@Override
+	protected <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai) {
+		checkImageIsFine(rai);
+		long[] dims = rai.dimensionsAsLongArray();
+		this.img = Views.interval(rai, new long[] {0, 0, 0}, new long[] {dims[0] - 1, dims[1] - 1, 2});
+		this.targetDims = img.dimensionsAsLongArray();
 	}
-	
-	/**
-	 * Method used that runs EfficientViTSAM using a mask as the prompt. The mask should be a 2D single-channel
-	 * image {@link RandomAccessibleInterval} of the same x and y sizes as the image of interest, the image 
-	 * where the model is finding the segmentations.
-	 * Note that the quality of this prompting method is not good, it is still experimental as it barely works
-	 * 
-	 * @param <T>
-	 * 	ImgLib2 datatype of the mask
-	 * @param img
-	 * 	mask used as the prompt
-	 * @param returnAll
-	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientViTSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public <T extends RealType<T> & NativeType<T>>
-	List<Polygon> processMask(RandomAccessibleInterval<T> img, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
-		long[] dims = img.dimensionsAsLongArray();
-		if (dims.length == 2 && dims[1] == this.shma.getOriginalShape()[1] && dims[0] == this.shma.getOriginalShape()[0]) {
-			img = Views.permute(img, 0, 1);
-		} else if (dims.length != 2 && dims[0] != this.shma.getOriginalShape()[1] && dims[1] != this.shma.getOriginalShape()[0]) {
-			throw new IllegalArgumentException("The provided mask should be a 2d image with just one channel of width "
-					+ this.shma.getOriginalShape()[1] + " and height " + this.shma.getOriginalShape()[0]);
-		}
-		SharedMemoryArray maskShma = SharedMemoryArray.buildSHMA(img);
-		try {
-			return processMask(maskShma, returnAll);
-		} catch (IOException | RuntimeException | InterruptedException ex) {
-			maskShma.close();
-			throw ex;
-		}
+
+	@Override
+	protected void createEncodeImageScript() {
+		this.script = ""
+			+ "task.update(str(im.shape))" + System.lineSeparator()
+			+ "predictor.set_image(im)";
+	}
+
+	@Override
+	protected <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared) {
+		RandomAccessibleInterval<T> imageToBeSent = ImgLib2SAMUtils.reescaleIfNeeded(imShared);
+		long[] dims = imageToBeSent.dimensionsAsLongArray();
+		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {dims[0], dims[1], dims[2]}, new UnsignedByteType());
+		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
 	}
 
 	@Override
@@ -478,24 +409,32 @@ public class EfficientViTSamJ extends AbstractSamJ2 {
 		this.script = code;
 	}
 	
-	private static <T extends RealType<T> & NativeType<T>>
-	SharedMemoryArray  createEfficientSAMInputSHM(final RandomAccessibleInterval<T> inImg) {
+	private <T extends RealType<T> & NativeType<T>> void checkImageIsFine(RandomAccessibleInterval<T> inImg) {
 		long[] dims = inImg.dimensionsAsLongArray();
-		if ((dims.length != 3 && dims.length != 2) || (dims.length == 3 && dims[2] != 3 && dims[2] != 1)) {
-			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, float32, ...) 2D images."
-					+ "The image dimensions order should be 'xyc', first dimension height, second width and third channels.");
+		if ((dims.length != 3 && dims.length != 2) || (dims.length == 3 && dims[2] != 3 && dims[2] != 1)){
+			throw new IllegalArgumentException("Currently EfficientViTSAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
+					+ "The image dimensions order should be 'xyc', first dimension width, second height and third channels.");
 		}
-		return SharedMemoryArray.buildMemorySegmentForImage(new long[] {dims[0], dims[1], 3}, new UnsignedByteType());
+	}
+	
+	/**
+	 * 
+	 * @return the list of EfficientViTSAM models that are supported
+	 */
+	public static List<String> getListOfSupportedEfficientViTSAM(){
+		return MODELS_DICT.keySet().stream().collect(Collectors.toList());
 	}
 	
 	private <T extends RealType<T> & NativeType<T>>
-	void adaptImageToModel(final RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<UnsignedByteType> targetImg) {
+	void adaptImageToModel(RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<T> targetImg) {
 		if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 3) {
 			for (int i = 0; i < 3; i ++) 
-				RealTypeConverters.copyFromTo( convertViewToRGB(Views.hyperSlice(ogImg, 2, i)), Views.hyperSlice(targetImg, 2, i) );
+				RealTypeConverters.copyFromTo( ImgLib2SAMUtils.convertViewToRGB(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), 
+						Views.hyperSlice(targetImg, 2, i) );
 		} else if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 1) {
 			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
-			IntervalView<UnsignedByteType> resIm = Views.interval( Views.expandMirrorDouble(convertViewToRGB(ogImg), new long[] {0, 0, 2}), 
+			IntervalView<UnsignedByteType> resIm = 
+					Views.interval( Views.expandMirrorDouble(ImgLib2SAMUtils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0], ogImg.dimensionsAsLongArray()[1], 2}) );
 			RealTypeConverters.copyFromTo( resIm, targetImg );
 		} else if (ogImg.numDimensions() == 2) {
@@ -504,8 +443,6 @@ public class EfficientViTSamJ extends AbstractSamJ2 {
 			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
 					+ "The image dimensions order should be 'yxc', first dimension height, second width and third channels.");
 		}
-		this.img = targetImg;
-		this.targetDims = targetImg.dimensionsAsLongArray();
 	}
 	
 	/**
@@ -522,25 +459,5 @@ public class EfficientViTSamJ extends AbstractSamJ2 {
 		try (EfficientViTSamJ sam = initializeSam(SamEnvManager.create(), img)) {
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
-	}
-	
-	/**
-	 * 
-	 * @return the list of EfficientViTSAM models that are supported
-	 */
-	public static List<String> getListOfSupportedEfficientViTSAM(){
-		return MODELS_DICT.keySet().stream().collect(Collectors.toList());
-	}
-
-	@Override
-	protected <T extends RealType<T> & NativeType<T>> void adaptImage(RandomAccessibleInterval<T> rai) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected void createEncodeImageScript() {
-		// TODO Auto-generated method stub
-		
 	}
 }

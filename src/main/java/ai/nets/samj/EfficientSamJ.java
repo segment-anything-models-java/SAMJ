@@ -139,7 +139,6 @@ public class EfficientSamJ extends AbstractSamJ implements AutoCloseable {
 
 		this.env = new Environment() {
 			@Override public String base() { return manager.getEfficientSAMPythonEnv(); }
-			@Override public boolean useSystemPath() { return false; }
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);

@@ -171,7 +171,6 @@ public class EfficientViTSamJ extends AbstractSamJ implements AutoCloseable {
 
 		this.env = new Environment() {
 			@Override public String base() { return manager.getEfficientViTSamEnv(); }
-			@Override public boolean useSystemPath() { return false; }
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);

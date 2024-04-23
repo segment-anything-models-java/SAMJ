@@ -457,7 +457,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
 			IntervalView<UnsignedByteType> resIm = 
 					Views.interval( Views.expandMirrorDouble(ImgLib2Utils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
-					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0], ogImg.dimensionsAsLongArray()[1], 2}) );
+					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0] - 1, ogImg.dimensionsAsLongArray()[1] - 1, 2}) );
 			RealTypeConverters.copyFromTo( resIm, targetImg );
 		} else if (ogImg.numDimensions() == 2) {
 			adaptImageToModel(Views.addDimension(ogImg, 0, 0), targetImg);

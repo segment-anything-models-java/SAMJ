@@ -28,8 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-
+import java.util.stream.Collectors;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -39,12 +38,10 @@ import io.bioimage.modelrunner.apposed.appose.Service;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
-import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 /**
@@ -209,8 +206,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	void updateImage(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
 		setImageOfInterest(rai);
 		if (img.dimensionsAsLongArray()[0] * img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
-				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE)
+				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
+			this.targetDims = new long[] {0, 0, 0};
 			return;
+		}
 		this.script = "";
 		sendImgLib2AsNp();
 		createEncodeImageScript();
@@ -275,10 +274,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			cropSize = new long[] {encodeCoords[2] - encodeCoords[0], encodeCoords[3] - encodeCoords[1], 3};
 		else if (cropSize.length == 2)
 			cropSize = new long[] {cropSize[0], cropSize[1], 3};
+		else if (cropSize.length == 3 && cropSize[2] != 3)
+			throw new IllegalArgumentException("The size of the area that wants to be encoded needs to be defined as [width, height].");
 		else 
 			throw new IllegalArgumentException("The size of the area that wants to be encoded needs to be defined as [width, height].");
 		RandomAccessibleInterval<T> crop = 
-				Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize );
+				Views.offsetInterval( Cast.unchecked(img), new long[] {encodeCoords[0], encodeCoords[1], 0}, cropSize );
 		
 		//RandomAccessibleInterval<T> crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize);
 		//RandomAccessibleInterval<T> crop = Views.offsetInterval(Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize);
@@ -471,6 +472,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 					+ "contain all the points. Point {x=" + outsideP.get(0)[0] + ", y=" + outsideP.get(0)[1] + "} is out of the region.");
 		}
 		evaluateReencodingNeeded(pointsList, pointsNegList, encodingArea);
+		pointsList = adaptPointPrompts(pointsList);
+		pointsNegList = adaptPointPrompts(pointsNegList);
 		this.script = "";
 		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
@@ -481,6 +484,16 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
 		return polys;
+	}
+	
+	private List<int[]> adaptPointPrompts(List<int[]> pointsList) {
+		pointsList = pointsList.stream().map(pp -> {
+			int[] newPoint = new int[2];
+			newPoint[0] = (int) (pp[0] - this.encodeCoords[0]);
+			newPoint[1] = (int) (pp[1] - this.encodeCoords[1]);
+			return newPoint;
+			}).collect(Collectors.toList());
+		return pointsList;
 	}
 	
 	/**
@@ -728,12 +741,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 		minX = (int) Math.max(0,  minX - Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
 		minY = (int) Math.max(0,  minY - Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
-		maxX = (int) Math.min(img.dimensionsAsLongArray()[1],  maxX + Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
-		maxY = (int) Math.min(img.dimensionsAsLongArray()[0],  maxY + Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
+		maxX = (int) Math.min(img.dimensionsAsLongArray()[0],  maxX + Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
+		maxY = (int) Math.min(img.dimensionsAsLongArray()[1],  maxY + Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
 		Rectangle rect = new Rectangle();
 		rect.x = minX;
 		rect.y = minY;
-		rect.width = maxX - minY;
+		rect.width = maxX - minX;
 		rect.height = maxY - minY;
 		return rect;
 	}
@@ -821,8 +834,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		long[] posWrtBbox = new long[4];
 		posWrtBbox[0] = (long) Math.max(0, Math.ceil((boundingBox[0] + xSize / 2) - newSize[0] / 2));
 		posWrtBbox[1] = (long) Math.max(0, Math.ceil((boundingBox[1] + ySize / 2) - newSize[1] / 2));
-		posWrtBbox[2] = (long) Math.min(imageSize[1], Math.floor((boundingBox[2] + xSize / 2) + newSize[0] / 2));
-		posWrtBbox[3] = (long) Math.min(imageSize[0], Math.floor((boundingBox[3] + ySize / 2) + newSize[1] / 2));
+		posWrtBbox[2] = (long) Math.min(imageSize[0], Math.floor((boundingBox[2] + xSize / 2) + newSize[0] / 2));
+		posWrtBbox[3] = (long) Math.min(imageSize[1], Math.floor((boundingBox[3] + ySize / 2) + newSize[1] / 2));
 		return posWrtBbox;
 	}
 	

@@ -213,6 +213,7 @@ public class EfficientSamJ extends AbstractSamJ {
 			code += ll + ", ";
 		code = code.substring(0, code.length() - 2);
 		code += "])" + System.lineSeparator();
+		//code += "np.save('/home/carlos/git/crop.npy', im)" + System.lineSeparator();
 		code += "input_h = im.shape[1]" + System.lineSeparator();
 		code += "input_w = im.shape[0]" + System.lineSeparator();
 		code += "globals()['input_h'] = input_h" + System.lineSeparator();
@@ -360,7 +361,7 @@ public class EfficientSamJ extends AbstractSamJ {
 		} else if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 1) {
 			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
 			IntervalView<FloatType> resIm = Views.interval( Views.expandMirrorDouble(ImgLib2Utils.normalizedView(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
-					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0], ogImg.dimensionsAsLongArray()[1], 2}) );
+					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0] - 1, ogImg.dimensionsAsLongArray()[1] - 1, 2}) );
 			RealTypeConverters.copyFromTo( resIm, targetImg );
 		} else if (ogImg.numDimensions() == 2) {
 			adaptImageToModel(Views.addDimension(ogImg, 0, 0), targetImg);

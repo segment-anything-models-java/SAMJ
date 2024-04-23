@@ -745,10 +745,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @return whether the bounding box is within the encoded area or not
 	 */
 	public boolean isAreaEncoded(int[] boundingBox) {
-		boolean upperLeftVertex = (boundingBox[0] > this.encodeCoords[0]) && (boundingBox[0] < this.encodeCoords[2]);
-		boolean upperRightVertex = (boundingBox[2] > this.encodeCoords[0]) && (boundingBox[2] < this.encodeCoords[2]);
-		boolean downLeftVertex = (boundingBox[1] > this.encodeCoords[1]) && (boundingBox[1] < this.encodeCoords[3]);
-		boolean downRightVertex = (boundingBox[3] > this.encodeCoords[1]) && (boundingBox[3] < this.encodeCoords[3]);
+		boolean upperLeftVertex = (boundingBox[0] > encodeCoords[0]) && (boundingBox[0] < encodeCoords[0] + targetDims[0]);
+		boolean upperRightVertex = (boundingBox[2] > encodeCoords[0]) && (boundingBox[2] < encodeCoords[0] + targetDims[0]);
+		boolean downLeftVertex = (boundingBox[1] > encodeCoords[1]) && (boundingBox[1] < encodeCoords[1] + targetDims[1]);
+		boolean downRightVertex = (boundingBox[3] > encodeCoords[1]) && (boundingBox[3] < encodeCoords[1] + targetDims[1]);
 		
 		if (upperLeftVertex && upperRightVertex && downLeftVertex && downRightVertex)
 			return true;

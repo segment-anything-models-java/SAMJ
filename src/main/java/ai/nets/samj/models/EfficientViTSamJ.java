@@ -318,7 +318,6 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			script += ll + ", ";
 		script = script.substring(0, script.length() - 2);
 		script += "])" + System.lineSeparator();
-		script += "im = np.transpose(im, (1, 0, 2))" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();
 		script += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();

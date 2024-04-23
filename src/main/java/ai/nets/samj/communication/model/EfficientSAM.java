@@ -55,7 +55,7 @@ public class EfficientSAM implements SAMModel {
 	/**
 	 * Axes order required for the input image by the model
 	 */
-	public static final String INPUT_IMAGE_AXES = "yxc";
+	public static final String INPUT_IMAGE_AXES = "xyc";
 	
 	private static final String HTML_DESCRIPTION = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything <br>"
 	        + "<strong>Weights size:</strong> 105.7 MB <br>"

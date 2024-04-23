@@ -32,9 +32,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import ai.nets.samj.AbstractSamJ;
-import ai.nets.samj.EfficientSamJ;
-import ai.nets.samj.SamEnvManager;
+import ai.nets.samj.models.AbstractSamJ;
+import ai.nets.samj.models.EfficientSamJ;
+import ai.nets.samj.install.SamEnvManager;
 import ai.nets.samj.ui.SAMJLogger;
 
 /**

@@ -28,6 +28,7 @@ import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
+import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
@@ -35,6 +36,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -196,7 +198,32 @@ public class EfficientSamJ extends AbstractSamJ {
 
 	@Override
 	protected void createEncodeImageScript() {
-		this.script = ""
+		String code = "";
+		// This line wants to recreate the original numpy array. Should look like:
+		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
+		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
+		code += "im_shm = shared_memory.SharedMemory(name='"
+							+ shma.getNameForPython() + "', size=" + shma.getSize() 
+							+ ")" + System.lineSeparator();
+		int size = 1;
+		for (long l : targetDims) {size *= l;}
+		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
+			  + "', buffer=im_shm.buf).reshape([";
+		for (long ll : targetDims)
+			code += ll + ", ";
+		code = code.substring(0, code.length() - 2);
+		code += "])" + System.lineSeparator();
+		code += "input_h = im.shape[1]" + System.lineSeparator();
+		code += "input_w = im.shape[0]" + System.lineSeparator();
+		code += "globals()['input_h'] = input_h" + System.lineSeparator();
+		code += "globals()['input_w'] = input_w" + System.lineSeparator();
+		code += "task.update(str(im.shape))" + System.lineSeparator();
+		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
+		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
+		code += "im_shm.unlink()" + System.lineSeparator();
+		//code += "box_shm.close()" + System.lineSeparator();
+		this.script += code;
+		this.script += ""
 				+ "task.update(str(im.shape))" + System.lineSeparator()
 				+ "aa = predictor.get_image_embeddings(im[None, ...])";
 	}
@@ -379,7 +406,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	protected <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared) {
 		RandomAccessibleInterval<T> imageToBeSent = ImgLib2Utils.reescaleIfNeeded(imShared);
 		long[] dims = imageToBeSent.dimensionsAsLongArray();
-		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {dims[0], dims[1], dims[2]}, new FloatType());
+		shma = SharedMemoryArray.create(new long[] {dims[0], dims[1], dims[2]}, new FloatType(), false, false);
 		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
 	}
 }

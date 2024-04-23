@@ -33,12 +33,15 @@ import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
+import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -304,7 +307,22 @@ public class EfficientViTSamJ extends AbstractSamJ {
 
 	@Override
 	protected void createEncodeImageScript() {
-		this.script += ""
+		script = "";
+		script += "im_shm = shared_memory.SharedMemory(name='"
+				+ shma.getNameForPython() + "', size=" + shma.getSize() 
+				+ ")" + System.lineSeparator();
+		int size = 1;
+		for (long l : targetDims) {size *= l;}
+		script += "im = np.ndarray(" + size + ", dtype='" + "', buffer=im_shm.buf).reshape([";
+		for (long ll : targetDims)
+			script += ll + ", ";
+		script = script.substring(0, script.length() - 2);
+		script += "])" + System.lineSeparator();
+		script += "im = np.transpose(im, (1, 0, 2))" + System.lineSeparator();
+		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();
+		script += "im_shm.unlink()" + System.lineSeparator();
+		//code += "box_shm.close()" + System.lineSeparator();
+		script += ""
 			+ "task.update(str(im.shape))" + System.lineSeparator()
 			+ "predictor.set_image(im)";
 	}
@@ -313,7 +331,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	protected <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared) {
 		RandomAccessibleInterval<T> imageToBeSent = ImgLib2Utils.reescaleIfNeeded(imShared);
 		long[] dims = imageToBeSent.dimensionsAsLongArray();
-		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {dims[0], dims[1], dims[2]}, new UnsignedByteType());
+		shma = SharedMemoryArray.create(new long[] {dims[0], dims[1], dims[2]}, new UnsignedByteType(), false, false);
 		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
 	}
 

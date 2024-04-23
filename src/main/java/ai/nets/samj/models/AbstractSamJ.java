@@ -268,31 +268,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	protected <T extends RealType<T> & NativeType<T>> 
 	void sendImgLib2AsNp() {
 		createSHMArray((RandomAccessibleInterval<T>) this.img);
-		String code = "";
-		// This line wants to recreate the original numpy array. Should look like:
-		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
-		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
-		code += "im_shm = shared_memory.SharedMemory(name='"
-							+ shma.getNameForPython() + "', size=" + shma.getSize() 
-							+ ")" + System.lineSeparator();
-		int size = 1;
-		for (long l : targetDims) {size *= l;}
-		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType(Util.getTypeFromInterval(shma.getSharedRAI())) 
-			  + "', buffer=im_shm.buf).reshape([";
-		for (long ll : targetDims)
-			code += ll + ", ";
-		code = code.substring(0, code.length() - 2);
-		code += "])" + System.lineSeparator();
-		code += "input_h = im.shape[1]" + System.lineSeparator();
-		code += "input_w = im.shape[0]" + System.lineSeparator();
-		code += "globals()['input_h'] = input_h" + System.lineSeparator();
-		code += "globals()['input_w'] = input_w" + System.lineSeparator();
-		code += "task.update(str(im.shape))" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
-		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
-		code += "im_shm.unlink()" + System.lineSeparator();
-		//code += "box_shm.close()" + System.lineSeparator();
-		this.script += code;
 	}
 		
 	private <T extends RealType<T> & NativeType<T>> void sendCropAsNp(long[] cropSize) {
@@ -318,7 +293,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 							+ ")" + System.lineSeparator();
 		int size = 1;
 		for (long l : targetDims) {size *= l;}
-		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType(Util.getTypeFromInterval(crop)) + "', buffer=im_shm.buf).reshape([";
+		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(crop) + "', buffer=im_shm.buf).reshape([";
 		for (long ll : targetDims)
 			code += ll + ", ";
 		code = code.substring(0, code.length() - 2);
@@ -637,7 +612,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			throw new IllegalArgumentException("The provided mask should be a 2d image with just one channel of width "
 					+ this.shma.getOriginalShape()[1] + " and height " + this.shma.getOriginalShape()[0]);
 		}
-		SharedMemoryArray maskShma = SharedMemoryArray.buildSHMA(img);
+		SharedMemoryArray maskShma = SharedMemoryArray.createSHMAFromRAI(img, false, false);
 		try {
 			return processMask(maskShma, returnAll);
 		} catch (IOException | RuntimeException | InterruptedException ex) {

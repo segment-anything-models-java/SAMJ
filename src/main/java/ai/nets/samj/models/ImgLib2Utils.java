@@ -14,7 +14,7 @@ import net.imglib2.util.Cast;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-public class ImgLib2SAMUtils {
+public class ImgLib2Utils {
 
 	/**
 	 * Get the maximum and minimum pixel values of an {@link IterableInterval}

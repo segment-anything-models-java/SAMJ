@@ -311,7 +311,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 
 	@Override
 	protected <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared) {
-		RandomAccessibleInterval<T> imageToBeSent = ImgLib2SAMUtils.reescaleIfNeeded(imShared);
+		RandomAccessibleInterval<T> imageToBeSent = ImgLib2Utils.reescaleIfNeeded(imShared);
 		long[] dims = imageToBeSent.dimensionsAsLongArray();
 		shma = SharedMemoryArray.buildMemorySegmentForImage(new long[] {dims[0], dims[1], dims[2]}, new UnsignedByteType());
 		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
@@ -432,12 +432,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	void adaptImageToModel(RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<T> targetImg) {
 		if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 3) {
 			for (int i = 0; i < 3; i ++) 
-				RealTypeConverters.copyFromTo( ImgLib2SAMUtils.convertViewToRGB(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), 
+				RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), 
 						Views.hyperSlice(targetImg, 2, i) );
 		} else if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 1) {
 			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
 			IntervalView<UnsignedByteType> resIm = 
-					Views.interval( Views.expandMirrorDouble(ImgLib2SAMUtils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
+					Views.interval( Views.expandMirrorDouble(ImgLib2Utils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0], ogImg.dimensionsAsLongArray()[1], 2}) );
 			RealTypeConverters.copyFromTo( resIm, targetImg );
 		} else if (ogImg.numDimensions() == 2) {

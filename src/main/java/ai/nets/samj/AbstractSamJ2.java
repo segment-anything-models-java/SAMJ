@@ -40,15 +40,9 @@ import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
-import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.converter.Converter;
-import net.imglib2.converter.Converters;
 import net.imglib2.type.NativeType;
-import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
@@ -129,8 +123,80 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 	 */
 	protected RandomAccessibleInterval<?> img;
 	
+	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
+	
+	protected abstract void processBoxWithSAM(boolean returnAll);
+	
+	protected abstract <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai);
+	
+	protected abstract <T extends RealType<T> & NativeType<T>> void createEncodeImageScript();
+	
+	abstract protected void processMasksWithSam(SharedMemoryArray shmArr, boolean returnAll);
+	
+	protected abstract <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared);
+
+	@Override
 	/**
-	 * Change the image encoded by the EfficientSAM model
+	 * {@inheritDoc}
+	 * Close the Python process and clean the memory
+	 */
+	public void close() {
+		if (python != null) python.close();
+	}
+	
+	/**
+	 * 
+	 * @return true if the SAMJ model instance is verbose or not
+	 */
+	public boolean isDebugging() {
+		return isDebugging;
+	}
+
+	/**
+	 * Method that prints the String in the script parameter to the {@link DebugTextPrinter}
+	 * 
+	 * @param script
+	 * 	text that wants to be printed, usually a Python script
+	 * @param designationOfTheScript
+	 * 	the name (or some string to design) of the text that is going to be printed
+	 */
+	public void printScript(final String script, final String designationOfTheScript) {
+		if (!isDebugging) return;
+		debugPrinter.printText("START: =========== "+designationOfTheScript+" ===========");
+		debugPrinter.printText(LocalDateTime.now().toString());
+		debugPrinter.printText(script);
+		debugPrinter.printText("END:   =========== "+designationOfTheScript+" ===========");
+	}
+
+	/**
+	 * Set an empty consumer as {@link DebugTextPrinter} to avoid the SAMJ model instance
+	 * to communicate its process
+	 */
+	public void disableDebugPrinting() {
+		debugPrinter = (text) -> {};
+	}
+	
+	/**
+	 * Set the {@link DebugTextPrinter} that wants to be used in the model
+	 * @param lineComsumer
+	 * 	the {@link DebugTextPrinter} (which is basically a String consumer used to communicate the
+	 *  SAMJ model instance process) that wants to be used
+	 */
+	public void setDebugPrinter(final DebugTextPrinter lineComsumer) {
+		if (lineComsumer != null) debugPrinter = lineComsumer;
+	}
+	
+	/**
+	 * Set whether the SAMJ model instance has to be more verbose or not
+	 * @param newState
+	 * 	whether the new model is verbose or not
+	 */
+	public void setDebugging(boolean newState) {
+		isDebugging = newState;
+	}
+	
+	/**
+	 * Encode an image (n-dimensional array) with an SAM model
 	 * @param <T>
 	 * 	ImgLib2 data type of the image of interest
 	 * @param rai
@@ -141,22 +207,6 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 	 */
 	public <T extends RealType<T> & NativeType<T>>
 	void updateImage(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
-		addImage(rai);
-	}
-	
-	/**
-	 * Encode an image (n-dimensional array) with an EfficientSAM model
-	 * @param <T>
-	 * 	ImgLib2 data type of the image of interest
-	 * @param rai
-	 * 	image (n-dimensional array) that is going to be encoded as a {@link RandomAccessibleInterval}
-	 * @throws IOException if any of the files to run a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
-	 * @throws InterruptedException if the process is interrupted
-	 */
-	private <T extends RealType<T> & NativeType<T>>
-	void addImage(RandomAccessibleInterval<T> rai) 
-			throws IOException, RuntimeException, InterruptedException {
 		setImageOfInterest(rai);
 		if (img.dimensionsAsLongArray()[0] * img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
 				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE)
@@ -184,10 +234,6 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 			throw e;
 		}
 	}
-	
-	protected abstract <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai);
-	
-	protected abstract <T extends RealType<T> & NativeType<T>> void createEncodeImageScript();
 	
 	private void reencodeCrop() throws IOException, InterruptedException, RuntimeException {
 		reencodeCrop(null);
@@ -217,6 +263,75 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 			throw e;
 		}
 		
+	}
+	
+	protected <T extends RealType<T> & NativeType<T>> 
+	void sendImgLib2AsNp() {
+		createSHMArray((RandomAccessibleInterval<T>) this.img);
+		String code = "";
+		// This line wants to recreate the original numpy array. Should look like:
+		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
+		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
+		code += "im_shm = shared_memory.SharedMemory(name='"
+							+ shma.getNameForPython() + "', size=" + shma.getSize() 
+							+ ")" + System.lineSeparator();
+		int size = 1;
+		for (long l : targetDims) {size *= l;}
+		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType((RandomAccessibleInterval<T>) img) 
+			  + "', buffer=im_shm.buf).reshape([";
+		for (long ll : targetDims)
+			code += ll + ", ";
+		code = code.substring(0, code.length() - 2);
+		code += "])" + System.lineSeparator();
+		code += "input_h = im.shape[1]" + System.lineSeparator();
+		code += "input_w = im.shape[0]" + System.lineSeparator();
+		code += "globals()['input_h'] = input_h" + System.lineSeparator();
+		code += "globals()['input_w'] = input_w" + System.lineSeparator();
+		code += "task.update(str(im.shape))" + System.lineSeparator();
+		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
+		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
+		code += "im_shm.unlink()" + System.lineSeparator();
+		//code += "box_shm.close()" + System.lineSeparator();
+		this.script += code;
+	}
+		
+	private <T extends RealType<T> & NativeType<T>> void sendCropAsNp(long[] cropSize) {
+		if (cropSize == null)
+			cropSize = new long[] {encodeCoords[2] - encodeCoords[0], encodeCoords[3] - encodeCoords[1], 3};
+		else if (cropSize.length == 2)
+			cropSize = new long[] {cropSize[0], cropSize[1], 3};
+		else 
+			throw new IllegalArgumentException("The size of the area that wants to be encoded needs to be defined as [width, height].");
+		RandomAccessibleInterval<T> crop = 
+				Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize );
+		
+		//RandomAccessibleInterval<T> crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize);
+		//RandomAccessibleInterval<T> crop = Views.offsetInterval(Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize);
+		targetDims = crop.dimensionsAsLongArray();
+		createSHMArray(crop);
+		String code = "";
+		// This line wants to recreate the original numpy array. Should look like:
+		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
+		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
+		code += "im_shm = shared_memory.SharedMemory(name='"
+							+ shma.getNameForPython() + "', size=" + shma.getSize() 
+							+ ")" + System.lineSeparator();
+		int size = 1;
+		for (long l : targetDims) {size *= l;}
+		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType(Util.getTypeFromInterval(crop)) + "', buffer=im_shm.buf).reshape([";
+		for (long ll : targetDims)
+			code += ll + ", ";
+		code = code.substring(0, code.length() - 2);
+		code += "])" + System.lineSeparator();
+		code += "input_h = im.shape[1]" + System.lineSeparator();
+		code += "input_w = im.shape[0]" + System.lineSeparator();
+		//code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
+		code += "globals()['input_h'] = input_h" + System.lineSeparator();
+		code += "globals()['input_w'] = input_w" + System.lineSeparator();
+		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
+		code += "im_shm.unlink()" + System.lineSeparator();
+		//code += "box_shm.close()" + System.lineSeparator();
+		this.script += code;
 	}
 	
 	private List<Polygon> processAndRetrieveContours(HashMap<String, Object> inputs) 
@@ -256,6 +371,220 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
 			polys.add( new Polygon(xArr, yArr, xArr.length) );
 		}
+		return polys;
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a list of points as the prompt. This method runs
+	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList)
+			throws IOException, RuntimeException, InterruptedException{
+		return processPoints(pointsList, true);
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a list of points as the prompt. This method runs
+	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException{
+		Rectangle rect = new Rectangle();
+		rect.x = -1;
+		rect.y = -1;
+		rect.height = -1;
+		rect.width = -1;
+		return processPoints(pointsList, rect, returnAll);
+	}
+
+	public List<Polygon> processPoints(List<int[]> pointsList, Rectangle encodingArea, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException {
+		Objects.requireNonNull(encodingArea, "Second argument cannot be null. Use the method "
+				+ "'processPoints(List<int[]> pointsList, Rectangle zoomedArea, boolean returnAll)'"
+				+ " instead");
+		return processPoints(pointsList, new ArrayList<int[]>(), encodingArea, returnAll);
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
+	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
+	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @param pointsNegList
+	 * 	the list of points that does not point to the instance of interest, but the background
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList)
+			throws IOException, RuntimeException, InterruptedException {
+		Rectangle rect = new Rectangle();
+		rect.x = (int) this.encodeCoords[0];
+		rect.y = (int) this.encodeCoords[1];
+		rect.height = (int) this.targetDims[0];
+		rect.width = (int) this.targetDims[1];
+		return processPoints(pointsList, pointsNegList, rect, true);
+	}
+	
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
+			Rectangle zoomedArea)
+			throws IOException, RuntimeException, InterruptedException {
+		return processPoints(pointsList, pointsNegList, zoomedArea, true);
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
+	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
+	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @param pointsNegList
+	 * 	the list of points that does not point to the instance of interest, but the background
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException {
+		Rectangle rect = new Rectangle();
+		rect.x = (int) this.encodeCoords[0];
+		rect.y = (int) this.encodeCoords[1];
+		rect.height = (int) this.targetDims[0];
+		rect.width = (int) this.targetDims[1];
+		return processPoints(pointsList, pointsNegList, rect, returnAll);
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
+	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
+	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
+	 * @param pointsList
+	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
+	 * 	of length 2, first position is x-axis, second y-axis
+	 * @param pointsNegList
+	 * 	the list of points that does not point to the instance of interest, but the background
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
+			Rectangle encodingArea, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException {
+		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
+				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
+				+ " instead");
+
+		if (encodingArea.x == -1) {
+			encodingArea = getCurrentlyEncodedArea();
+		} else {
+			ArrayList<int[]> outsideP = getPointsNotInRect(pointsList, pointsNegList, encodingArea);
+			if (outsideP.size() != 0)
+				throw new IllegalArgumentException("The Rectangle containing the area to be encoded should "
+					+ "contain all the points. Point {x=" + outsideP.get(0)[0] + ", y=" + outsideP.get(0)[1] + "} is out of the region.");
+		}
+		evaluateReencodingNeeded(pointsList, pointsNegList, encodingArea);
+		this.script = "";
+		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
+		HashMap<String, Object> inputs = new HashMap<String, Object>();
+		inputs.put("input_points", pointsList);
+		inputs.put("input_neg_points", pointsNegList);
+		printScript(script, "Points and negative points inference");
+		List<Polygon> polys = processAndRetrieveContours(inputs);
+		recalculatePolys(polys, encodeCoords);
+		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
+		return polys;
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a bounding box as the prompt. The bounding box should
+	 * be a int array of length 4 of the form [x0, y0, x1, y1].
+	 * This method runs the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * 
+	 * Returns a list of all the polygons found by EfficientSAM
+	 * 
+	 * @param boundingBox
+	 * 	the bounding box that serves as the prompt for EfficientSAM
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processBox(int[] boundingBox) 
+			throws IOException, RuntimeException, InterruptedException {
+		return processBox(boundingBox, true);
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a bounding box as the prompt. The bounding box should
+	 * be a int array of length 4 of the form [x0, y0, x1, y1].
+	 * This method runs the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * 
+	 * @param boundingBox
+	 * 	the bounding box that serves as the prompt for EfficientSAM
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException {
+		if (needsMoreResolution(boundingBox)) {
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop();
+		} else if (!isAreaEncoded(boundingBox)) {
+			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+			reencodeCrop();
+		}
+		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
+				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
+		this.script = "";
+		processBoxWithSAM(returnAll);
+		HashMap<String, Object> inputs = new HashMap<String, Object>();
+		inputs.put("input_box", adaptedBoundingBox);
+		printScript(script, "Rectangle inference");
+		List<Polygon> polys = processAndRetrieveContours(inputs);
+		recalculatePolys(polys, encodeCoords);
+		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	
@@ -324,105 +653,6 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		printScript(script, "Pre-computed mask inference");
 		List<Polygon> polys = processAndRetrieveContours(null);
 		debugPrinter.printText("processMask() obtained " + polys.size() + " polygons");
-		return polys;
-	}
-	
-	abstract protected void processMasksWithSam(SharedMemoryArray shmArr, boolean returnAll);
-	
-	/**
-	 * Method used that runs EfficientSAM using a list of points as the prompt. This method runs
-	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
-	 * @param pointsList
-	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
-	 * 	of length 2, first position is x-axis, second y-axis
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processPoints(List<int[]> pointsList)
-			throws IOException, RuntimeException, InterruptedException{
-		return processPoints(pointsList, true);
-	}
-	
-	/**
-	 * Method used that runs EfficientSAM using a list of points as the prompt. This method runs
-	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
-	 * @param pointsList
-	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
-	 * 	of length 2, first position is x-axis, second y-axis
-	 * @param returnAll
-	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processPoints(List<int[]> pointsList, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException{
-		Rectangle rect = new Rectangle();
-		rect.x = -1;
-		rect.y = -1;
-		rect.height = -1;
-		rect.width = -1;
-		return processPoints(pointsList, rect, returnAll);
-	}
-
-	public List<Polygon> processPoints(List<int[]> pointsList, Rectangle encodingArea, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
-		Objects.requireNonNull(encodingArea, "Second argument cannot be null. Use the method "
-				+ "'processPoints(List<int[]> pointsList, Rectangle zoomedArea, boolean returnAll)'"
-				+ " instead");
-		return processPoints(pointsList, new ArrayList<int[]>(), encodingArea, returnAll);
-	}
-	
-	/**
-	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
-	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
-	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
-	 * @param pointsList
-	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
-	 * 	of length 2, first position is x-axis, second y-axis
-	 * @param pointsNegList
-	 * 	the list of points that does not point to the instance of interest, but the background
-	 * @param returnAll
-	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
-			Rectangle encodingArea, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
-		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
-				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
-				+ " instead");
-
-		if (encodingArea.x == -1) {
-			encodingArea = getCurrentlyEncodedArea();
-		} else {
-			ArrayList<int[]> outsideP = getPointsNotInRect(pointsList, pointsNegList, encodingArea);
-			if (outsideP.size() != 0)
-				throw new IllegalArgumentException("The Rectangle containing the area to be encoded should "
-					+ "contain all the points. Point {x=" + outsideP.get(0)[0] + ", y=" + outsideP.get(0)[1] + "} is out of the region.");
-		}
-		evaluateReencodingNeeded(pointsList, pointsNegList, encodingArea);
-		this.script = "";
-		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
-		HashMap<String, Object> inputs = new HashMap<String, Object>();
-		inputs.put("input_points", pointsList);
-		inputs.put("input_neg_points", pointsNegList);
-		printScript(script, "Points and negative points inference");
-		List<Polygon> polys = processAndRetrieveContours(inputs);
-		recalculatePolys(polys, encodeCoords);
-		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	
@@ -557,123 +787,6 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 	}
 	
 	/**
-	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
-	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
-	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
-	 * @param pointsList
-	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
-	 * 	of length 2, first position is x-axis, second y-axis
-	 * @param pointsNegList
-	 * 	the list of points that does not point to the instance of interest, but the background
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList)
-			throws IOException, RuntimeException, InterruptedException {
-		Rectangle rect = new Rectangle();
-		rect.x = (int) this.encodeCoords[0];
-		rect.y = (int) this.encodeCoords[1];
-		rect.height = (int) this.targetDims[0];
-		rect.width = (int) this.targetDims[1];
-		return processPoints(pointsList, pointsNegList, rect, true);
-	}
-	
-	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
-			Rectangle zoomedArea)
-			throws IOException, RuntimeException, InterruptedException {
-		return processPoints(pointsList, pointsNegList, zoomedArea, true);
-	}
-	
-	/**
-	 * Method used that runs EfficientSAM using a list of points as the prompt. This method also accepts another
-	 * list of points as the negative prompt, the points that represent the background class wrt the object of interest. This method runs
-	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * It returns a list of polygons that corresponds to the contours of the masks found by EfficientSAM
-	 * @param pointsList
-	 * 	the list of points that serve as a prompt for EfficientSAM. Each point is an int array
-	 * 	of length 2, first position is x-axis, second y-axis
-	 * @param pointsNegList
-	 * 	the list of points that does not point to the instance of interest, but the background
-	 * @param returnAll
-	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
-		Rectangle rect = new Rectangle();
-		rect.x = (int) this.encodeCoords[0];
-		rect.y = (int) this.encodeCoords[1];
-		rect.height = (int) this.targetDims[0];
-		rect.width = (int) this.targetDims[1];
-		return processPoints(pointsList, pointsNegList, rect, returnAll);
-	}
-	
-	/**
-	 * Method used that runs EfficientSAM using a bounding box as the prompt. The bounding box should
-	 * be a int array of length 4 of the form [x0, y0, x1, y1].
-	 * This method runs the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * 
-	 * Returns a list of all the polygons found by EfficientSAM
-	 * 
-	 * @param boundingBox
-	 * 	the bounding box that serves as the prompt for EfficientSAM
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processBox(int[] boundingBox) 
-			throws IOException, RuntimeException, InterruptedException {
-		return processBox(boundingBox, true);
-	}
-	
-	/**
-	 * Method used that runs EfficientSAM using a bounding box as the prompt. The bounding box should
-	 * be a int array of length 4 of the form [x0, y0, x1, y1].
-	 * This method runs the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
-	 * was initialized with the image, thus it is quite fast.
-	 * 
-	 * @param boundingBox
-	 * 	the bounding box that serves as the prompt for EfficientSAM
-	 * @param returnAll
-	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
-	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
-		if (needsMoreResolution(boundingBox)) {
-			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			reencodeCrop();
-		} else if (!isAreaEncoded(boundingBox)) {
-			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			reencodeCrop();
-		}
-		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
-				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
-		this.script = "";
-		processBoxWithSAM(returnAll);
-		HashMap<String, Object> inputs = new HashMap<String, Object>();
-		inputs.put("input_box", adaptedBoundingBox);
-		printScript(script, "Rectangle inference");
-		List<Polygon> polys = processAndRetrieveContours(inputs);
-		recalculatePolys(polys, encodeCoords);
-		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
-		return polys;
-	}
-	
-	/**
 	 * Check whether the bounding box is inside the area that is encoded or not
 	 * @param boundingBox
 	 * 	the vertices of the bounding box
@@ -725,141 +838,6 @@ public abstract class AbstractSamJ2 implements AutoCloseable {
 		if (xSize * UPPER_REENCODE_THRESH > encodedX && ySize * UPPER_REENCODE_THRESH > encodedY)
 			return true;
 		return false;
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 * Close the Python process and clean the memory
-	 */
-	public void close() {
-		if (python != null) python.close();
-	}
-	
-	protected <T extends RealType<T> & NativeType<T>> 
-	void sendImgLib2AsNp() {
-		createSHMArray((RandomAccessibleInterval<T>) this.img);
-		String code = "";
-		// This line wants to recreate the original numpy array. Should look like:
-		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
-		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
-		code += "im_shm = shared_memory.SharedMemory(name='"
-							+ shma.getNameForPython() + "', size=" + shma.getSize() 
-							+ ")" + System.lineSeparator();
-		int size = 1;
-		for (long l : targetDims) {size *= l;}
-		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType((RandomAccessibleInterval<T>) img) 
-			  + "', buffer=im_shm.buf).reshape([";
-		for (long ll : targetDims)
-			code += ll + ", ";
-		code = code.substring(0, code.length() - 2);
-		code += "])" + System.lineSeparator();
-		code += "input_h = im.shape[1]" + System.lineSeparator();
-		code += "input_w = im.shape[0]" + System.lineSeparator();
-		code += "globals()['input_h'] = input_h" + System.lineSeparator();
-		code += "globals()['input_w'] = input_w" + System.lineSeparator();
-		code += "task.update(str(im.shape))" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
-		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
-		code += "im_shm.unlink()" + System.lineSeparator();
-		//code += "box_shm.close()" + System.lineSeparator();
-		this.script += code;
-	}
-	
-	protected abstract <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared);
-		
-	private <T extends RealType<T> & NativeType<T>> void sendCropAsNp(long[] cropSize) {
-		if (cropSize == null)
-			cropSize = new long[] {encodeCoords[2] - encodeCoords[0], encodeCoords[3] - encodeCoords[1], 3};
-		else if (cropSize.length == 2)
-			cropSize = new long[] {cropSize[0], cropSize[1], 3};
-		else 
-			throw new IllegalArgumentException("The size of the area that wants to be encoded needs to be defined as [width, height].");
-		RandomAccessibleInterval<T> crop = 
-				Views.interval( Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize );
-		
-		//RandomAccessibleInterval<T> crop = Views.offsetInterval(crop, new long[] {encodeCoords[1], encodeCoords[0], 0}, interValSize);
-		//RandomAccessibleInterval<T> crop = Views.offsetInterval(Cast.unchecked(img), new long[] {encodeCoords[1], encodeCoords[0], 0}, cropSize);
-		targetDims = crop.dimensionsAsLongArray();
-		createSHMArray(crop);
-		String code = "";
-		// This line wants to recreate the original numpy array. Should look like:
-		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
-		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
-		code += "im_shm = shared_memory.SharedMemory(name='"
-							+ shma.getNameForPython() + "', size=" + shma.getSize() 
-							+ ")" + System.lineSeparator();
-		int size = 1;
-		for (long l : targetDims) {size *= l;}
-		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataType(Util.getTypeFromInterval(crop)) + "', buffer=im_shm.buf).reshape([";
-		for (long ll : targetDims)
-			code += ll + ", ";
-		code = code.substring(0, code.length() - 2);
-		code += "])" + System.lineSeparator();
-		code += "input_h = im.shape[1]" + System.lineSeparator();
-		code += "input_w = im.shape[0]" + System.lineSeparator();
-		//code += "np.save('/home/carlos/git/cropped.npy', im)" + System.lineSeparator();
-		code += "globals()['input_h'] = input_h" + System.lineSeparator();
-		code += "globals()['input_w'] = input_w" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
-		code += "im_shm.unlink()" + System.lineSeparator();
-		//code += "box_shm.close()" + System.lineSeparator();
-		this.script += code;
-	}
-	
-	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
-	
-	protected abstract void processBoxWithSAM(boolean returnAll);
-
-	/**
-	 * Set an empty consumer as {@link DebugTextPrinter} to avoid the SAMJ model instance
-	 * to communicate its process
-	 */
-	public void disableDebugPrinting() {
-		debugPrinter = (text) -> {};
-	}
-	
-	/**
-	 * Set the {@link DebugTextPrinter} that wants to be used in the model
-	 * @param lineComsumer
-	 * 	the {@link DebugTextPrinter} (which is basically a String consumer used to communicate the
-	 *  SAMJ model instance process) that wants to be used
-	 */
-	public void setDebugPrinter(final DebugTextPrinter lineComsumer) {
-		if (lineComsumer != null) debugPrinter = lineComsumer;
-	}
-	
-	/**
-	 * Set whether the SAMJ model instance has to be more verbose or not
-	 * @param newState
-	 * 	whether the new model is verbose or not
-	 */
-	public void setDebugging(boolean newState) {
-		isDebugging = newState;
-	}
-	
-	/**
-	 * 
-	 * @return true if the SAMJ model instance is verbose or not
-	 */
-	public boolean isDebugging() {
-		return isDebugging;
-	}
-
-	/**
-	 * Method that prints the String in the script parameter to the {@link DebugTextPrinter}
-	 * 
-	 * @param script
-	 * 	text that wants to be printed, usually a Python script
-	 * @param designationOfTheScript
-	 * 	the name (or some string to design) of the text that is going to be printed
-	 */
-	public void printScript(final String script, final String designationOfTheScript) {
-		if (!isDebugging) return;
-		debugPrinter.printText("START: =========== "+designationOfTheScript+" ===========");
-		debugPrinter.printText(LocalDateTime.now().toString());
-		debugPrinter.printText(script);
-		debugPrinter.printText("END:   =========== "+designationOfTheScript+" ===========");
 	}
 	
 	/**

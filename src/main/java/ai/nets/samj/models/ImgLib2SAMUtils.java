@@ -1,6 +1,6 @@
-package ai.nets.samj;
+package ai.nets.samj.models;
 
-import ai.nets.samj.AbstractSamJ2.DebugTextPrinter;
+import ai.nets.samj.models.AbstractSamJ.DebugTextPrinter;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converter;
@@ -132,11 +132,11 @@ public class ImgLib2SAMUtils {
 	protected static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> 
 	reescaleIfNeeded(RandomAccessibleInterval<T> rai) {
 		if ((rai.dimensionsAsLongArray()[0] > rai.dimensionsAsLongArray()[1])
-				&& (rai.dimensionsAsLongArray()[0] > AbstractSamJ2.MAX_ENCODED_AREA_RS)) {
+				&& (rai.dimensionsAsLongArray()[0] > AbstractSamJ.MAX_ENCODED_AREA_RS)) {
 			// TODO reescale
 			return rai;
 		} else if ((rai.dimensionsAsLongArray()[0] < rai.dimensionsAsLongArray()[1])
-				&& (rai.dimensionsAsLongArray()[1] > AbstractSamJ2.MAX_ENCODED_SIDE)) {
+				&& (rai.dimensionsAsLongArray()[1] > AbstractSamJ.MAX_ENCODED_SIDE)) {
 			// TODO reescale
 			return rai;
 		} else {

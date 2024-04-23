@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package ai.nets.samj;
+package ai.nets.samj.install;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +47,8 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 import io.bioimage.modelrunner.utils.CommonUtils;
 
 import org.apache.commons.compress.archivers.ArchiveException;
+
+import ai.nets.samj.models.EfficientViTSamJ;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallerUtils;

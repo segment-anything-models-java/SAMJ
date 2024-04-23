@@ -54,7 +54,7 @@ import ai.nets.samj.gui.components.GridPanel;
 import ai.nets.samj.gui.components.HTMLPane;
 import ai.nets.samj.gui.tools.Files;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
-import ai.nets.samj.SamEnvManager;
+import ai.nets.samj.install.SamEnvManager;
 
 /**
  * Class that creates a subpanel in the main panel of SAMJ default GUI.

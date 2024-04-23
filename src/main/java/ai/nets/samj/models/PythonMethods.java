@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package ai.nets.samj;
+package ai.nets.samj.models;
 
 /**
  * Class that declares the Python methods that can be used then in the script for several tasks

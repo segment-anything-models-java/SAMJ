@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package ai.nets.samj;
+package ai.nets.samj.models;
 
 import java.lang.AutoCloseable;
 import java.time.LocalDateTime;
@@ -52,7 +52,7 @@ import net.imglib2.view.Views;
  * @author Carlos Garcia
  * @author vladimir Ulman
  */
-public abstract class AbstractSamJ2 implements AutoCloseable {
+public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected static int LOWER_REENCODE_THRESH = 50;
 	

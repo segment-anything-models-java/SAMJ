@@ -398,8 +398,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		Rectangle rect = new Rectangle();
 		rect.x = (int) this.encodeCoords[0];
 		rect.y = (int) this.encodeCoords[1];
-		rect.height = (int) this.targetDims[0];
-		rect.width = (int) this.targetDims[1];
+		rect.height = (int) this.targetDims[1];
+		rect.width = (int) this.targetDims[0];
 		return processPoints(pointsList, pointsNegList, rect, true);
 	}
 	
@@ -432,8 +432,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		Rectangle rect = new Rectangle();
 		rect.x = (int) this.encodeCoords[0];
 		rect.y = (int) this.encodeCoords[1];
-		rect.height = (int) this.targetDims[0];
-		rect.width = (int) this.targetDims[1];
+		rect.height = (int) this.targetDims[1];
+		rect.width = (int) this.targetDims[0];
 		return processPoints(pointsList, pointsNegList, rect, returnAll);
 	}
 	
@@ -621,16 +621,16 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	public Rectangle getCurrentlyEncodedArea() {
-		int xMargin = (int) (targetDims[1] * 0.1);
-		int yMargin = (int) (targetDims[0] * 0.1);
+		int xMargin = (int) (targetDims[0] * 0.1);
+		int yMargin = (int) (targetDims[1] * 0.1);
 		Rectangle alreadyEncoded;
 		if (encodeCoords[0] != 0 || encodeCoords[1] != 0 || targetDims[1] != this.img.dimensionsAsLongArray()[1]
 				 || targetDims[0] != this.img.dimensionsAsLongArray()[0]) {
 			alreadyEncoded = new Rectangle((int) encodeCoords[0] + xMargin / 2, (int) encodeCoords[1] + yMargin / 2, 
-					(int) targetDims[1] - xMargin, (int) targetDims[0] - yMargin);
+					(int) targetDims[0] - xMargin, (int) targetDims[1] - yMargin);
 		} else {
 			alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 
-					(int) targetDims[1], (int) targetDims[0]);
+					(int) targetDims[0], (int) targetDims[1]);
 		}
 		return alreadyEncoded;
 	}
@@ -655,7 +655,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		ArrayList<int[]> notInRect = getPointsNotInRect(pointsList, pointsNegList, rect);
 		if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
 				&& alreadyEncoded.width + alreadyEncoded.x >= rect.width + rect.x 
-				&& alreadyEncoded.height + alreadyEncoded.y >= rect.width + rect.y
+				&& alreadyEncoded.height + alreadyEncoded.y >= rect.height + rect.y
 				&& alreadyEncoded.width * 0.9 < rect.width && alreadyEncoded.height * 0.9 < rect.height
 				&& notInRect.size() == 0) {
 			return;
@@ -664,13 +664,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			this.reencodeCrop(new long[] {rect.width, rect.height});
 		} else if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
 				&& alreadyEncoded.width + alreadyEncoded.x >= rect.width + rect.x 
-				&& alreadyEncoded.height + alreadyEncoded.y >= rect.width + rect.y
+				&& alreadyEncoded.height + alreadyEncoded.y >= rect.height + rect.y
 				&& (alreadyEncoded.width * 0.9 > rect.width || alreadyEncoded.height * 0.9 > rect.height)) {
 			this.encodeCoords = new long[] {rect.x, rect.y};
 			this.reencodeCrop(new long[] {rect.width, rect.height});
 		} else if (alreadyEncoded.x <= neededArea.x && alreadyEncoded.y <= neededArea.y 
 				&& alreadyEncoded.width + alreadyEncoded.x >= neededArea.width + neededArea.x 
-				&& alreadyEncoded.height + alreadyEncoded.y >= neededArea.width + neededArea.y
+				&& alreadyEncoded.height + alreadyEncoded.y >= neededArea.height + neededArea.y
 				&& alreadyEncoded.width * 0.9 < neededArea.width && alreadyEncoded.height * 0.9 < neededArea.height
 				&& notInRect.size() == 0) {
 			return;
@@ -770,8 +770,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	public boolean needsMoreResolution(int[] boundingBox) {
 		long xSize = boundingBox[2] - boundingBox[0];
 		long ySize = boundingBox[3] - boundingBox[1];
-		long encodedX = targetDims[1];
-		long encodedY = targetDims[0];
+		long encodedX = targetDims[0];
+		long encodedY = targetDims[1];
 		if (xSize * LOWER_REENCODE_THRESH < encodedX && ySize * LOWER_REENCODE_THRESH < encodedY)
 			return true;
 		return false;
@@ -785,8 +785,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	public boolean boundingBoxTooBig(int[] boundingBox) {
 		long xSize = boundingBox[2] - boundingBox[0];
 		long ySize = boundingBox[3] - boundingBox[1];
-		long encodedX = targetDims[1];
-		long encodedY = targetDims[0];
+		long encodedX = targetDims[0];
+		long encodedY = targetDims[1];
 		if (xSize * UPPER_REENCODE_THRESH > encodedX && ySize * UPPER_REENCODE_THRESH > encodedY)
 			return true;
 		return false;

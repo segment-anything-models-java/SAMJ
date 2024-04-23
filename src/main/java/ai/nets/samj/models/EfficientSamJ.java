@@ -218,7 +218,7 @@ public class EfficientSamJ extends AbstractSamJ {
 		code += "globals()['input_h'] = input_h" + System.lineSeparator();
 		code += "globals()['input_w'] = input_w" + System.lineSeparator();
 		code += "task.update(str(im.shape))" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im))" + System.lineSeparator();
+		code += "im = torch.from_numpy(np.transpose(im, (2, 1, 0)))" + System.lineSeparator();
 		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
 		code += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();

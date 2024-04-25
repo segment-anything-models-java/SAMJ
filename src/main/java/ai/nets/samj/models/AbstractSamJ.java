@@ -710,7 +710,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				return;
 			this.reencodeCrop(new long[] {width, height});
 		} else {
-			System.err.println("2");
 			long[] imgDims = this.img.dimensionsAsLongArray();
 			long width = neededArea.width;
 			long height = neededArea.height;

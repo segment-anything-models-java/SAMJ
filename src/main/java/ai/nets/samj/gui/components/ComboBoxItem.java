@@ -87,7 +87,7 @@ public abstract class ComboBoxItem {
      * 	the possible ImgLib2 data types of the {@link RandomAccessibleInterval}
      * @return the {@link RandomAccessibleInterval} created from the software image object
      */
-    public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getImageasImgLib2();
+    public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getImageAsImgLib2();
 
     @Override
     /**

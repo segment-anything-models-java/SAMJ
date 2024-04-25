@@ -62,7 +62,7 @@ import ai.nets.samj.ui.PromptsResultsDisplay;
 import ai.nets.samj.ui.PromptsResultsDisplay.SAMJException;
 import ai.nets.samj.ui.SAMJLogger;
 import ai.nets.samj.ui.UtilityMethods;
-import ai.nets.samj.SamEnvManager;
+import ai.nets.samj.install.SamEnvManager;
 
 /**
  * Class that creates a default graphical user interface to interact with SAMJ models

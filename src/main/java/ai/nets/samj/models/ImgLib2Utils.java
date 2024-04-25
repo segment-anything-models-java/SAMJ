@@ -17,8 +17,9 @@
  * limitations under the License.
  * #L%
  */
-package ai.nets.samj;
+package ai.nets.samj.models;
 
+import ai.nets.samj.models.AbstractSamJ.DebugTextPrinter;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converter;
@@ -32,76 +33,12 @@ import net.imglib2.util.Cast;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-import java.time.LocalDateTime;
-
 /**
- * Class that contains methods that can be sued by SAMJ models
- * @author Vladimir Ulman
+ * Methods used to feed images in the correct form to SAM models
+ * 
  * @author Carlos Garcia
  */
-public class AbstractSamJ {
-
-	/** Essentially, a syntactic-shortcut for a String consumer */
-	public interface DebugTextPrinter { void printText(String text); }
-	/**
-	 * Default String consumer that just prints the Strings that are inputed with {@link System#out}
-	 */
-	protected DebugTextPrinter debugPrinter = System.out::println;
-	/**
-	 * Whether the SAMJ model instance is verbose or not
-	 */
-	protected boolean isDebugging = true;
-
-	/**
-	 * Set an empty consumer as {@link DebugTextPrinter} to avoid the SAMJ model instance
-	 * to communicate its process
-	 */
-	public void disableDebugPrinting() {
-		debugPrinter = (text) -> {};
-	}
-	
-	/**
-	 * Set the {@link DebugTextPrinter} that wants to be used in the model
-	 * @param lineComsumer
-	 * 	the {@link DebugTextPrinter} (which is basically a String consumer used to communicate the
-	 *  SAMJ model instance process) that wants to be used
-	 */
-	public void setDebugPrinter(final DebugTextPrinter lineComsumer) {
-		if (lineComsumer != null) debugPrinter = lineComsumer;
-	}
-	
-	/**
-	 * Set whether the SAMJ model instance has to be more verbose or not
-	 * @param newState
-	 * 	whether the new model is verbose or not
-	 */
-	public void setDebugging(boolean newState) {
-		isDebugging = newState;
-	}
-	
-	/**
-	 * 
-	 * @return true if the SAMJ model instance is verbose or not
-	 */
-	public boolean isDebugging() {
-		return isDebugging;
-	}
-
-	/**
-	 * Method that prints the String in the script parameter to the {@link DebugTextPrinter}
-	 * 
-	 * @param script
-	 * 	text that wants to be printed, usually a Python script
-	 * @param designationOfTheScript
-	 * 	the name (or some string to design) of the text that is going to be printed
-	 */
-	public void printScript(final String script, final String designationOfTheScript) {
-		if (!isDebugging) return;
-		debugPrinter.printText("START: =========== "+designationOfTheScript+" ===========");
-		debugPrinter.printText(LocalDateTime.now().toString());
-		debugPrinter.printText(script);
-		debugPrinter.printText("END:   =========== "+designationOfTheScript+" ===========");
-	}
+public class ImgLib2Utils {
 
 	/**
 	 * Get the maximum and minimum pixel values of an {@link IterableInterval}
@@ -170,8 +107,8 @@ public class AbstractSamJ {
 	 *  RAI to be potentially normalized.
 	 * @return The input image itself or a View of it with {@link FloatType} data type
 	 */
-	public <T extends RealType<T> & NativeType<T>>
-	RandomAccessibleInterval<FloatType> normalizedView(final RandomAccessibleInterval<T> inImg) {
+	public static <T extends RealType<T> & NativeType<T>>
+	RandomAccessibleInterval<FloatType> normalizedView(final RandomAccessibleInterval<T> inImg, DebugTextPrinter debugPrinter) {
 		final double[] minMax = new double[2];
 		getMinMaxPixelValue(Views.iterable(inImg), minMax);
 		///debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ NORMALIZED, returning Converted view");
@@ -204,8 +141,8 @@ public class AbstractSamJ {
 	 *  RAI to be potentially converted to RGB.
 	 * @return The input image itself or a View of it in {@link UnsignedByteType} data type
 	 */
-	public <T extends RealType<T> & NativeType<T>>
-	RandomAccessibleInterval<UnsignedByteType> convertViewToRGB(final RandomAccessibleInterval<T> inImg) {
+	public static <T extends RealType<T> & NativeType<T>>
+	RandomAccessibleInterval<UnsignedByteType> convertViewToRGB(final RandomAccessibleInterval<T> inImg, DebugTextPrinter debugPrinter) {
 		if (Util.getTypeFromInterval(inImg) instanceof UnsignedByteType) {
 			debugPrinter.printText("IMAGE IS RGB, returning directly itself");
 			return Cast.unchecked(inImg);
@@ -214,5 +151,20 @@ public class AbstractSamJ {
 		debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ RGB, returning Converted view");
 		getMinMaxPixelValue(Views.iterable(inImg), minMax);
 		return convertViewToRGB(inImg, minMax);
+	}
+	
+	protected static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> 
+	reescaleIfNeeded(RandomAccessibleInterval<T> rai) {
+		if ((rai.dimensionsAsLongArray()[0] > rai.dimensionsAsLongArray()[1])
+				&& (rai.dimensionsAsLongArray()[0] > AbstractSamJ.MAX_ENCODED_AREA_RS)) {
+			// TODO reescale
+			return rai;
+		} else if ((rai.dimensionsAsLongArray()[0] < rai.dimensionsAsLongArray()[1])
+				&& (rai.dimensionsAsLongArray()[1] > AbstractSamJ.MAX_ENCODED_SIDE)) {
+			// TODO reescale
+			return rai;
+		} else {
+			return rai;
+		}
 	}
 }

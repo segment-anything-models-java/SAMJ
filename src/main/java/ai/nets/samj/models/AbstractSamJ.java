@@ -65,7 +65,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	public static long MAX_ENCODED_SIDE = MAX_ENCODED_AREA_RS * 3;
 	
-	protected static long ENCODE_MARGIN = 128;
+	protected static long ENCODE_MARGIN = 64;
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface DebugTextPrinter { void printText(String text); }
@@ -690,6 +690,64 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @throws RuntimeException
 	 */
 	private void evaluateReencodingNeeded(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle rect) 
+			throws IOException, InterruptedException, RuntimeException {
+		Rectangle extendedRect = extendRect(rect, 20);
+		
+		Rectangle alreadyEncoded = getCurrentlyEncodedArea();
+		Rectangle neededArea = getApproximateAreaNeeded(pointsList, pointsNegList, rect);
+		if (rect.equals(alreadyEncoded)) neededArea = getApproximateAreaNeeded(pointsList, pointsNegList);
+		ArrayList<int[]> notInRect = getPointsNotInRect(pointsList, pointsNegList, rect);
+		
+		if (rectContainsRect(alreadyEncoded, neededArea)
+				&& alreadyEncoded.width * 0.7 < extendedRect.width && alreadyEncoded.height * 0.7 < extendedRect.height) {
+			System.err.println("0");
+			return;
+		} else if ((alreadyEncoded.width * 0.7 > extendedRect.width || alreadyEncoded.height * 0.7 > extendedRect.height)
+				&& extendedRect.contains(neededArea)) {
+			System.err.println("1");
+			this.encodeCoords = new long[] {extendedRect.x, extendedRect.y};
+			long width = extendedRect.width;
+			long height = extendedRect.height;
+			if (alreadyEncoded.x == encodeCoords[0] && alreadyEncoded.y == encodeCoords[1]
+					&& alreadyEncoded.width == width && alreadyEncoded.height == height)
+				return;
+			this.reencodeCrop(new long[] {width, height});
+		} else {
+			System.err.println("2");
+			long[] imgDims = this.img.dimensionsAsLongArray();
+			long width = neededArea.width;
+			long height = neededArea.height;
+			this.encodeCoords[0] = Math.min(neededArea.x, imgDims[0] - width);
+			this.encodeCoords[1]  = Math.min(neededArea.y, imgDims[1] - height);
+			if (alreadyEncoded.x == encodeCoords[0] && alreadyEncoded.y == encodeCoords[1]
+					&& alreadyEncoded.width == width && alreadyEncoded.height == height)
+				return;
+			this.reencodeCrop(new long[] {width, height});
+		}
+	}
+	
+	private Rectangle extendRect(Rectangle rect, int percentage) {
+		double newX = Math.max(0, Math.min(rect.x - percentage * rect.width / 2 / 100, rect.x - ENCODE_MARGIN));
+		double newY = Math.max(0, Math.min(rect.y - percentage * rect.height / 2 / 100, rect.y - ENCODE_MARGIN));
+		
+		double newW = Math.min(
+				Math.max(percentage * rect.width / 100, 2 * ENCODE_MARGIN) + rect.width+ newX, img.dimensionsAsLongArray()[0]) 
+				- newX;
+		double newH = Math.min(
+				Math.max(percentage * rect.height / 100, 2 * ENCODE_MARGIN) + rect.height + newY, img.dimensionsAsLongArray()[1]) 
+				- newY;
+		return new Rectangle((int) newX, (int) newY, (int) newW, (int) newH);
+	}
+	
+	private static boolean rectContainsRect(Rectangle outer, Rectangle inner) {
+		if (outer.x <= inner.x && outer.y <= inner.y 
+				&& outer.width + outer.x >= inner.width + inner.x 
+				&& outer.height + outer.y >= inner.height + inner.y)
+			return true;
+		return false;
+	}
+
+	private void evaluateReencodingNeeded2(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle rect) 
 			throws IOException, InterruptedException, RuntimeException {
 		Rectangle alreadyEncoded = getCurrentlyEncodedArea();
 		Rectangle neededArea = getApproximateAreaNeeded(pointsList, pointsNegList, rect);

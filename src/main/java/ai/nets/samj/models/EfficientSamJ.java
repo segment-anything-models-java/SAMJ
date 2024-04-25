@@ -393,6 +393,7 @@ public class EfficientSamJ extends AbstractSamJ {
 		long[] dims = rai.dimensionsAsLongArray();
 		if (dims.length == 2)
 			rai = Views.addDimension(rai, 0, 0);
+		dims = rai.dimensionsAsLongArray();
 		if (dims[2] == 1)
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );

@@ -700,11 +700,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		
 		if (rectContainsRect(alreadyEncoded, neededArea)
 				&& alreadyEncoded.width * 0.7 < extendedRect.width && alreadyEncoded.height * 0.7 < extendedRect.height) {
-			System.err.println("0");
 			return;
-		} else if ((alreadyEncoded.width * 0.7 > extendedRect.width || alreadyEncoded.height * 0.7 > extendedRect.height)
-				&& extendedRect.contains(neededArea)) {
-			System.err.println("1");
+		} else if (extendedRect.contains(neededArea)) {
 			this.encodeCoords = new long[] {extendedRect.x, extendedRect.y};
 			long width = extendedRect.width;
 			long height = extendedRect.height;
@@ -731,10 +728,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		double newY = Math.max(0, Math.min(rect.y - percentage * rect.height / 2 / 100, rect.y - ENCODE_MARGIN));
 		
 		double newW = Math.min(
-				Math.max(percentage * rect.width / 100, 2 * ENCODE_MARGIN) + rect.width+ newX, img.dimensionsAsLongArray()[0]) 
+				Math.max(2 * percentage * rect.width / 100, 2 * ENCODE_MARGIN) + rect.width + newX, img.dimensionsAsLongArray()[0]) 
 				- newX;
 		double newH = Math.min(
-				Math.max(percentage * rect.height / 100, 2 * ENCODE_MARGIN) + rect.height + newY, img.dimensionsAsLongArray()[1]) 
+				Math.max(2 * percentage * rect.height / 100, 2 * ENCODE_MARGIN) + rect.height + newY, img.dimensionsAsLongArray()[1]) 
 				- newY;
 		return new Rectangle((int) newX, (int) newY, (int) newW, (int) newH);
 	}
@@ -821,13 +818,15 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 		minX = (int) Math.max(0,  minX - Math.max((maxX - minX) * 0.1, ENCODE_MARGIN));
 		minY = (int) Math.max(0,  minY - Math.max((maxY - minY) * 0.1, ENCODE_MARGIN));
-		maxX = (int) Math.min(img.dimensionsAsLongArray()[0],  maxX + Math.max((maxX - minX) * 0.1, ENCODE_MARGIN));
-		maxY = (int) Math.min(img.dimensionsAsLongArray()[1],  maxY + Math.max((maxY - minY) * 0.1, ENCODE_MARGIN));
+		maxX = (int) (maxX + Math.max((maxX - minX) * 0.1, ENCODE_MARGIN));
+		maxY = (int) (maxY + Math.max((maxY - minY) * 0.1, ENCODE_MARGIN));
 		Rectangle rect = new Rectangle();
 		rect.x = minX;
 		rect.y = minY;
 		rect.width = (int) Math.max(maxX - minX, MIN_ENCODED_AREA_SIDE);
 		rect.height = (int) Math.max(maxY - minY, MIN_ENCODED_AREA_SIDE);
+		rect.x -= (Math.max(rect.x + rect.width - img.dimensionsAsLongArray()[0], 0));
+		rect.y -= (Math.max(rect.y + rect.height - img.dimensionsAsLongArray()[1], 0));
 		return rect;
 	}
 	
@@ -851,13 +850,15 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 		minX = (int) Math.max(0,  minX - Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
 		minY = (int) Math.max(0,  minY - Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
-		maxX = (int) Math.min(img.dimensionsAsLongArray()[0],  maxX + Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
-		maxY = (int) Math.min(img.dimensionsAsLongArray()[1],  maxY + Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
+		maxX = (int) (maxX + Math.max(focusedArea.width * 0.1, ENCODE_MARGIN));
+		maxY = (int) (maxY + Math.max(focusedArea.height * 0.1, ENCODE_MARGIN));
 		Rectangle rect = new Rectangle();
 		rect.x = minX;
 		rect.y = minY;
 		rect.width = (int) Math.max(maxX - minX, MIN_ENCODED_AREA_SIDE);
 		rect.height = (int) Math.max(maxY - minY, MIN_ENCODED_AREA_SIDE);
+		rect.x -= (Math.max(rect.x + rect.width - img.dimensionsAsLongArray()[0], 0));
+		rect.y -= (Math.max(rect.y + rect.height - img.dimensionsAsLongArray()[1], 0));
 		return rect;
 	}
 	

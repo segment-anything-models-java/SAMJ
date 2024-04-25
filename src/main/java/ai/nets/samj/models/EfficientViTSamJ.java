@@ -301,7 +301,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	protected <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai) {
 		checkImageIsFine(rai);
 		long[] dims = rai.dimensionsAsLongArray();
-		this.img = Views.interval(rai, new long[] {0, 0, 0}, new long[] {dims[0] - 1, dims[1] - 1, 2});
+		if (dims.length == 2)
+			rai = Views.addDimension(rai, 0, 0);
+		if (dims[2] == 1)
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
+		this.img = rai;
 		this.targetDims = img.dimensionsAsLongArray();
 	}
 

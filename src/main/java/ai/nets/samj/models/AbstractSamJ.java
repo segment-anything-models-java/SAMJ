@@ -464,7 +464,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
-
+		boolean providedReencodingArea = true;
 		if (encodingArea.x == -1) {
 			encodingArea = getCurrentlyEncodedArea();
 		} else {
@@ -690,8 +690,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		} else if (notInRect.size() != 0) {
 			this.encodeCoords = new long[] {(long) Math.max(0, rect.x - rect.width * 0.1), 
 											(long) Math.max(0, rect.y - rect.height * 0.1)};
-			this.reencodeCrop(new long[] {(long) Math.min(rect.width * 0.2, img.dimensionsAsLongArray()[0] - encodeCoords[0]), 
-					(long) Math.min(rect.height * 0.2, img.dimensionsAsLongArray()[1] - encodeCoords[1])});
+			long[] imgDims = this.img.dimensionsAsLongArray();
+			long width = Math.min(imgDims[0], Math.max(rect.x + rect.width, neededArea.x + neededArea.width) - encodeCoords[0]);
+			long height = Math.min(imgDims[1], Math.max(rect.y + rect.height, neededArea.y + neededArea.height) - encodeCoords[1]);
+			if (alreadyEncoded.x == encodeCoords[0] && alreadyEncoded.y == encodeCoords[1]
+					&& alreadyEncoded.width == width && alreadyEncoded.height == height)
+				return;
+			this.reencodeCrop(new long[] {width, height});
 		} else if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
 				&& alreadyEncoded.width + alreadyEncoded.x >= rect.width + rect.x 
 				&& alreadyEncoded.height + alreadyEncoded.y >= rect.height + rect.y
@@ -699,8 +704,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				&& rect.contains(neededArea)) {
 			this.encodeCoords = new long[] {(long) Math.max(0, rect.x - rect.width * 0.1), 
 											(long) Math.max(0, rect.y - rect.height * 0.1)};
-			this.reencodeCrop(new long[] {(long) Math.min(rect.width * 0.2, img.dimensionsAsLongArray()[0] - encodeCoords[0]), 
-										  (long) Math.min(rect.height * 0.2, img.dimensionsAsLongArray()[1] - encodeCoords[1])});
+			long[] imgDims = this.img.dimensionsAsLongArray();
+			long width = Math.min(imgDims[0], Math.max(rect.x + rect.width, neededArea.x + neededArea.width) - encodeCoords[0]);
+			long height = Math.min(imgDims[1], Math.max(rect.y + rect.height, neededArea.y + neededArea.height) - encodeCoords[1]);
+			if (alreadyEncoded.x == encodeCoords[0] && alreadyEncoded.y == encodeCoords[1]
+					&& alreadyEncoded.width == width && alreadyEncoded.height == height)
+				return;
+			this.reencodeCrop(new long[] {width, height});
 		} else if (alreadyEncoded.x <= neededArea.x && alreadyEncoded.y <= neededArea.y 
 				&& alreadyEncoded.width + alreadyEncoded.x >= neededArea.width + neededArea.x 
 				&& alreadyEncoded.height + alreadyEncoded.y >= neededArea.height + neededArea.y
@@ -709,8 +719,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			return;
 		} else {
 			this.encodeCoords = new long[] {Math.min(rect.x, neededArea.x), Math.min(rect.y, neededArea.y)};
-			this.reencodeCrop(new long[] {Math.max(rect.x + rect.width, neededArea.x + neededArea.width) - encodeCoords[0],
-											Math.max(rect.y + rect.height, neededArea.y + neededArea.height) - encodeCoords[1]});
+			long[] imgDims = this.img.dimensionsAsLongArray();
+			long width = Math.min(imgDims[0], Math.max(rect.x + rect.width, neededArea.x + neededArea.width) - encodeCoords[0]);
+			long height = Math.min(imgDims[1], Math.max(rect.y + rect.height, neededArea.y + neededArea.height) - encodeCoords[1]);
+			if (alreadyEncoded.x == encodeCoords[0] && alreadyEncoded.y == encodeCoords[1]
+					&& alreadyEncoded.width == width && alreadyEncoded.height == height)
+				return;
+			this.reencodeCrop(new long[] {width, height});
 		}
 	}
 	

@@ -59,13 +59,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	/**
 	 * TODO rethink maximum size
 	 */
-	public static long MAX_ENCODED_AREA_RS = 1024;
+	public static long MAX_ENCODED_AREA_RS = 512;
 	
 	public static long MIN_ENCODED_AREA_SIDE = 128;
 	
 	public static long MAX_ENCODED_SIDE = MAX_ENCODED_AREA_RS * 3;
 	
-	protected static long ENCODE_MARGIN = 20;
+	protected static long ENCODE_MARGIN = 128;
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface DebugTextPrinter { void printText(String text); }
@@ -123,6 +123,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * This image is stored as "xyc"
 	 */
 	protected RandomAccessibleInterval<?> img;
+	/**
+	 * Whether the image is small or not. If the image is small, it is only encoded once, if
+	 * it is not, the image is encoded on demand
+	 */
+	protected boolean imageSmall = true;
 	
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
@@ -212,6 +217,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		if (img.dimensionsAsLongArray()[0] * img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
 				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
 			this.targetDims = new long[] {0, 0, 0};
+			this.imageSmall = false;
 			return;
 		}
 		this.script = "";
@@ -466,7 +472,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
-		if (img.dimensionsAsLongArray()[0] > 0 || img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS) {
+		if (!this.imageSmall || this.encodeCoords[0] != 0 || this.encodeCoords[1] != 0 
+				|| targetDims[0] != img.dimensionsAsLongArray()[0] || targetDims[1] != img.dimensionsAsLongArray()[1]) {
 			if (encodingArea.x == -1) {
 				encodingArea = getCurrentlyEncodedArea();
 			} else {
@@ -538,12 +545,15 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Polygon> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		if (needsMoreResolution(boundingBox)) {
-			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			reencodeCrop();
-		} else if (!isAreaEncoded(boundingBox)) {
-			this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
-			reencodeCrop();
+		if (!this.imageSmall || this.encodeCoords[0] != 0 || this.encodeCoords[1] != 0 
+				|| targetDims[0] != img.dimensionsAsLongArray()[0] || targetDims[1] != img.dimensionsAsLongArray()[1]) {
+			if (needsMoreResolution(boundingBox)) {
+				this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+				reencodeCrop();
+			} else if (!isAreaEncoded(boundingBox)) {
+				this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
+				reencodeCrop();
+			}
 		}
 		int[] adaptedBoundingBox = new int[] {(int) (boundingBox[0] - encodeCoords[0]), (int) (boundingBox[1] - encodeCoords[1]),
 				(int) (boundingBox[2] - encodeCoords[0]), (int) (boundingBox[3] - encodeCoords[1])};;
@@ -639,8 +649,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	public Rectangle getCurrentlyEncodedArea() {
-		int xMargin = (int) (targetDims[0] * 0.1);
-		int yMargin = (int) (targetDims[1] * 0.1);
+		// TODO remove int xMargin = (int) (targetDims[0] * 0.1);
+		// TODO remove int yMargin = (int) (targetDims[1] * 0.1);
 		Rectangle alreadyEncoded;
 		alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 
 				(int) targetDims[0], (int) targetDims[1]);
@@ -683,6 +693,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			throws IOException, InterruptedException, RuntimeException {
 		Rectangle alreadyEncoded = getCurrentlyEncodedArea();
 		Rectangle neededArea = getApproximateAreaNeeded(pointsList, pointsNegList, rect);
+		if (rect.equals(alreadyEncoded)) neededArea = getApproximateAreaNeeded(pointsList, pointsNegList);
 		ArrayList<int[]> notInRect = getPointsNotInRect(pointsList, pointsNegList, rect);
 		if (alreadyEncoded.x <= rect.x && alreadyEncoded.y <= rect.y 
 				&& alreadyEncoded.width + alreadyEncoded.x >= rect.width + rect.x 
@@ -721,8 +732,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			this.reencodeCrop(new long[] {width, height});
 		} else {
 			long[] imgDims = this.img.dimensionsAsLongArray();
-			long width = alreadyEncoded.width;
-			long height = alreadyEncoded.height;
+			long width = neededArea.width;
+			long height = neededArea.height;
 			this.encodeCoords[0] = Math.min(neededArea.x, imgDims[0] - width);
 			this.encodeCoords[1]  = Math.min(neededArea.y, imgDims[1] - height);
 			if (alreadyEncoded.x == encodeCoords[0] && alreadyEncoded.y == encodeCoords[1]
@@ -752,11 +763,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 		minX = (int) Math.max(0,  minX - Math.max((maxX - minX) * 0.1, ENCODE_MARGIN));
 		minY = (int) Math.max(0,  minY - Math.max((maxY - minY) * 0.1, ENCODE_MARGIN));
+		maxX = (int) Math.min(img.dimensionsAsLongArray()[0],  maxX + Math.max((maxX - minX) * 0.1, ENCODE_MARGIN));
+		maxY = (int) Math.min(img.dimensionsAsLongArray()[1],  maxY + Math.max((maxY - minY) * 0.1, ENCODE_MARGIN));
 		Rectangle rect = new Rectangle();
 		rect.x = minX;
 		rect.y = minY;
-		rect.width = maxX - minY;
-		rect.height = maxY - minY;
+		rect.width = (int) Math.max(maxX - minX, MIN_ENCODED_AREA_SIDE);
+		rect.height = (int) Math.max(maxY - minY, MIN_ENCODED_AREA_SIDE);
 		return rect;
 	}
 	

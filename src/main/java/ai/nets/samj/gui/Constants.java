@@ -25,6 +25,10 @@ package ai.nets.samj.gui;
  */
 public class Constants {
 	
+	/**
+	 * Version of the library
+	 * TODO should be coordinated with the version of the plugin?
+	 */
 	public static final String VERSION = "0.0.1";
 
 }

@@ -743,6 +743,15 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return false;
 	}
 
+	/**
+	 * TODO remove
+	 * @param pointsList
+	 * @param pointsNegList
+	 * @param rect
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws RuntimeException
+	 */
 	private void evaluateReencodingNeeded2(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle rect) 
 			throws IOException, InterruptedException, RuntimeException {
 		Rectangle alreadyEncoded = getCurrentlyEncodedArea();

@@ -104,7 +104,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Text field containing copyrigth info
 	 */
-	private JTextField txtStatus = new JTextField("(c) SAMJ team 2024 - EARLY RELEASE");
+	private JTextField txtStatus = new JTextField("(c) SAMJ team 2024 - " + Constants.VERSION);
 	/**
 	 * Button that activates the annotation with SAMJ models using bounding box prompts
 	 */

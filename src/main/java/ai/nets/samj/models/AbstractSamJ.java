@@ -117,6 +117,18 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	protected double[] scale;
 	/**
+	 * TODO this should be false by default, but at the moment IJ is the only consumer
+	 * IMPORTANT (ONLY FOR IMAGEJ ROI MANAGER)
+	 * If the resulting polygons are going to be displayed using 
+	 * ImageJ's ROI manager, this needs to be set to true.
+	 * 
+	 * If this is set to true, the Polygon ROI produced by the model will be increased
+	 * by one pixel on the right and down sides. This is because IJ's ROI manager takes
+	 * the upper left corner of the pixel to anchor the Polygon ROI, effectively leaving the
+	 * the pixels on the right and lower part out of the ROI.
+	 */
+	protected boolean isIJROIManager = true;
+	/**
 	 * Complete image being annotated. Usually this image is encoded completely 
 	 * but for larger images, zooms of it might be encoded instead of the whole image.
 	 * 
@@ -156,6 +168,22 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	public boolean isDebugging() {
 		return isDebugging;
+	}
+	
+	/**
+	 * IMPORTANT (only for ImageJ)
+	 * If the resulting polygons are going to be displayed using 
+	 * ImageJ's ROI manager, this method method needs to be called with true.
+	 * 
+	 * If this is set to true, the Polygon ROI produced by the model will be increased
+	 * by one pixel on the right and down sides. This is because IJ's ROI manager takes
+	 * the upper left corner of the pixel to anchor the Polygon ROI, effectively leaving the
+	 * the pixels on the right and lower part out of the ROI.
+	 * @param isUsingIJRoiManager
+	 * 	whether we are going to give the Polygon ROI to ImageJ ROI manager
+	 */
+	public void setUsinIJRoiManager(boolean isUsingIJRoiManager) {
+		this.isIJROIManager = isUsingIJRoiManager;
 	}
 
 	/**

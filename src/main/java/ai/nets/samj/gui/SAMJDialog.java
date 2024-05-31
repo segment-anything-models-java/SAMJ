@@ -385,8 +385,13 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 				GUIsOwnLog.warn("Not starting encoding as the selected model is not installed.");
 
 			GUIsOwnLog.warn("Start the encoding");
-			if (display == null || !display.getFocusedImage().equals(((ComboBoxItem) this.cmbImage.getSelectedItem()).getValue()))
+			if (display == null 
+					|| !display.getFocusedImage().equals(((ComboBoxItem) this.cmbImage.getSelectedItem()).getValue())) {
 				display = displayInterface.getPrompts(((ComboBoxItem) this.cmbImage.getSelectedItem()).getValue());
+				display.setRectIconConsumer(b -> this.bnRect.setPressed(b));
+				display.setFreelineIconConsumer(b -> this.bnBrush.setPressed(b));
+				display.setPointsIconConsumer(b -> this.bnPoints.setPressed(b));
+			}
 			SAMModel selectedSAMModel = this.panelModel.getSelectedModel();
 			this.bnStart.setPressed(true);
 			new Thread(() -> {

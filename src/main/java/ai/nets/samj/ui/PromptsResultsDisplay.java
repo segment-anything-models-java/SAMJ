@@ -46,6 +46,36 @@ public interface PromptsResultsDisplay {
 	    DECODING, 
 	    OTHER; 
 	}
+	
+	@FunctionalInterface
+	/**
+	 * Functional interface that the consumer software can use to alter the state of the buttons
+	 * in the SAMJ dialog
+	 */
+	interface BooleanConsumer {
+	    void accept(boolean value);
+	}
+	
+	/**
+	 * Consumer that allows setting the state of the Rectangle roi icon
+	 * @param consumer
+	 * 	the consumer to modify the state of the REctangle roi icon
+	 */
+	void setRectIconConsumer(BooleanConsumer consumer);
+	
+	/**
+	 * Consumer that allows setting the state of the points roi icon
+	 * @param consumer
+	 * 	the consumer to modify the state of the points roi icon
+	 */
+	void setPointsIconConsumer(BooleanConsumer consumer);
+	
+	/**
+	 * Consumer that allows setting the state of the freeline roi icon
+	 * @param consumer
+	 * 	the consumer to modify the state of the freeline roi icon
+	 */
+	void setFreelineIconConsumer(BooleanConsumer consumer);
 
 	/**
 	 * Get the image on which the wanted model will act.

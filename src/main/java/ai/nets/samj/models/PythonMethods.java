@@ -99,4 +99,34 @@ public class PythonMethods {
 			+ "globals()['find_contour_neighbors'] = find_contour_neighbors" +  System.lineSeparator()
 			+ "globals()['trace_contour'] = trace_contour" +  System.lineSeparator()
 			+ "globals()['get_polygons_from_binary_mask'] = get_polygons_from_binary_mask" +  System.lineSeparator();
+	
+	
+	protected static String SAM_EVERYTHING = ""
+			+ "def sam_everything(point_list, return_all=False):\n"
+			+ "    masks = np.zeros((input_h, input_w, 0), dtype='uint8')\n"
+			+ "    scores = []\n"
+			+ "    for ii, pp in enumerate(point_list):\n"
+			+ "        input_points = np.array(pp).reshape(1, 2)\n"
+			+ "        input_points = torch.reshape(torch.tensor(input_points), [1, 1, -1, 2])\n"
+			+ "        input_label = np.array([0])\n"
+			+ "        input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])\n"
+			+ "        predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images,\n"
+			+ "				input_points,\n"
+			+ "				input_label,\n"
+			+ "				multimask_output=True,\n"
+			+ "				input_h=input_h,\n"
+			+ "				input_w=input_w,\n"
+			+ "				output_h=input_h,\n"
+			+ "				output_w=input_w,)\n"
+			+ "        sorted_ids = torch.argsort(predicted_iou, dim=-1, descending=True)\n"
+			+ "        predicted_iou = torch.take_along_dim(predicted_iou, sorted_ids, dim=2)\n"
+			+ "        predicted_logits = torch.take_along_dim(predicted_logits, sorted_ids[..., None, None], dim=2)\n"
+			+ "        mask = torch.ge(predicted_logits[0, 0, 0, :, :], 0).cpu().detach().numpy()\n"
+			+ "        if predicted_iou[0] > 1:\n"
+			+ "            masks = np.concatenate((masks, mask.reshape(mask.shape[0], mask.shape[1], 1)), axis=1)\n"
+			+ "            scores.append(predicted_iou[0].cpu().detach().numpy())\n"
+			+ "    added_masks = masks.sum(2)\n"
+			+ "    inds = np.where(added_masks > 1)\n"
+			+ "    while inds[0].shape[0] > 0:\n"
+			+ "        overlapping = np.where(masks[inds[0][0], inds[1][0]])[0]";
 }

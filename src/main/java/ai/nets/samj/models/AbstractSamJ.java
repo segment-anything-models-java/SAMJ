@@ -367,6 +367,30 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return polys;
 	}
 	
+	/**
+	 * TODO explain what happens with big images
+	 * Method that uses SAM-like models to create a pseudo-segmentation of the image of interest.
+	 * The objectSize argument is used to create a grid of points that cover the original image 
+	 * and that will be used as prompts to the model. 
+	 * The object masks with more accuracy will be put together to generate a pseudo-segmentation mask.
+	 * 
+	 * Imagine that you have a 512x256 image, with objects of an approximate size of 50 pixels. This method
+	 * will create a grid of ceil(512 / 30) x ceil(256 / 30) = 18 x 9 equally spaced points, then each of
+	 * them will be prompted to the SAM model to see if there is any image in the position of the point.
+	 * Finally, all the masks that have been found will be put together creating a pseudo-mask that 
+	 * will probably have not detected eery object in the image.
+	 * Regard, that the smaller the objectSize argument, the more prompts will be evaluated, the more time
+	 * the pseudo-segmentation will take but the more objects will be detected.
+	 * 
+	 * @param objectSize
+	 * 	mean size of the object
+	 * @param returnAll
+	 * 	whether to return all the ROIS found with one prompt or only the largest one
+	 * @return a pseudo-segmentation mask
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
 	public List<Polygon> everything(int objectSize, boolean returnAll) 
 			throws IOException, RuntimeException, InterruptedException {
 		int encodingSize = OPTIMAL_BBOX_IM_RATIO * objectSize;

@@ -141,6 +141,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	protected boolean imageSmall = true;
 	
+	protected abstract void samEverything(List<int[]> grid, boolean returnAll);
+	
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
 	protected abstract void processBoxWithSAM(boolean returnAll);
@@ -362,6 +364,29 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
 			polys.add( new Polygon(xArr, yArr, xArr.length) );
 		}
+		return polys;
+	}
+	
+	public List<Polygon> everything(int objectSize, boolean returnAll) 
+			throws IOException, RuntimeException, InterruptedException {
+		int encodingSize = OPTIMAL_BBOX_IM_RATIO * objectSize;
+		long imWidth = this.img.dimensionsAsLongArray()[0];
+		long imHeight = this.img.dimensionsAsLongArray()[1];
+		double pointPromptsX = Math.ceil(imWidth / (double) objectSize);
+		double pointPromptsY = Math.ceil(imHeight / (double) objectSize);
+		List<int[]> grid = new ArrayList<int[]>();
+		
+		for (int i = 0; i < pointPromptsX; i ++) {
+			for (int j = 0; j < pointPromptsX; j ++) {
+				grid.add(null);
+			}
+		}
+		this.script = "";
+		samEverything(grid, returnAll);
+		printScript(script, "SAM-EVERYHING");
+		List<Polygon> polys = processAndRetrieveContours(null);
+		recalculatePolys(polys, encodeCoords);
+		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	

@@ -145,7 +145,7 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
-		<dl-modelrunner.version>0.5.8</dl-modelrunner.version>
+		<dl-modelrunner.version>0.5.9</dl-modelrunner.version>
 	</properties>
 
 	<dependencies>

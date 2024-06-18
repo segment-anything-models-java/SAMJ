@@ -93,7 +93,7 @@ public class SamEnvManager {
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-				"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly", "mkl=2024.0.0"});
+				"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly"});
 		else 
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
 					"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly"});
@@ -106,7 +106,13 @@ public class SamEnvManager {
 	/**
 	 * Dependencies for every environment that need to be installed using PIP
 	 */
-	final public static List<String> INSTALL_PIP_DEPS = Arrays.asList(new String[] {"appose"});
+	final public static List<String> INSTALL_PIP_DEPS;
+	static {
+		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl=2023.2.2", "appose"});
+		else 
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"appose"});
+	}
 	/**
 	 * Dependencies for EfficientViTSAM environments that need to be installed using PIP
 	 */

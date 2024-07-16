@@ -19,6 +19,7 @@
  */
 package ai.nets.samj.models;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,7 +41,6 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
@@ -53,6 +53,11 @@ import net.imglib2.view.Views;
  * @author Vladimir Ulman
  */
 public class EfficientViTSamJ extends AbstractSamJ {
+	
+	/**
+	 * List of encodings that are cached to avoid recalculating
+	 */
+	List<String> savedEncodings = new ArrayList<String>();
 	/**
 	 * Map that associates the key for each of the existing EfficientViTSAM models to its complete name
 	 */
@@ -95,6 +100,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			+ "model.load_state_dict(weight)" + System.lineSeparator()
 			+ "predictor = EfficientViTSamPredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
+			+ "encodings_map = {}" + System.lineSeparator()
+			+ "globals()['encodings_map'] = encodings_map" + System.lineSeparator()
 			+ "globals()['shared_memory'] = shared_memory" + System.lineSeparator()
 			+ "globals()['measure'] = measure" + System.lineSeparator()
 			+ "globals()['np'] = np" + System.lineSeparator()
@@ -498,5 +505,20 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	protected void cellSAM(List<int[]> grid, boolean returnAll) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String persistEncodingScript(String encodingName) {
+		return "encodings_map['" + encodingName + "'] = predictor.features";
+	}
+
+	@Override
+	public String selectEncodingScript(String encodingName) {
+		return "predictor.features = encodings_map['" + encodingName + "']";		
+	}
+
+	@Override
+	public String deleteEncodingScript(String encodingName) {
+		return "del encodings_map['" + encodingName + "']";
 	}
 }

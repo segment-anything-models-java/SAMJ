@@ -23,6 +23,7 @@ import ai.nets.samj.install.SamEnvManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
@@ -48,6 +49,12 @@ import net.imglib2.view.Views;
  * @author vladimir Ulman
  */
 public class EfficientSamJ extends AbstractSamJ {
+	
+	/**
+	 * List of encodings that are cached to avoid recalculating
+	 */
+	List<String> savedEncodings = new ArrayList<String>();
+	
 	/**
 	 * All the Python imports and configurations needed to start using EfficientSAM.
 	 */
@@ -66,6 +73,8 @@ public class EfficientSamJ extends AbstractSamJ {
 			+ "" + System.lineSeparator()
 			+ "predictor = build_efficient_sam(encoder_patch_embed_dim=384,encoder_num_heads=6,checkpoint=r'%s',).eval()" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
+			+ "encodings_map = {}" + System.lineSeparator()
+			+ "globals()['encodings_map'] = encodings_map" + System.lineSeparator()
 			+ "globals()['shared_memory'] = shared_memory" + System.lineSeparator()
 			+ "globals()['measure'] = measure" + System.lineSeparator()
 			+ "globals()['np'] = np" + System.lineSeparator()
@@ -226,7 +235,7 @@ public class EfficientSamJ extends AbstractSamJ {
 		this.script += code;
 		this.script += ""
 				+ "task.update(str(im.shape))" + System.lineSeparator()
-				+ "aa = predictor.get_image_embeddings(im[None, ...])";
+				+ "predictor.get_image_embeddings(im[None, ...])";
 	}
 
 	@Override
@@ -423,5 +432,21 @@ public class EfficientSamJ extends AbstractSamJ {
 		long[] dims = imageToBeSent.dimensionsAsLongArray();
 		shma = SharedMemoryArray.create(new long[] {dims[0], dims[1], dims[2]}, new FloatType(), false, false);
 		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
+	}
+
+	@Override
+	public String persistEncodingScript(String encodingName) {
+		return "encodings_map['" + encodingName + "'] = predictor.encoded_images";
+	}
+
+	@Override
+	public String selectEncodingScript(String encodingName) {
+		return "predictor.encoded_images = encodings_map['" + encodingName + "']";
+		
+	}
+
+	@Override
+	public String deleteEncodingScript(String encodingName) {
+		return "del encodings_map['" + encodingName + "']";
 	}
 }

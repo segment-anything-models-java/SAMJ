@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -140,6 +141,17 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * it is not, the image is encoded on demand
 	 */
 	protected boolean imageSmall = true;
+	
+	/**
+	 * List of encodings that are cached to avoid recalculating
+	 */
+	List<String> savedEncodings = new ArrayList<String>();
+
+	protected abstract String persistEncodingScript(String encodingName);
+
+	protected abstract String selectEncodingScript(String encodingName);
+
+	protected abstract String deleteEncodingScript(String encodingName);
 	
 	protected abstract void cellSAM(List<int[]> grid, boolean returnAll);
 	
@@ -1037,5 +1049,63 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			pp.xpoints = Arrays.stream(pp.xpoints).map(x -> x + (int) encodeCoords[0]).toArray();
 			pp.ypoints = Arrays.stream(pp.ypoints).map(y -> y + (int) encodeCoords[1]).toArray();
 		});
+	}
+
+	public String persistEncoding() throws IOException, InterruptedException {
+		String uuid = UUID.randomUUID().toString();
+		String saveEncodings = persistEncodingScript(uuid);
+		try {
+			Task task = python.task(saveEncodings);
+			task.waitFor();
+			if (task.status == TaskStatus.CANCELED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.FAILED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.CRASHED)
+				throw new RuntimeException();
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			throw e;
+		}
+		this.savedEncodings.add(uuid);
+		return uuid;
+	}
+
+	public void selectEncoding(String encodingName) throws IOException, InterruptedException {
+		if (!this.savedEncodings.contains(encodingName))
+			throw new IllegalArgumentException("No saved encoding found with name: " + encodingName);
+		String setEncoding = selectEncodingScript(encodingName);
+		try {
+			Task task = python.task(setEncoding);
+			task.waitFor();
+			if (task.status == TaskStatus.CANCELED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.FAILED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.CRASHED)
+				throw new RuntimeException();
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			throw e;
+		}
+		
+	}
+
+
+	public void deleteEncoding(String encodingName) throws IOException, InterruptedException {
+		if (!this.savedEncodings.contains(encodingName))
+			return;
+		String returnEncoding = deleteEncodingScript(encodingName);
+		try {
+			Task task = python.task(returnEncoding);
+			task.waitFor();
+			if (task.status == TaskStatus.CANCELED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.FAILED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.CRASHED)
+				throw new RuntimeException();
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			throw e;
+		}
+		this.savedEncodings.remove(encodingName);
 	}
 }

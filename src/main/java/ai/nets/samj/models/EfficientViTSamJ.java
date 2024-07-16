@@ -493,4 +493,10 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
 	}
+
+	@Override
+	protected void cellSAM(List<int[]> grid, boolean returnAll) {
+		// TODO Auto-generated method stub
+		
+	}
 }

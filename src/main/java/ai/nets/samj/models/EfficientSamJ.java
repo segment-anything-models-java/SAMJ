@@ -23,6 +23,7 @@ import ai.nets.samj.install.SamEnvManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
@@ -353,6 +354,11 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
 		this.script = code;
+	}
+
+	@Override
+	protected void cellSAM(List<int[]> grid, boolean returnAll) {
+		// TODO Auto-generated method stub
 	}
 	
 	private <T extends RealType<T> & NativeType<T>>

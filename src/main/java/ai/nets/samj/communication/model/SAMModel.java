@@ -146,6 +146,13 @@ public interface SAMModel {
 	 */
 	public <T extends RealType<T> & NativeType<T>> List<Polygon> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException;
 
+	
+	public String persistEncoding() throws IOException, InterruptedException;
+	
+	public void selectEncoding(String encodingName) throws IOException, InterruptedException;
+	
+	public void deleteEncoding(String encodingName) throws IOException, InterruptedException;
+	
 	/**
 	 * Close the Python process where the model is being executed
 	 */

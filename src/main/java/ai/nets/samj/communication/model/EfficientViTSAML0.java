@@ -239,4 +239,34 @@ public class EfficientViTSAML0 implements SAMModel {
 	public void setReturnOnlyBiggest(boolean onlyBiggest) {
 		this.onlyBiggest = onlyBiggest;
 	}
+
+	@Override
+	public String persistEncoding() throws IOException, InterruptedException {
+		try {
+			return efficientSamJ.persistEncoding();
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			log.error(FULL_NAME+", unable to persist the encoding: "+e.getMessage());
+			throw e;
+		}
+	}
+
+	@Override
+	public void selectEncoding(String encodingName) throws IOException, InterruptedException {
+		try {
+			efficientSamJ.selectEncoding(encodingName);
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			log.error(FULL_NAME+", unable to persist the encoding named '" + encodingName + "': "+e.getMessage());
+			throw e;
+		}
+	}
+
+	@Override
+	public void deleteEncoding(String encodingName) throws IOException, InterruptedException {
+		try {
+			efficientSamJ.deleteEncoding(encodingName);
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			log.error(FULL_NAME+", unable to delete the encoding named '" + encodingName + "': "+e.getMessage());
+			throw e;
+		}
+	}
 }

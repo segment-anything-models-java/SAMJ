@@ -65,13 +65,17 @@ public class SamEnvManager {
 	 */
 	final public static String SAM_WEIGHTS_NAME = "sam_vit_h_4b8939.pth";
 	/**
+	 * Name of the file that contains the weights of SAM Huge
+	 */
+	final public static String SAM2_TINY_WEIGHTS_NAME = "sam_vit_h_4b8939.pth";
+	/**
+	 * Name of the file that contains the weights of SAM Huge
+	 */
+	final public static String SAM2_SMALL_WEIGHTS_NAME = "sam_vit_h_4b8939.pth";
+	/**
 	 * Name of the file that contains the weights for EfficientSAM small
 	 */
 	final public static String ESAM_SMALL_WEIGHTS_NAME ="efficient_sam_vits.pt";
-	/**
-	 * Name of the encoder (ViT Huge) that is going to be used for SAM in SAMJ
-	 */
-	final public static String SAM_MODEL_TYPE = "vit_h";
 	/**
 	 * Default version for the family of EfficientViTSAM models
 	 */

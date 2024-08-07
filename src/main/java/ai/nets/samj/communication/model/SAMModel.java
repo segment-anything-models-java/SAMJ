@@ -24,6 +24,7 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
 
+import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.ui.SAMJLogger;
 import net.imglib2.Interval;
 import net.imglib2.Localizable;
@@ -60,6 +61,8 @@ public interface SAMModel {
 	 * @return a text describing the model.
 	 */
 	String getDescription();
+	
+	SamEnvManagerAbstract getInstallationManger();
 	/**
 	 * 
 	 * @return true or false whether all the things needed to run the model are already installed or not.

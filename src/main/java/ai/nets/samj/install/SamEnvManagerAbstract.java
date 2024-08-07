@@ -86,6 +86,8 @@ public abstract class SamEnvManagerAbstract {
 	final static public String DEFAULT_DIR = new File("appose_x86_64").getAbsolutePath();
 
 	
+	public abstract boolean checkEverythingInstalled();
+	
 	public abstract boolean checkSAMDepsInstalled();
 	
 	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
@@ -105,6 +107,8 @@ public abstract class SamEnvManagerAbstract {
 	public abstract String getModelWeigthPath();
 	
 	public abstract String getModelEnv();
+	
+	public abstract void uninstall();
 	
 	
 	

@@ -58,11 +58,11 @@ import ai.nets.samj.gui.components.GridPanel;
 import ai.nets.samj.gui.icons.ButtonIcon;
 import ai.nets.samj.gui.icons.LoadingButton;
 import ai.nets.samj.gui.tools.Tools;
+import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.ui.PromptsResultsDisplay;
 import ai.nets.samj.ui.PromptsResultsDisplay.SAMJException;
 import ai.nets.samj.ui.SAMJLogger;
 import ai.nets.samj.ui.UtilityMethods;
-import ai.nets.samj.install.SamEnvManager;
 
 /**
  * Class that creates a default graphical user interface to interact with SAMJ models
@@ -350,9 +350,9 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	
 	/**
 	 * 
-	 * @return the {@link SamEnvManager} used to install and mange the models
+	 * @return the {@link SamEnvManager} used to install and manage the models
 	 */
-	public SamEnvManager getModelInstallationManager() {
+	public SamEnvManagerAbstract getModelInstallationManager() {
 		return this.panelModel.getInstallationManager();
 	}
 

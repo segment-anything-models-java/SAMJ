@@ -144,8 +144,6 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * 	the ImgLib2 data type of the image provided
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @param image
-	 * 	the image where SAM is going to be run on
 	 * @return an instance of {@link EfficientSamJ} that allows running EfficientSAM on an image
 	 * @param debugPrinter
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
@@ -157,14 +155,12 @@ public class EfficientSamJ extends AbstractSamJ {
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientSamJ
 	initializeSam(SamEnvManagerAbstract manager,
-	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -191,13 +187,11 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientSamJ
-	initializeSam(SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
+	initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.updateImage(image);
-			sam.img = image;
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -399,7 +393,8 @@ public class EfficientSamJ extends AbstractSamJ {
 	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
-		try (EfficientSamJ sam = initializeSam(EfficientSamEnvManager.create(), img)) {
+		try (EfficientSamJ sam = initializeSam(EfficientSamEnvManager.create())) {
+			sam.setImage(img);
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
 	}

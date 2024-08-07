@@ -201,14 +201,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
 	initializeSam(String modelType, SamEnvManagerAbstract manager,
-	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 		EfficientViTSamJ sam = null;
 		try{
 			sam = new EfficientViTSamJ(manager, modelType, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -235,13 +233,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
-	initializeSam(String modelType, SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) 
+	initializeSam(String modelType, SamEnvManagerAbstract manager) 
 				throws IOException, RuntimeException, InterruptedException {
 		EfficientViTSamJ sam = null;
 		try{
 			sam = new EfficientViTSamJ(manager, modelType);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -274,10 +271,9 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
 	initializeSam(SamEnvManagerAbstract manager,
-	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager, image, debugPrinter, printPythonCode);
+		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager, debugPrinter, printPythonCode);
 	}
 
 	/**
@@ -300,8 +296,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
-	initializeSam(SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager, image);
+	initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager);
 	}
 
 	@Override
@@ -497,7 +493,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
-		try (EfficientViTSamJ sam = initializeSam(EfficientViTSamEnvManager.create(), img)) {
+		try (EfficientViTSamJ sam = initializeSam(EfficientViTSamEnvManager.create())) {
+			sam.setImage(img);
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
 	}

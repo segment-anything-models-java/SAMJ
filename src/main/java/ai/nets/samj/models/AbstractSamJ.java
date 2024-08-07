@@ -254,7 +254,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public <T extends RealType<T> & NativeType<T>>
-	void updateImage(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
+	void setImage(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
 		setImageOfInterest(rai);
 		if (img.dimensionsAsLongArray()[0] * img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
 				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {

@@ -25,7 +25,6 @@ import java.util.List;
 import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
-import java.io.File;
 import java.io.IOException;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
@@ -186,14 +185,12 @@ public class Sam2 extends AbstractSamJ {
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
 	initializeSam(String modelType, SamEnvManagerAbstract manager,
-	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 		Sam2 sam = null;
 		try{
 			sam = new Sam2(manager, modelType, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -220,13 +217,12 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(String modelType, SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) 
+	initializeSam(String modelType, SamEnvManagerAbstract manager) 
 				throws IOException, RuntimeException, InterruptedException {
 		Sam2 sam = null;
 		try{
 			sam = new Sam2(manager, modelType);
 			sam.encodeCoords = new long[] {0, 0};
-			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -259,10 +255,9 @@ public class Sam2 extends AbstractSamJ {
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
 	initializeSam(SamEnvManagerAbstract manager,
-	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, image, debugPrinter, printPythonCode);
+		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, debugPrinter, printPythonCode);
 	}
 
 	/**
@@ -285,8 +280,8 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, image);
+	initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager);
 	}
 
 	@Override
@@ -482,7 +477,8 @@ public class Sam2 extends AbstractSamJ {
 	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
-		try (Sam2 sam = initializeSam(Sam2EnvManager.create(), img)) {
+		try (Sam2 sam = initializeSam(Sam2EnvManager.create())) {
+			sam.setImage(img);
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
 	}

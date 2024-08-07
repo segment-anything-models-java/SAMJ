@@ -23,7 +23,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,17 +41,10 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
-import ai.nets.samj.communication.model.EfficientSAM;
-import ai.nets.samj.communication.model.EfficientViTSAML0;
-import ai.nets.samj.communication.model.EfficientViTSAML1;
-import ai.nets.samj.communication.model.EfficientViTSAML2;
-import ai.nets.samj.communication.model.EfficientViTSAMXL0;
-import ai.nets.samj.communication.model.EfficientViTSAMXL1;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.communication.model.SAMModels;
 import ai.nets.samj.gui.components.GridPanel;
 import ai.nets.samj.gui.components.HTMLPane;
-import ai.nets.samj.gui.tools.Files;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 
@@ -375,38 +367,8 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (getSelectedModel().getName().equals(EfficientSAM.FULL_NAME)) {
-			Files.deleteFolder(new File(manager.getEfficientSAMPythonEnv()));
-			Files.deleteFolder(new File(manager.getEfficientSamEnv()));
-			getSelectedModel().setInstalled(false);
-		} else if (getSelectedModel().getName().equals(EfficientViTSAML0.FULL_NAME)
-				&& new File(manager.getEfficientViTSAMWeightsPath("l0")).getParentFile().list().length != 1) {
-			Files.deleteFolder(new File(manager.getEfficientViTSAMWeightsPath("l0")));
-			getSelectedModel().setInstalled(false);
-		} else if (getSelectedModel().getName().equals(EfficientViTSAML1.FULL_NAME)
-				&& new File(manager.getEfficientViTSAMWeightsPath("l1")).getParentFile().list().length != 1) {
-			Files.deleteFolder(new File(manager.getEfficientViTSAMWeightsPath("l1")));
-			getSelectedModel().setInstalled(false);
-		} else if (getSelectedModel().getName().equals(EfficientViTSAML2.FULL_NAME)
-				&& new File(manager.getEfficientViTSAMWeightsPath("l2")).getParentFile().list().length != 1) {
-			Files.deleteFolder(new File(manager.getEfficientViTSAMWeightsPath("l2")));
-			getSelectedModel().setInstalled(false);
-		} else if (getSelectedModel().getName().equals(EfficientViTSAMXL0.FULL_NAME)
-				&& new File(manager.getEfficientViTSAMWeightsPath("xl0")).getParentFile().list().length != 1) {
-			Files.deleteFolder(new File(manager.getEfficientViTSAMWeightsPath("xl0")));
-			getSelectedModel().setInstalled(false);
-		} else if (getSelectedModel().getName().equals(EfficientViTSAMXL1.FULL_NAME)
-				&& new File(manager.getEfficientViTSAMWeightsPath("xl1")).getParentFile().list().length != 1) {
-			Files.deleteFolder(new File(manager.getEfficientViTSAMWeightsPath("xl1")));
-			getSelectedModel().setInstalled(false);
-		} else if (getSelectedModel().getName().equals(EfficientViTSAML0.FULL_NAME) 
-				|| getSelectedModel().getName().equals(EfficientViTSAML1.FULL_NAME)
-				|| getSelectedModel().getName().equals(EfficientViTSAML2.FULL_NAME)
-				|| getSelectedModel().getName().equals(EfficientViTSAMXL0.FULL_NAME)
-				|| getSelectedModel().getName().equals(EfficientViTSAMXL1.FULL_NAME)) {
-			Files.deleteFolder(new File(manager.getEfficientViTSamEnv()));
-			getSelectedModel().setInstalled(false);
-		}
+		getSelectedModel().getInstallationManger().uninstall();
+		getSelectedModel().setInstalled(false);
 	}
 	
 	/**

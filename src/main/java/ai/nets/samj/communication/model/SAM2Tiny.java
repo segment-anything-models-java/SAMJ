@@ -82,7 +82,6 @@ public class SAM2Tiny implements SAMModel {
 	 */
 	public SAM2Tiny() throws IOException, RuntimeException, InterruptedException {
 		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "tiny");
-		efficientSamJ = Sam2.initializeSam("tiny", manager);
 	}
 
 	@Override

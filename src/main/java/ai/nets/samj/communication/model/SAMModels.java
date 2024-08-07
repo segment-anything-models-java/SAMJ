@@ -38,10 +38,10 @@ public class SAMModels extends ArrayList<SAMModel> {
 	public  SAMModels() throws IOException, RuntimeException, InterruptedException {
 		super();
 		add(new EfficientSAM());
-		add(new EfficientViTSAML0());
-		add(new EfficientViTSAML1());
+		add(new SAM2Tiny());
+		add(new SAM2Small());
 		add(new EfficientViTSAML2());
 		add(new EfficientViTSAMXL0());
-		add(new EfficientViTSAMXL1());
+		//add(new EfficientViTSAMXL1());
 	}
 }

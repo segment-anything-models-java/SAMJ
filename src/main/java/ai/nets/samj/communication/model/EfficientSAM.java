@@ -82,7 +82,6 @@ public class EfficientSAM implements SAMModel {
 	 */
 	public EfficientSAM() throws IOException, RuntimeException, InterruptedException {
 		this.manager = EfficientSamEnvManager.create();
-		efficientSamJ = EfficientSamJ.initializeSam(manager);
 	}
 
 	@Override

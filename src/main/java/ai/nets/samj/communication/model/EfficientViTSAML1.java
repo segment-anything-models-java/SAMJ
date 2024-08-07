@@ -136,7 +136,6 @@ public class EfficientViTSAML1 implements SAMModel {
 	 */
 	public EfficientViTSAML1() throws IOException, RuntimeException, InterruptedException {
 		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "l1");
-		efficientSamJ = EfficientViTSamJ.initializeSam("l1", manager);
 	}
 
 	@Override

@@ -26,6 +26,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +70,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * General for every supported model.
 	 */
 	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.4.0", 
-			"torchvision=0.19.0", "skimage, samv2=0.0.4"});
+			"torchvision=0.19.0", "skimage", "sam2", "pytest"});
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
 	 */
@@ -86,9 +87,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	final public static List<String> INSTALL_PIP_DEPS;
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl=2023.2.2", "appose", "pytest", "samv2=0.0.4"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "samv2==0.0.4", "pytest"});
 		else 
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"appose", "pytest", "samv2=0.0.4"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"samv2==0.0.4", "pytest"});
 	}
 	/**
 	 * Byte sizes of all the EfficientViTSAM options
@@ -210,7 +211,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		if (!Sam2.getListOfSupportedVariants().contains(modelType))
 			throw new IllegalArgumentException("The provided model is not one of the supported SAM2 models: " 
 												+ Sam2.getListOfSupportedVariants());
-		File weightsFile = Paths.get(this.path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", modelType + ".pt").toFile();
+		File weightsFile = Paths.get(this.getModelWeigthPath()).toFile();
 		if (!weightsFile.isFile()) return false;
 		if (weightsFile.length() != SAM2_BYTE_SIZES_MAP.get(modelType)) return false;
 		return true;
@@ -304,10 +305,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 			throw new IllegalArgumentException("Unable to install Python without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- CREATING THE SAM2 PYTHON ENVIRONMENT WITH ITS DEPENDENCIES");
 		String[] pythonArgs = new String[] {"-c", "conda-forge", "python=3.11", "-c", "pytorch"};
-		String[] args = new String[pythonArgs.length + INSTALL_CONDA_DEPS.size() + INSTALL_CONDA_DEPS.size()];
+		String[] args = new String[pythonArgs.length + INSTALL_CONDA_DEPS.size()];
 		int c = 0;
 		for (String ss : pythonArgs) args[c ++] = ss;
-		for (String ss : INSTALL_CONDA_DEPS) args[c ++] = ss;
 		for (String ss : INSTALL_CONDA_DEPS) args[c ++] = ss;
 		if (!this.checkSAMDepsInstalled() || force) {
 			try {
@@ -321,10 +321,19 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 PYTHON ENVIRONMENT CREATION");
 				throw e;
 			}
+			ArrayList<String> pipInstall = new ArrayList<String>();
+			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
+			for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
+			try {
+				Mamba.runPythonIn(Paths.get(path,  "envs", SAM2_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
+			} catch (IOException | InterruptedException e) {
+	            thread.interrupt();
+	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
+				throw e;
+			}
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 PYTHON ENVIRONMENT CREATED");
-        // TODO remove
         installApposePackage(SAM2_ENV_NAME);
 	}
 	
@@ -351,16 +360,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * 
-	 * @return the path to the EfficientSAM Small weights file
-	 */
-	public String getModelWeightsPath() {
-		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", modelType + ".pt").toFile();
-		if (!file.isFile()) return null;
-		return file.getAbsolutePath();
-	}
-	
-	/**
-	 * 
 	 * @return the the path to the Python environment needed to run EfficientSAM
 	 */
 	public String getModelEnv() {
@@ -374,16 +373,19 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @return the official name of the EfficientSAM Small weights
 	 */
 	public String getModelWeigthsName() {
-		return modelType + ".pt";
+		return "sam2_hiera_" + modelType + ".pt";
 	}
 
 	@Override
 	public String getModelWeigthPath() {
+		File file;
 		try {
-			return Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", DownloadModel.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toAbsolutePath().toString();
+			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", DownloadModel.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toFile();
 		} catch (MalformedURLException e) {
-			return Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format("sam2_hiera_%s.pt", modelType)).toAbsolutePath().toString();
+			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format("sam2_hiera_%s.pt", modelType)).toFile();
 		}
+
+		return file.getAbsolutePath();
 	}
 
 	@Override
@@ -399,8 +401,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 
 	@Override
 	public void uninstall() {
-		if (new File(this.getModelWeightsPath()).getParentFile().list().length != 1)
-			Files.deleteFolder(new File(this.getModelWeightsPath()));
+		if (new File(this.getModelWeigthPath()).getParentFile().list().length != 1)
+			Files.deleteFolder(new File(this.getModelWeigthPath()));
 		else
 			Files.deleteFolder(new File(this.getModelEnv()));
 	}

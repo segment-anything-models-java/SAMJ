@@ -114,16 +114,15 @@ public class SAM2Tiny implements SAMModel {
 	 */
 	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
+		this.log = useThisLoggerForIt;
+		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
+			int idx = text.indexOf("contours_x");
+			if (idx > 0) this.log.info( text.substring(0,idx) );
+			else this.log.info( text );
+		};
 		if (this.efficientSamJ == null)
-			efficientSamJ = Sam2.initializeSam("tiny", manager);
+			efficientSamJ = Sam2.initializeSam("tiny", manager, filteringLogger, false);
 		try {
-			this.log = useThisLoggerForIt;
-			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
-				int idx = text.indexOf("contours_x");
-				if (idx > 0) this.log.info( text.substring(0,idx) );
-				else this.log.info( text );
-			};
-			this.efficientSamJ.setDebugPrinter(filteringLogger);
 			this.efficientSamJ.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());

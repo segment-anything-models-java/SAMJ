@@ -111,7 +111,9 @@ public abstract class SamEnvManagerAbstract {
 	public abstract void uninstall();
 	
 	
-	
+	public void setConsumer(Consumer<String> consumer) {
+		this.consumer = consumer;
+	}
 	
 	/**
 	 * Send information as Strings to the consumer

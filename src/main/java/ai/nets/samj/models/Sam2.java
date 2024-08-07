@@ -84,7 +84,7 @@ public class Sam2 extends AbstractSamJ {
 			+ "from sam2.utils.misc import variant_to_config_mapping" + System.lineSeparator()
 			+ "task.update('imported')" + System.lineSeparator()
 			+ "model = build_sam2(variant_to_config_mapping['%s'],'%s')" + System.lineSeparator()
-			+ "predictor = SAM2ImagePredictor(model)"
+			+ "predictor = SAM2ImagePredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
 			+ "globals()['encodings_map'] = encodings_map" + System.lineSeparator()

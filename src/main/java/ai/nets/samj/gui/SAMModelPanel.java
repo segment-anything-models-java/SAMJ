@@ -147,6 +147,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
 		
 		ButtonGroup group = new ButtonGroup();
 		for(SAMModel model : models) {
+			model.getInstallationManger().setConsumer((str) -> addHtml(str));
 			JRadioButton rb = new JRadioButton(model.getName(), false);
 			rbModels.add(rb);
 			rb.addActionListener(this);

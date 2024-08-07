@@ -19,16 +19,20 @@
  */
 package ai.nets.samj.models;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import ai.nets.samj.install.SamEnvManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
+
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
@@ -37,16 +41,16 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 /**
- * Class that enables the use of EfficientSAM from Java.
- * @author Carlos Garcia
- * @author vladimir Ulman
+ * Class that provides the needed methods to run EfficientViTSAM models from Java
+ * 
+ * @author Carlos Javier Garcia Lopez de Haro
+ * @author Vladimir Ulman
  */
 public class Sam2 extends AbstractSamJ {
 	
@@ -54,9 +58,19 @@ public class Sam2 extends AbstractSamJ {
 	 * List of encodings that are cached to avoid recalculating
 	 */
 	List<String> savedEncodings = new ArrayList<String>();
-	
 	/**
-	 * All the Python imports and configurations needed to start using EfficientSAM.
+	 * Map that associates the key for each of the existing EfficientViTSAM models to its complete name
+	 */
+	private static final HashMap<String, String> MODELS_DICT = new HashMap<String, String>();
+	static {
+		MODELS_DICT.put("l0", "efficientvit_sam_l0");
+		MODELS_DICT.put("l1", "efficientvit_sam_l1");
+		MODELS_DICT.put("l2", "efficientvit_sam_l2");
+		MODELS_DICT.put("xl0", "efficientvit_sam_xl0");
+		MODELS_DICT.put("xl1", "efficientvit_sam_xl1");
+	}
+	/**
+	 * All the Python imports and configurations needed to start using EfficientViTSAM.
 	 */
 	public static final String IMPORTS = ""
 			+ "task.update('start')" + System.lineSeparator()
@@ -65,13 +79,26 @@ public class Sam2 extends AbstractSamJ {
 			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
-			+ "sys.path.append(r'%s')" + System.lineSeparator()
+			+ "import os" + System.lineSeparator()
+			+ "os.chdir(r'%s')" + System.lineSeparator()
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
 			+ "task.update('import sam')" + System.lineSeparator()
-			+ "from efficient_sam.efficient_sam import build_efficient_sam" + System.lineSeparator()
+			+ "from efficientvit.models.efficientvit import EfficientViTSam, %s" + System.lineSeparator()
+			+ "from efficientvit.models.efficientvit.sam import EfficientViTSamPredictor" + System.lineSeparator()
 			+ "task.update('imported')" + System.lineSeparator()
 			+ "" + System.lineSeparator()
-			+ "predictor = build_efficient_sam(encoder_patch_embed_dim=384,encoder_num_heads=6,checkpoint=r'%s',).eval()" + System.lineSeparator()
+			+ "model = %s().cpu().eval()" + System.lineSeparator()
+			+ "eps = 1e-6" + System.lineSeparator()
+			+ "for m in model.modules():" + System.lineSeparator()
+			+ "  if isinstance(m, (torch.nn.GroupNorm, torch.nn.LayerNorm, torch.nn.modules.batchnorm._BatchNorm)):" + System.lineSeparator()
+			+ "    if eps is not None:" + System.lineSeparator()
+			+ "      m.eps = eps" + System.lineSeparator()
+			+ "f_name = os.path.realpath(os.path.expanduser(r'%s'))" + System.lineSeparator()
+			+ "weight = torch.load(f_name, map_location='cpu')" + System.lineSeparator()
+			+ "if \"state_dict\" in weight:" + System.lineSeparator()
+			+ "  weight = weight[\"state_dict\"]" + System.lineSeparator()
+			+ "model.load_state_dict(weight)" + System.lineSeparator()
+			+ "predictor = EfficientViTSamPredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
 			+ "globals()['encodings_map'] = encodings_map" + System.lineSeparator()
@@ -80,25 +107,34 @@ public class Sam2 extends AbstractSamJ {
 			+ "globals()['np'] = np" + System.lineSeparator()
 			+ "globals()['torch'] = torch" + System.lineSeparator()
 			+ "globals()['predictor'] = predictor" + System.lineSeparator();
+	/**
+	 * String containing the Python imports code after it has been formatted with the correct 
+	 * paths and names
+	 */
+	private String IMPORTS_FORMATED;
 
 	/**
-	 * Create an instance of the class to be able to run EfficientSAM in Java.
+	 * Create an instance of the class to be able to run EfficientViTSAM in Java.
 	 * 
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @param type
+	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	private Sam2(SamEnvManager manager) throws IOException, RuntimeException, InterruptedException {
-		this(manager, (t) -> {}, false);
+	private Sam2(SamEnvManager manager, String type) throws IOException, RuntimeException, InterruptedException {
+		this(manager, type, (t) -> {}, false);
 	}
 
 	/**
-	 * Create an instance of the class to be able to run EfficientSAM in Java.
+	 * Create an instance of the class to be able to run EfficientViTSAM in Java.
 	 * 
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @param type
+	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @param debugPrinter
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
@@ -108,21 +144,25 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 * 
 	 */
-	private Sam2(SamEnvManager manager,
+	private Sam2(SamEnvManager manager, String type,
 	                      final DebugTextPrinter debugPrinter,
 	                      final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 
+		if (!MODELS_DICT.keySet().contains(type))
+			throw new IllegalArgumentException("The model type should be one of hte following: " 
+							+ MODELS_DICT.keySet().stream().collect(Collectors.toList()));
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
 		this.env = new Environment() {
-			@Override public String base() { return manager.getEfficientSAMPythonEnv(); }
+			@Override public String base() { return manager.getEfficientViTSamEnv(); }
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);
-		String IMPORTS_FORMATED = String.format(IMPORTS,
-				manager.getEfficientSamEnv() + File.separator + SamEnvManager.ESAM_NAME,
-				manager.getEfficientSAMSmallWeightsPath());
+		IMPORTS_FORMATED = String.format(IMPORTS,
+									manager.getEfficientViTSamEnv() + File.separator + SamEnvManager.EVITSAM_NAME,
+									MODELS_DICT.get(type), MODELS_DICT.get(type), manager.getEfficientViTSAMWeightsPath(type));
+		
 		printScript(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
 		System.out.println(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
@@ -136,33 +176,36 @@ public class Sam2 extends AbstractSamJ {
 	}
 
 	/**
-	 * Create an EfficientSamJ instance that allows to use EfficientSAM on an image.
-	 * This method encodes the image provided, so depending on the computer
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
+	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time
 	 * 
 	 * @param <T>
 	 * 	the ImgLib2 data type of the image provided
+	 * @param modelType
+	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param image
 	 * 	the image where SAM is going to be run on
-	 * @return an instance of {@link Sam2} that allows running EfficientSAM on an image
 	 * @param debugPrinter
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
+	 * 	with the image already encoded
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(SamEnvManager manager,
+	initializeSam(String modelType, SamEnvManager manager,
 	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 		Sam2 sam = null;
 		try{
-			sam = new Sam2(manager, debugPrinter, printPythonCode);
+			sam = new Sam2(manager, modelType, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
 			sam.updateImage(image);
 		} catch (IOException | RuntimeException | InterruptedException ex) {
@@ -173,31 +216,31 @@ public class Sam2 extends AbstractSamJ {
 	}
 
 	/**
-	 * Create an EfficientSamJ instance that allows to use EfficientSAM on an image.
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
 	 * This method encodes the image provided, so depending on the computer and on the model
-	 * it might take some time.
-	 * 
+	 * it might take some time
 	 * 
 	 * @param <T>
 	 * 	the ImgLib2 data type of the image provided
+	 * @param modelType
+	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param image
 	 * 	the image where SAM is going to be run on
-	 * @return an instance of {@link Sam2} that allows running EfficientSAM on an image
-	 * 	with the image already encoded
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(SamEnvManager manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
+	initializeSam(String modelType, SamEnvManager manager, RandomAccessibleInterval<T> image) 
+				throws IOException, RuntimeException, InterruptedException {
 		Sam2 sam = null;
 		try{
-			sam = new Sam2(manager);
+			sam = new Sam2(manager, modelType);
 			sam.encodeCoords = new long[] {0, 0};
 			sam.updateImage(image);
-			sam.img = image;
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
@@ -205,37 +248,104 @@ public class Sam2 extends AbstractSamJ {
 		return sam;
 	}
 
+	/**
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
+	 * This method encodes the image provided, so depending on the computer and on the model
+	 * it might take some time.
+	 * 
+	 * The model used is the default one {@value SamEnvManager#DEFAULT_EVITSAM}
+	 * 
+	 * @param <T>
+	 * 	the ImgLib2 data type of the image provided
+	 * @param manager
+	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @param image
+	 * 	the image where SAM is going to be run on
+	 * @param debugPrinter
+	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
+	 * @param printPythonCode
+	 * 	whether to print the Python code that is going to be executed on the Python process or not
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
+	 * 	with the image already encoded
+	 * @throws IOException if any of the files to create a Python process is missing
+	 * @throws RuntimeException if there is any error running the Python code
+	 * @throws InterruptedException if the process is interrupted
+	 */
+	public static <T extends RealType<T> & NativeType<T>> Sam2
+	initializeSam(SamEnvManager manager,
+	              RandomAccessibleInterval<T> image,
+	              final DebugTextPrinter debugPrinter,
+	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+		return initializeSam(SamEnvManager.DEFAULT_EVITSAM, manager, image, debugPrinter, printPythonCode);
+	}
+
+	/**
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
+	 * This method encodes the image provided, so depending on the computer and on the model
+	 * it might take some time.
+	 * 
+	 * The model used is the default one {@value SamEnvManager#DEFAULT_EVITSAM}
+	 * 
+	 * @param <T>
+	 * 	the ImgLib2 data type of the image provided
+	 * @param manager
+	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @param image
+	 * 	the image where SAM is going to be run on
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
+	 * 	with the image already encoded
+	 * @throws IOException if any of the files to create a Python process is missing
+	 * @throws RuntimeException if there is any error running the Python code
+	 * @throws InterruptedException if the process is interrupted
+	 */
+	public static <T extends RealType<T> & NativeType<T>> Sam2
+	initializeSam(SamEnvManager manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
+		return initializeSam(SamEnvManager.DEFAULT_EVITSAM, manager, image);
+	}
+
+	@Override
+	protected <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai) {
+		checkImageIsFine(rai);
+		long[] dims = rai.dimensionsAsLongArray();
+		if (dims.length == 2)
+			rai = Views.addDimension(rai, 0, 0);
+		dims = rai.dimensionsAsLongArray();
+		if (dims[2] == 1)
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
+		this.img = rai;
+		this.targetDims = img.dimensionsAsLongArray();
+	}
+
 	@Override
 	protected void createEncodeImageScript() {
-		String code = "";
-		// This line wants to recreate the original numpy array. Should look like:
-		// input0_appose_shm = shared_memory.SharedMemory(name=input0)
-		// input0 = np.ndarray(size, dtype="float64", buffer=input0_appose_shm.buf).reshape([64, 64])
-		code += "im_shm = shared_memory.SharedMemory(name='"
-							+ shma.getNameForPython() + "', size=" + shma.getSize() 
-							+ ")" + System.lineSeparator();
+		script = "";
+		script += "im_shm = shared_memory.SharedMemory(name='"
+				+ shma.getNameForPython() + "', size=" + shma.getSize() 
+				+ ")" + System.lineSeparator();
 		int size = 1;
 		for (long l : targetDims) {size *= l;}
-		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
-			  + "', buffer=im_shm.buf).reshape([";
+		script += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
+				+ "', buffer=im_shm.buf).reshape([";
 		for (long ll : targetDims)
-			code += ll + ", ";
-		code = code.substring(0, code.length() - 2);
-		code += "])" + System.lineSeparator();
-		//code += "np.save('/home/carlos/git/crop.npy', im)" + System.lineSeparator();
-		code += "input_h = im.shape[1]" + System.lineSeparator();
-		code += "input_w = im.shape[0]" + System.lineSeparator();
-		code += "globals()['input_h'] = input_h" + System.lineSeparator();
-		code += "globals()['input_w'] = input_w" + System.lineSeparator();
-		code += "task.update(str(im.shape))" + System.lineSeparator();
-		code += "im = torch.from_numpy(np.transpose(im, (2, 1, 0)))" + System.lineSeparator();
-		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
-		code += "im_shm.unlink()" + System.lineSeparator();
+			script += ll + ", ";
+		script = script.substring(0, script.length() - 2);
+		script += "])" + System.lineSeparator();
+		script += "im = np.transpose(im, (1, 0, 2))" + System.lineSeparator();
+		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();
+		script += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
-		this.script += code;
-		this.script += ""
-				+ "task.update(str(im.shape))" + System.lineSeparator()
-				+ "predictor.get_image_embeddings(im[None, ...])";
+		script += ""
+			+ "task.update(str(im.shape))" + System.lineSeparator()
+			+ "predictor.set_image(im)";
+	}
+
+	@Override
+	protected <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared) {
+		RandomAccessibleInterval<T> imageToBeSent = ImgLib2Utils.reescaleIfNeeded(imShared);
+		long[] dims = imageToBeSent.dimensionsAsLongArray();
+		shma = SharedMemoryArray.create(new long[] {dims[0], dims[1], dims[2]}, new UnsignedByteType(), false, false);
+		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
 	}
 
 	@Override
@@ -247,9 +357,8 @@ public class Sam2 extends AbstractSamJ {
 			code += l + ",";
 		code += "])" + System.lineSeparator();
 		code += "different_mask_vals = np.unique(mask)" + System.lineSeparator();
-		//code += "print(different_mask_vals)" + System.lineSeparator();
-		code += "cont_x = []" + System.lineSeparator();
-		code += "cont_y = []" + System.lineSeparator();
+		code += "contours_x = []" + System.lineSeparator();
+		code += "contours_y = []" + System.lineSeparator();
 		code += "for val in different_mask_vals:" + System.lineSeparator()
 			  + "  if val < 1:" + System.lineSeparator()
 			  + "    continue" + System.lineSeparator()
@@ -264,29 +373,20 @@ public class Sam2 extends AbstractSamJ {
 			  + "  input_points_neg[:, 0] = locations_neg[0]" + System.lineSeparator()
 			  + "  input_points_neg[:, 1] = locations_neg[1]" + System.lineSeparator()
 			  + "  input_points = np.concatenate((input_points_pos.reshape(-1, 2), input_points_neg.reshape(-1, 2)), axis=0)" + System.lineSeparator()
-			  + "  input_label = np.concatenate((input_labels_pos, input_labels_neg * 0), axis=0)" + System.lineSeparator()
-			  + "  input_points = torch.reshape(torch.tensor(input_points), [1, 1, -1, 2])" + System.lineSeparator()
-			  + "  input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
-			  + "  predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
-			  + "    input_points," + System.lineSeparator()
-			  + "    input_label," + System.lineSeparator()
-			  + "    multimask_output=True," + System.lineSeparator()
-			  + "    input_h=input_h," + System.lineSeparator()
-			  + "    input_w=input_w," + System.lineSeparator()
-			  + "    output_h=input_h," + System.lineSeparator()
-			  + "    output_w=input_w,)" + System.lineSeparator()
+			  + "  input_label = np.concatenate((input_labels_pos, input_labels_neg), axis=0)" + System.lineSeparator()
+			  + "  mask_val, _, _ = predictor.predict(" + System.lineSeparator()
+			  + "    point_coords=input_points," + System.lineSeparator()
+			  + "    point_labels=input_label," + System.lineSeparator()
+			  + "    multimask_output=False," + System.lineSeparator()
+			  + "    box=None,)" + System.lineSeparator()
 			  //+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
-			  + "  sorted_ids = torch.argsort(predicted_iou, dim=-1, descending=True)" + System.lineSeparator()
-			  + "  predicted_iou = torch.take_along_dim(predicted_iou, sorted_ids, dim=2)" + System.lineSeparator()
-			  + "  predicted_logits = torch.take_along_dim(predicted_logits, sorted_ids[..., None, None], dim=2)" + System.lineSeparator()
-			  + "  mask_val = torch.ge(predicted_logits[0, 0, 0, :, :], 0).cpu().detach().numpy()" + System.lineSeparator()
-				+ (this.isIJROIManager ? "mask_val[1:, 1:] += mask_val[:-1, :-1]" : "") + System.lineSeparator()
-			  + "  cont_x_val,cont_y_val = get_polygons_from_binary_mask(mask_val, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
-			  + "  cont_x += cont_x_val" + System.lineSeparator()
-			  + "  cont_y += cont_y_val" + System.lineSeparator()
+				+ (this.isIJROIManager ? "mask_val[0, 1:, 1:] += mask_val[0, :-1, :-1]" : "") + System.lineSeparator()
+			  + "  contours_x_val,contours_y_val = get_polygons_from_binary_mask(mask_val[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+			  + "  contours_x += contours_x_val" + System.lineSeparator()
+			  + "  contours_y += contours_y_val" + System.lineSeparator()
 			  + "task.update('all contours traced')" + System.lineSeparator()
-			  + "task.outputs['contours_x'] = cont_x" + System.lineSeparator()
-			  + "task.outputs['contours_y'] = cont_y" + System.lineSeparator();
+			  + "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
+			  + "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
 		code += "mask = 0" + System.lineSeparator();
 		code += "shm_mask.close()" + System.lineSeparator();
 		code += "shm_mask.unlink()" + System.lineSeparator();
@@ -307,27 +407,21 @@ public class Sam2 extends AbstractSamJ {
 				+ "input_points = np.concatenate("
 						+ "(np.array(input_points_list).reshape(" + nPoints + ", 2), np.array(input_neg_points_list).reshape(" + nNegPoints + ", 2))"
 						+ ", axis=0)" + System.lineSeparator()
-				+ "input_points = torch.reshape(torch.tensor(input_points), [1, 1, -1, 2])" + System.lineSeparator()
 				+ "input_label = np.array([1] * " + (nPoints + nNegPoints) + ")" + System.lineSeparator()
 				+ "input_label[" + nPoints + ":] -= 1" + System.lineSeparator()
-				+ "input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
-				+ "predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
-				+ "    input_points," + System.lineSeparator()
-				+ "    input_label," + System.lineSeparator()
-				+ "    multimask_output=True," + System.lineSeparator()
-				+ "    input_h=input_h," + System.lineSeparator()
-				+ "    input_w=input_w," + System.lineSeparator()
-				+ "    output_h=input_h," + System.lineSeparator()
-				+ "    output_w=input_w,)" + System.lineSeparator()
-				+ "sorted_ids = torch.argsort(predicted_iou, dim=-1, descending=True)" + System.lineSeparator()
-				+ "predicted_iou = torch.take_along_dim(predicted_iou, sorted_ids, dim=2)" + System.lineSeparator()
-				+ "predicted_logits = torch.take_along_dim(predicted_logits, sorted_ids[..., None, None], dim=2)" + System.lineSeparator()
-				+ "mask = torch.ge(predicted_logits[0, 0, 0, :, :], 0).cpu().detach().numpy()" + System.lineSeparator()
+				+ "mask, _, _ = predictor.predict(" + System.lineSeparator()
+				+ "    point_coords=input_points," + System.lineSeparator()
+				+ "    point_labels=input_label," + System.lineSeparator()
+				+ "    multimask_output=False," + System.lineSeparator()
+				+ "    box=None,)" + System.lineSeparator()
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
-				//+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
-				+ (this.isIJROIManager ? "mask[1:, 1:] += mask[:-1, :-1]" : "") + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				// TODO remove + "import matplotlib.pyplot as plt" + System.lineSeparator()
+				// TODO remove + "plt.imsave('/tmp/aa.jpg', mask[0], cmap='gray')" + System.lineSeparator()
+				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				//+ (this.isIJROIManager ? "mask[0, :, 1:] += mask[0, :, :-1]" : "") + System.lineSeparator()
+				//+ "np.save('/home/carlos/git/aa.npy', mask)" + System.lineSeparator()
+				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
@@ -339,45 +433,48 @@ public class Sam2 extends AbstractSamJ {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
 				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
-				+ "input_box = torch.reshape(torch.tensor(input_box), [1, 1, -1, 2])" + System.lineSeparator()
-				+ "input_label = np.array([2,3])" + System.lineSeparator()
-				+ "input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
-				+ "predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
-				+ "    input_box," + System.lineSeparator()
-				+ "    input_label," + System.lineSeparator()
-				+ "    multimask_output=True," + System.lineSeparator()
-				+ "    input_h=input_h," + System.lineSeparator()
-				+ "    input_w=input_w," + System.lineSeparator()
-				+ "    output_h=input_h," + System.lineSeparator()
-				+ "    output_w=input_w,)" + System.lineSeparator()
-				+ "sorted_ids = torch.argsort(predicted_iou, dim=-1, descending=True)" + System.lineSeparator()
-				+ "predicted_iou = torch.take_along_dim(predicted_iou, sorted_ids, dim=2)" + System.lineSeparator()
-				+ "predicted_logits = torch.take_along_dim(predicted_logits, sorted_ids[..., None, None], dim=2)" + System.lineSeparator()
-				+ "mask = torch.ge(predicted_logits[0, 0, 0, :, :], 0).cpu().detach().numpy()" + System.lineSeparator()
+				+ "mask, _, _ = predictor.predict(" + System.lineSeparator()
+				+ "    point_coords=None," + System.lineSeparator()
+				+ "    point_labels=None," + System.lineSeparator()
+				+ "    multimask_output=False," + System.lineSeparator()
+				+ "    box=input_box,)" + System.lineSeparator()
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				//+ "np.save('/home/carlos/git/mask.npy', mask)" + System.lineSeparator()
-				+ (this.isIJROIManager ? "mask[1:, 1:] += mask[:-1, :-1]" : "") + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
 		this.script = code;
 	}
-
-	@Override
-	protected void cellSAM(List<int[]> grid, boolean returnAll) {
-		// TODO Auto-generated method stub
+	
+	private <T extends RealType<T> & NativeType<T>> void checkImageIsFine(RandomAccessibleInterval<T> inImg) {
+		long[] dims = inImg.dimensionsAsLongArray();
+		if ((dims.length != 3 && dims.length != 2) || (dims.length == 3 && dims[2] != 3 && dims[2] != 1)){
+			throw new IllegalArgumentException("Currently EfficientViTSAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
+					+ "The image dimensions order should be 'xyc', first dimension width, second height and third channels.");
+		}
+	}
+	
+	/**
+	 * 
+	 * @return the list of EfficientViTSAM models that are supported
+	 */
+	public static List<String> getListOfSupportedVariants(){
+		return MODELS_DICT.keySet().stream().collect(Collectors.toList());
 	}
 	
 	private <T extends RealType<T> & NativeType<T>>
-	void adaptImageToModel(final RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<FloatType> targetImg) {
+	void adaptImageToModel(RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<T> targetImg) {
 		if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 3) {
 			for (int i = 0; i < 3; i ++) 
-				RealTypeConverters.copyFromTo( ImgLib2Utils.normalizedView(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), Views.hyperSlice(targetImg, 2, i) );
+				RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), 
+						Views.hyperSlice(targetImg, 2, i) );
 		} else if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 1) {
 			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
-			IntervalView<FloatType> resIm = Views.interval( Views.expandMirrorDouble(ImgLib2Utils.normalizedView(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
+			IntervalView<UnsignedByteType> resIm = 
+					Views.interval( Views.expandMirrorDouble(ImgLib2Utils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0] - 1, ogImg.dimensionsAsLongArray()[1] - 1, 2}) );
 			RealTypeConverters.copyFromTo( resIm, targetImg );
 		} else if (ogImg.numDimensions() == 2) {
@@ -389,7 +486,7 @@ public class Sam2 extends AbstractSamJ {
 	}
 	
 	/**
-	 * MEthod used during development to test features
+	 * Tests during development
 	 * @param args
 	 * 	nothing
 	 * @throws IOException nothing
@@ -405,44 +502,19 @@ public class Sam2 extends AbstractSamJ {
 	}
 
 	@Override
-	protected <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai) {
-		checkImageIsFine(rai);
-		long[] dims = rai.dimensionsAsLongArray();
-		if (dims.length == 2)
-			rai = Views.addDimension(rai, 0, 0);
-		dims = rai.dimensionsAsLongArray();
-		if (dims[2] == 1)
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2}), 
-					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
-		this.img = rai;
-		this.targetDims = img.dimensionsAsLongArray();
-	}
-	
-	private <T extends RealType<T> & NativeType<T>> void checkImageIsFine(RandomAccessibleInterval<T> inImg) {
-		long[] dims = inImg.dimensionsAsLongArray();
-		if ((dims.length != 3 && dims.length != 2) || (dims.length == 3 && dims[2] != 3 && dims[2] != 1)){
-			throw new IllegalArgumentException("Currently EfficientSAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
-					+ "The image dimensions order should be 'xyc', first dimension width, second height and third channels.");
-		}
-	}
-
-	@Override
-	protected <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared) {
-		RandomAccessibleInterval<T> imageToBeSent = ImgLib2Utils.reescaleIfNeeded(imShared);
-		long[] dims = imageToBeSent.dimensionsAsLongArray();
-		shma = SharedMemoryArray.create(new long[] {dims[0], dims[1], dims[2]}, new FloatType(), false, false);
-		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
+	protected void cellSAM(List<int[]> grid, boolean returnAll) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public String persistEncodingScript(String encodingName) {
-		return "encodings_map['" + encodingName + "'] = predictor.encoded_images";
+		return "encodings_map['" + encodingName + "'] = predictor.features";
 	}
 
 	@Override
 	public String selectEncodingScript(String encodingName) {
-		return "predictor.encoded_images = encodings_map['" + encodingName + "']";
-		
+		return "predictor.features = encodings_map['" + encodingName + "']";		
 	}
 
 	@Override

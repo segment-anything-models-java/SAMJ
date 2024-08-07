@@ -82,8 +82,7 @@ public class EfficientSAM implements SAMModel {
 	 */
 	public EfficientSAM() throws IOException, RuntimeException, InterruptedException {
 		this.manager = EfficientSamEnvManager.create();
-		efficientSamJ = EfficientSamJ.initializeSam(
-				manager);
+		efficientSamJ = EfficientSamJ.initializeSam(manager);
 	}
 
 	@Override
@@ -116,6 +115,8 @@ public class EfficientSAM implements SAMModel {
 	 */
 	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
+		if (this.efficientSamJ == null)
+			efficientSamJ = EfficientSamJ.initializeSam(manager);
 		try {
 			this.log = useThisLoggerForIt;
 			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {

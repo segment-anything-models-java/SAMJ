@@ -99,6 +99,8 @@ public class EfficientViTSAML0 implements SAMModel {
 	 */
 	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
+		if (this.efficientSamJ == null)
+			this.efficientSamJ = EfficientViTSamJ.initializeSam("l0", manager);
 		try {
 			this.log = useThisLoggerForIt;
 			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {

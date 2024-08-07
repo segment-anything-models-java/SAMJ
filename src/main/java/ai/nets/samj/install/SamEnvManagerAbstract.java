@@ -32,26 +32,18 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import io.bioimage.modelrunner.bioimageio.download.DownloadModel;
 import io.bioimage.modelrunner.engine.installation.FileDownloader;
 import io.bioimage.modelrunner.system.PlatformDetection;
 import io.bioimage.modelrunner.utils.CommonUtils;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
-import ai.nets.samj.models.EfficientViTSamJ;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallerUtils;
 
 /*
  * Class that is manages the installation of SAM and EfficientSAM together with Python, their corresponding environments
@@ -60,15 +52,57 @@ import io.bioimage.modelrunner.apposed.appose.MambaInstallerUtils;
  * @author Carlos Javier Garcia Lopez de Haro
  */
 public abstract class SamEnvManagerAbstract {
+	
+	protected String path;
+	/**
+	 * {@link Mamba} instance used to create the environments
+	 */
+	protected Mamba mamba;
+	/**
+	 * Consumer used to keep providing info in the case of several threads working
+	 */
+	protected Consumer<String> consumer;
+	/**
+	 * Variable used to measer time intervals
+	 */
+	private static long millis = System.currentTimeMillis();
+	/**
+	 * Relative path to the mamba executable from the appose folder
+	 */
+	protected final static String MAMBA_RELATIVE_PATH = PlatformDetection.isWindows() ? 
+			 File.separator + "Library" + File.separator + "bin" + File.separator + "micromamba.exe" 
+			: File.separator + "bin" + File.separator + "micromamba";	
+	/**
+	 * Date format
+	 */
+	protected static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
+	/**
+	 * Name of the folder that contains the code of Appose in Python
+	 */
+	final static public String APPOSE = "appose-python";
+	/**
+	 * Default directory where micromamba is installed and where all the environments are created
+	 */
+	final static public String DEFAULT_DIR = new File("appose_x86_64").getAbsolutePath();
 
 	
-	public abstract void checkSAMDepsInstalled();
+	public abstract boolean checkSAMDepsInstalled();
 	
-	public abstract void installSAMDeps();
+	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+
+	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+
+	public abstract boolean checkModelWeightsInstalled();
 	
-	public abstract void checkModelWeightsInstalled();
+	public abstract void installModelWeigths() throws IOException, InterruptedException;
 	
-	public abstract void installModelWeigths();
+	public abstract void installModelWeigths(boolean force) throws IOException, InterruptedException;
+	
+	public abstract void installEverything() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+	
+	public abstract String getModelWeigthsName();
+	
+	public abstract String getModelEnv();
 	
 	
 	
@@ -78,7 +112,7 @@ public abstract class SamEnvManagerAbstract {
 	 * @param str
 	 * 	String that is going to be sent to the consumer
 	 */
-	private void passToConsumer(String str) {
+	protected void passToConsumer(String str) {
 		consumer.accept(str);
 		millis = System.currentTimeMillis();
 	}
@@ -93,35 +127,6 @@ public abstract class SamEnvManagerAbstract {
 		return mamba.checkMambaInstalled();
 	}
 	
-	// TODO move this to mamba
-	private void installOnnxsim(File envFile) throws IOException, InterruptedException {
-		final List< String > cmd = new ArrayList<>();
-		if ( PlatformDetection.isWindows() )
-			cmd.addAll( Arrays.asList( "cmd.exe", "/c" ) );
-		cmd.add( Paths.get( envFile.getAbsolutePath(), (PlatformDetection.isWindows() ? "python.exe" : "bin/python") ).toAbsolutePath().toString() );
-		cmd.addAll( Arrays.asList( new String[] {"-m", "pip", "install"} ) );
-		// TODO until appose new release cmd.addAll( INSTALL_PIP_DEPS );
-		cmd.addAll( INSTALL_EVSAM_PIP_DEPS );
-		final ProcessBuilder builder = new ProcessBuilder().directory( envFile );
-		//builder.inheritIO();
-		if ( PlatformDetection.isWindows() )
-		{
-			final Map< String, String > envs = builder.environment();
-			final String envDir = envFile.getAbsolutePath();
-			envs.put( "Path", envDir + ";" + envs.get( "Path" ) );
-			envs.put( "Path", Paths.get( envDir, "Scripts" ).toString() + ";" + envs.get( "Path" ) );
-			envs.put( "Path", Paths.get( envDir, "Library" ).toString() + ";" + envs.get( "Path" ) );
-			envs.put( "Path", Paths.get( envDir, "Library", "Bin" ).toString() + ";" + envs.get( "Path" ) );
-		} else {
-			final Map< String, String > envs = builder.environment();
-			final String envDir = envFile.getAbsolutePath();
-			envs.put( "PATH", envDir + ":" + envs.get( "PATH" ) );
-			envs.put( "PATH", Paths.get( envDir, "bin" ).toString() + ":" + envs.get( "PATH" ) );
-		}
-		if ( builder.command( cmd ).start().waitFor() != 0 )
-			throw new RuntimeException();
-	}
-	
 	/**
 	 * TODO keep until release of stable Appose
 	 * Install the Python package to run Appose in Python
@@ -131,7 +136,7 @@ public abstract class SamEnvManagerAbstract {
 	 * @throws InterruptedException if the package installation is interrupted
 	 * @throws MambaInstallException if there is any error with the Mamba installation
 	 */
-	private void installApposePackage(String envName) throws IOException, InterruptedException, MambaInstallException {
+	protected void installApposePackage(String envName) throws IOException, InterruptedException, MambaInstallException {
 		installApposePackage(envName, false);
 	}
 	
@@ -146,7 +151,7 @@ public abstract class SamEnvManagerAbstract {
 	 * @throws InterruptedException if the package installation is interrupted
 	 * @throws MambaInstallException if there is any error with the Mamba installation
 	 */
-	private void installApposePackage(String envName, boolean force) throws IOException, InterruptedException, MambaInstallException {
+	protected void installApposePackage(String envName, boolean force) throws IOException, InterruptedException, MambaInstallException {
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to SAM without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'APPOSE' PYTHON PACKAGE");
@@ -261,7 +266,7 @@ public abstract class SamEnvManagerAbstract {
 		return this.getEnvCreationProgress();
 	}
 	
-	private Thread reportProgress(String startStr) {
+	protected Thread reportProgress(String startStr) {
 		Thread currentThread = Thread.currentThread();
 		Thread thread = new Thread (() -> {
 			passToConsumer(startStr);

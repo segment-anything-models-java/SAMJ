@@ -217,7 +217,8 @@ public class SAM2Small implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public void notifyUiHasBeenClosed() {
-		log.info(FULL_NAME+": OKAY, I'm closing myself...");
+		if (log != null)
+			log.info(FULL_NAME+": OKAY, I'm closing myself...");
 		closeProcess();
 	}
 

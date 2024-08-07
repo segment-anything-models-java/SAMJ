@@ -213,7 +213,8 @@ public class EfficientViTSAML0 implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public void notifyUiHasBeenClosed() {
-		log.info(FULL_NAME+": OKAY, I'm closing myself...");
+		if (log != null)
+			log.info(FULL_NAME+": OKAY, I'm closing myself...");
 		closeProcess();
 	}
 
@@ -222,7 +223,8 @@ public class EfficientViTSAML0 implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public void closeProcess() {
-		efficientSamJ.close();
+	if (efficientSamJ != null)
+			efficientSamJ.close();
 		efficientSamJ = null;
 	}
 

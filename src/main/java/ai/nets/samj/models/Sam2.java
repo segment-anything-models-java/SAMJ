@@ -20,11 +20,10 @@
 package ai.nets.samj.models;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import ai.nets.samj.install.SamEnvManager;
+import ai.nets.samj.install.Sam2EnvManager;
+import ai.nets.samj.install.SamEnvManagerAbstract;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,13 +60,12 @@ public class Sam2 extends AbstractSamJ {
 	/**
 	 * Map that associates the key for each of the existing EfficientViTSAM models to its complete name
 	 */
-	private static final HashMap<String, String> MODELS_DICT = new HashMap<String, String>();
+	private static final List<String> MODELS_LIST = new ArrayList<String>();
 	static {
-		MODELS_DICT.put("l0", "efficientvit_sam_l0");
-		MODELS_DICT.put("l1", "efficientvit_sam_l1");
-		MODELS_DICT.put("l2", "efficientvit_sam_l2");
-		MODELS_DICT.put("xl0", "efficientvit_sam_xl0");
-		MODELS_DICT.put("xl1", "efficientvit_sam_xl1");
+		MODELS_LIST.add("tiny");
+		MODELS_LIST.add("small");
+		MODELS_LIST.add("base_plus");
+		MODELS_LIST.add("large");
 	}
 	/**
 	 * All the Python imports and configurations needed to start using EfficientViTSAM.
@@ -124,7 +122,7 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	private Sam2(SamEnvManager manager, String type) throws IOException, RuntimeException, InterruptedException {
+	private Sam2(SamEnvManagerAbstract manager, String type) throws IOException, RuntimeException, InterruptedException {
 		this(manager, type, (t) -> {}, false);
 	}
 
@@ -144,24 +142,25 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 * 
 	 */
-	private Sam2(SamEnvManager manager, String type,
+	private Sam2(SamEnvManagerAbstract manager, String type,
 	                      final DebugTextPrinter debugPrinter,
 	                      final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 
-		if (!MODELS_DICT.keySet().contains(type))
-			throw new IllegalArgumentException("The model type should be one of hte following: " 
-							+ MODELS_DICT.keySet().stream().collect(Collectors.toList()));
+		if (type.equals("base")) type = "base_plus";
+		if (!MODELS_LIST.contains(type))
+			throw new IllegalArgumentException("The model type should be one of the following: " 
+							+ MODELS_LIST);
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
 		this.env = new Environment() {
-			@Override public String base() { return manager.getEfficientViTSamEnv(); }
+			@Override public String base() { return manager.getModelEnv(); }
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS,
-									manager.getEfficientViTSamEnv() + File.separator + SamEnvManager.EVITSAM_NAME,
-									MODELS_DICT.get(type), MODELS_DICT.get(type), manager.getEfficientViTSAMWeightsPath(type));
+									manager.getModelEnv() + File.separator + Sam2EnvManager.SAM2_ENV_NAME,
+									type, type, manager.getModelWeigthsName());
 		
 		printScript(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
@@ -199,7 +198,7 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(String modelType, SamEnvManager manager,
+	initializeSam(String modelType, SamEnvManagerAbstract manager,
 	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
@@ -234,7 +233,7 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(String modelType, SamEnvManager manager, RandomAccessibleInterval<T> image) 
+	initializeSam(String modelType, SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) 
 				throws IOException, RuntimeException, InterruptedException {
 		Sam2 sam = null;
 		try{
@@ -272,11 +271,11 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(SamEnvManager manager,
+	initializeSam(SamEnvManagerAbstract manager,
 	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(SamEnvManager.DEFAULT_EVITSAM, manager, image, debugPrinter, printPythonCode);
+		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, image, debugPrinter, printPythonCode);
 	}
 
 	/**
@@ -299,8 +298,8 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> Sam2
-	initializeSam(SamEnvManager manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(SamEnvManager.DEFAULT_EVITSAM, manager, image);
+	initializeSam(SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
+		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, image);
 	}
 
 	@Override
@@ -462,7 +461,7 @@ public class Sam2 extends AbstractSamJ {
 	 * @return the list of EfficientViTSAM models that are supported
 	 */
 	public static List<String> getListOfSupportedVariants(){
-		return MODELS_DICT.keySet().stream().collect(Collectors.toList());
+		return MODELS_LIST;
 	}
 	
 	private <T extends RealType<T> & NativeType<T>>
@@ -496,7 +495,7 @@ public class Sam2 extends AbstractSamJ {
 	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
-		try (Sam2 sam = initializeSam(SamEnvManager.create(), img)) {
+		try (Sam2 sam = initializeSam(Sam2EnvManager.create(), img)) {
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
 	}

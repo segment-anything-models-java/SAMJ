@@ -34,7 +34,8 @@ import java.util.stream.Collectors;
 
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.EfficientSamJ;
-import ai.nets.samj.install.SamEnvManager;
+import ai.nets.samj.install.EfficientSamEnvManager;
+import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.ui.SAMJLogger;
 
 /**
@@ -45,6 +46,7 @@ import ai.nets.samj.ui.SAMJLogger;
 public class EfficientSAM implements SAMModel {
 
 	private EfficientSamJ efficientSamJ;
+	private final SamEnvManagerAbstract manager;
 	private SAMJLogger log;
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
@@ -67,7 +69,6 @@ public class EfficientSAM implements SAMModel {
 	
 	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is computationally heavy. It is not recommended to use it on lower-end computers.</p>";
 	
-	public EfficientSAM() {}
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
@@ -79,17 +80,10 @@ public class EfficientSAM implements SAMModel {
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public EfficientSAM(final RandomAccessibleInterval<?> image, final SAMJLogger log)
-						throws IOException, RuntimeException, InterruptedException {
-		this.log = log;
-		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
-			int idx = text.indexOf("contours_x");
-			if (idx > 0) this.log.info( text.substring(0,idx) );
-			else this.log.info( text );
-		};
+	public EfficientSAM() throws IOException, RuntimeException, InterruptedException {
+		this.manager = EfficientSamEnvManager.create();
 		efficientSamJ = EfficientSamJ.initializeSam(
-				SamEnvManager.create(), Cast.unchecked(image),
-				filteringLogger, false);
+				manager);
 	}
 
 	@Override
@@ -120,12 +114,19 @@ public class EfficientSAM implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public SAMModel instantiate(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
+	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
 		try {
-			return new EfficientSAM(image,useThisLoggerForIt);
+			this.log = useThisLoggerForIt;
+			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
+				int idx = text.indexOf("contours_x");
+				if (idx > 0) this.log.info( text.substring(0,idx) );
+				else this.log.info( text );
+			};
+			this.efficientSamJ.setDebugPrinter(filteringLogger);
+			this.efficientSamJ.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {
-			useThisLoggerForIt.error(FULL_NAME + " experienced an error: " + e.getMessage());
+			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
 	}
@@ -269,5 +270,10 @@ public class EfficientSAM implements SAMModel {
 			log.error(FULL_NAME+", unable to delete the encoding named '" + encodingName + "': "+e.getMessage());
 			throw e;
 		}
+	}
+
+	@Override
+	public SamEnvManagerAbstract getInstallationManger() {
+		return this.manager;
 	}
 }

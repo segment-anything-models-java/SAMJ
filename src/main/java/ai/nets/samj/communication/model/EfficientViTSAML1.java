@@ -32,9 +32,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import ai.nets.samj.install.EfficientViTSamEnvManager;
+import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.EfficientViTSamJ;
-import ai.nets.samj.install.SamEnvManager;
 import ai.nets.samj.ui.SAMJLogger;
 
 /**
@@ -45,6 +46,7 @@ import ai.nets.samj.ui.SAMJLogger;
 public class EfficientViTSAML1 implements SAMModel {
 
 	private EfficientViTSamJ efficientSamJ;
+	private final SamEnvManagerAbstract manager;
 	private SAMJLogger log;
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
@@ -66,12 +68,6 @@ public class EfficientViTSAML1 implements SAMModel {
 	        + "<strong>Paper:</strong> <a href=\"https://arxiv.org/pdf/2402.05008.pdf\">EfficientViT-SAM: Accelerated "
 	        + "Segment Anything Model Without Performance Loss</a>";
 	
-	/**
-	 * Create an empty instance of the model
-	 */
-	public EfficientViTSAML1() {
-		
-	}
 
 	@Override
 	/**
@@ -101,12 +97,19 @@ public class EfficientViTSAML1 implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public SAMModel instantiate(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
+	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
 		try {
-			return new EfficientViTSAML1(image,useThisLoggerForIt);
+			this.log = useThisLoggerForIt;
+			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
+				int idx = text.indexOf("contours_x");
+				if (idx > 0) this.log.info( text.substring(0,idx) );
+				else this.log.info( text );
+			};
+			this.efficientSamJ.setDebugPrinter(filteringLogger);
+			this.efficientSamJ.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {
-			useThisLoggerForIt.error(FULL_NAME + " experienced an error: " + e.getMessage());
+			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
 	}
@@ -129,17 +132,9 @@ public class EfficientViTSAML1 implements SAMModel {
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public EfficientViTSAML1(final RandomAccessibleInterval<?> image, final SAMJLogger log)
-								throws IOException, RuntimeException, InterruptedException {
-		this.log = log;
-		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
-			int idx = text.indexOf("contours_x");
-			if (idx > 0) this.log.info( text.substring(0,idx) );
-			else this.log.info( text );
-		};
-		efficientSamJ = EfficientViTSamJ.initializeSam("l1",
-				SamEnvManager.create(), Cast.unchecked(image),
-				filteringLogger, false);
+	public EfficientViTSAML1() throws IOException, RuntimeException, InterruptedException {
+		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "l1");
+		efficientSamJ = EfficientViTSamJ.initializeSam("l1", manager);
 	}
 
 	@Override
@@ -270,5 +265,10 @@ public class EfficientViTSAML1 implements SAMModel {
 			log.error(FULL_NAME+", unable to delete the encoding named '" + encodingName + "': "+e.getMessage());
 			throw e;
 		}
+	}
+
+	@Override
+	public SamEnvManagerAbstract getInstallationManger() {
+		return this.manager;
 	}
 }

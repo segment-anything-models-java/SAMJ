@@ -403,9 +403,8 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 					panelModel.progressInstallation.setIndeterminate(true);
 				});
 				try {
-					netAdapter = panelModel
-						.getSelectedModel()
-						.instantiate(display.giveProcessedSubImage(selectedSAMModel), logForNetworks);
+					netAdapter = panelModel.getSelectedModel();
+					netAdapter.setImage(display.giveProcessedSubImage(selectedSAMModel), logForNetworks);
 					netAdapter.setReturnOnlyBiggest(cmbROIs.getSelectedItem().equals(ONLY_BIGGEST));
 				} catch (Exception ex) {
 					display.notifyException(SAMJException.ENCODING, ex);

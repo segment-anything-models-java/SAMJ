@@ -37,7 +37,7 @@ import net.imglib2.type.numeric.RealType;
  * the system that even this network may be available/installed.
  * It is, however, not creating/instancing any connection to any
  * (Python) network code or whatsoever, that happens only after the
- * {@link SAMModel#instantiate(RandomAccessibleInterval, SAMJLogger)} is called, and reference
+ * {@link SAMModel#setImage(RandomAccessibleInterval, SAMJLogger)} is called, and reference
  * to such connection is returned.
  * @author Vladimir Ulman
  * @author Carlos Javier Garcia Lopez de Haro
@@ -81,12 +81,11 @@ public interface SAMModel {
 	 * 	the image of interest for segmentation or annotation
 	 * @param useThisLoggerForIt
 	 * 	a logger to provide info about the progress
-	 * @return an instance of a SAM-based model
 	 * @throws IOException if any of the files needed to run the Python script is missing 
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	SAMModel instantiate(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) throws IOException, RuntimeException, InterruptedException;
+	void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using two lists of points as the prompts. 

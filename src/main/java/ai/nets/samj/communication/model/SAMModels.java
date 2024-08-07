@@ -19,6 +19,7 @@
  */
 package ai.nets.samj.communication.model;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -30,8 +31,11 @@ public class SAMModels extends ArrayList<SAMModel> {
 
 	/**
 	 * A list where each of the components is a {@link SAMModel}
+	 * @throws InterruptedException 
+	 * @throws RuntimeException 
+	 * @throws IOException 
 	 */
-	public  SAMModels() {
+	public  SAMModels() throws IOException, RuntimeException, InterruptedException {
 		super();
 		add(new EfficientSAM());
 		add(new EfficientViTSAML0());

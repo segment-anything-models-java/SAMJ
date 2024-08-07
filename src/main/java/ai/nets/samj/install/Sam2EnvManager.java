@@ -35,6 +35,7 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
+import ai.nets.samj.gui.tools.Files;
 import ai.nets.samj.models.Sam2;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
@@ -383,5 +384,24 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		} catch (MalformedURLException e) {
 			return Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format("sam2_hiera_%s.pt", modelType)).toAbsolutePath().toString();
 		}
+	}
+
+	@Override
+	public boolean checkEverythingInstalled() {
+		if (!this.checkMambaInstalled()) return false;
+		
+		if (!this.checkSAMDepsInstalled()) return false;
+		
+		if (!this.checkModelWeightsInstalled()) return false;
+		
+		return true;
+	}
+
+	@Override
+	public void uninstall() {
+		if (new File(this.getModelWeightsPath()).getParentFile().list().length != 1)
+			Files.deleteFolder(new File(this.getModelWeightsPath()));
+		else
+			Files.deleteFolder(new File(this.getModelEnv()));
 	}
 }

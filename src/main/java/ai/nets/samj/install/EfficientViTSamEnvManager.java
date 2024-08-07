@@ -41,6 +41,7 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
+import ai.nets.samj.gui.tools.Files;
 import ai.nets.samj.models.EfficientViTSamJ;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
@@ -497,5 +498,26 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	@Override
 	public String getModelWeigthPath() {
 		return Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", modelType + ".pt").toAbsolutePath().toString();
+	}
+
+	@Override
+	public boolean checkEverythingInstalled() {
+		if (!this.checkMambaInstalled()) return false;
+		
+		if (!this.checkSAMDepsInstalled()) return false;
+		
+		if (!this.checkEfficientViTSAMPackageInstalled()) return false;
+		
+		if (!this.checkModelWeightsInstalled()) return false;
+		
+		return true;
+	}
+
+	@Override
+	public void uninstall() {
+		if (new File(this.getModelWeightsPath()).getParentFile().list().length != 1)
+			Files.deleteFolder(new File(this.getModelWeightsPath()));
+		else
+			Files.deleteFolder(new File(this.getModelEnv()));
 	}
 }

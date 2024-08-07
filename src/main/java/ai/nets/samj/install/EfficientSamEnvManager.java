@@ -38,6 +38,7 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
+import ai.nets.samj.gui.tools.Files;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
 
@@ -423,5 +424,23 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	@Override
 	public String getModelWeigthPath() {
 		return Paths.get(this.path, "envs", ESAM_ENV_NAME, ESAM_NAME, "weights", ESAM_SMALL_WEIGHTS_NAME).toAbsolutePath().toString();
+	}
+
+	@Override
+	public boolean checkEverythingInstalled() {
+		if (!this.checkMambaInstalled()) return false;
+		
+		if (!this.checkSAMDepsInstalled()) return false;
+		
+		if (!this.checkEfficientSAMPackageInstalled()) return false;
+		
+		if (!this.checkModelWeightsInstalled()) return false;
+		
+		return true;
+	}
+
+	@Override
+	public void uninstall() {
+		Files.deleteFolder(new File(this.getModelEnv()));
 	}
 }

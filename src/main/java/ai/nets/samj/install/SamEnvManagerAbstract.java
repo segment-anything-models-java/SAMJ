@@ -102,6 +102,8 @@ public abstract class SamEnvManagerAbstract {
 	
 	public abstract String getModelWeigthsName();
 	
+	public abstract String getModelWeigthPath();
+	
 	public abstract String getModelEnv();
 	
 	

@@ -294,21 +294,12 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 			}
 			ArrayList<String> pipInstall = new ArrayList<String>();
 			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
-			// TODO until appose new release for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
-			/*
-			try {
-				Mamba.runPythonIn(Paths.get(path,  "envs", COMMON_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
-			} catch (IOException | InterruptedException e) {
-	            thread.interrupt();
-	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
-				throw e;
-			}
-			*/
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- PYTHON ENVIRONMENT CREATED");
         // TODO remove
         installApposePackage(ESAM_ENV_NAME);
+		installEfficientSAMPackage(force);
 	}
 	
 	/**
@@ -427,5 +418,10 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 */
 	public String getModelWeigthsName() {
 		return ESAM_SMALL_WEIGHTS_NAME;
+	}
+
+	@Override
+	public String getModelWeigthPath() {
+		return Paths.get(this.path, "envs", ESAM_ENV_NAME, ESAM_NAME, "weights", ESAM_SMALL_WEIGHTS_NAME).toAbsolutePath().toString();
 	}
 }

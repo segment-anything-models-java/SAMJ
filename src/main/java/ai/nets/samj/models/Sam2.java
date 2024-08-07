@@ -95,7 +95,7 @@ public class Sam2 extends AbstractSamJ {
 			+ "globals()['torch'] = torch" + System.lineSeparator()
 			+ "globals()['predictor'] = predictor" + System.lineSeparator();
 	/**
-	 * String containing the Python imports code after it has been formatted with the correct 
+	 * String containing the Python imports code after it has been formated with the correct 
 	 * paths and names
 	 */
 	private String IMPORTS_FORMATED;
@@ -147,9 +147,7 @@ public class Sam2 extends AbstractSamJ {
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);
-		IMPORTS_FORMATED = String.format(IMPORTS, type,
-									manager.getModelEnv() + File.separator + Sam2EnvManager.SAM2_ENV_NAME
-									+ File.separator + manager.getModelWeigthsName());
+		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());
 		
 		printScript(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);

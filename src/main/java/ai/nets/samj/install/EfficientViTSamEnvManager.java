@@ -356,6 +356,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM PYTHON ENVIRONMENT CREATED");
         // TODO remove
         installApposePackage(EVITSAM_ENV_NAME);
+        installEfficientViTSAMPackage(force);
 	}
 	
 	private void installOnnxsim(File envFile) throws IOException, InterruptedException {
@@ -414,7 +415,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 		String zipResourcePath = "efficientvit.zip";
         String outputDirectory = mamba.getEnvsDir() + File.separator + EVITSAM_ENV_NAME;
         try (
-        	InputStream zipInputStream = SamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+        	InputStream zipInputStream = EfficientViTSamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
         	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
         		) {
         	ZipEntry entry;
@@ -491,5 +492,10 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 */
 	public String getModelWeigthsName() {
 		return modelType + ".pt";
+	}
+
+	@Override
+	public String getModelWeigthPath() {
+		return Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", modelType + ".pt").toAbsolutePath().toString();
 	}
 }

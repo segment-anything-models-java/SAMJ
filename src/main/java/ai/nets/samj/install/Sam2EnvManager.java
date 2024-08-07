@@ -21,9 +21,7 @@ package ai.nets.samj.install;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -32,8 +30,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
@@ -378,5 +374,14 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 */
 	public String getModelWeigthsName() {
 		return modelType + ".pt";
+	}
+
+	@Override
+	public String getModelWeigthPath() {
+		try {
+			return Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", DownloadModel.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toAbsolutePath().toString();
+		} catch (MalformedURLException e) {
+			return Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format("sam2_hiera_%s.pt", modelType)).toAbsolutePath().toString();
+		}
 	}
 }

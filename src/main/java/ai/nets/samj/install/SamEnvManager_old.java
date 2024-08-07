@@ -59,7 +59,7 @@ import io.bioimage.modelrunner.apposed.appose.MambaInstallerUtils;
  * 
  * @author Carlos Javier Garcia Lopez de Haro
  */
-public class SamEnvManager {
+public class SamEnvManager_old {
 	/**
 	 * Name of the file that contains the weights of SAM Huge
 	 */
@@ -221,7 +221,7 @@ public class SamEnvManager {
 	 * 	the path where the corresponding micromamba shuold be installed
 	 * @return an instance of {@link SamEnvManager}
 	 */
-	public static SamEnvManager create(String path) {
+	public static SamEnvManager_old create(String path) {
 		return create(path, (ss) -> {});
 	}
 	
@@ -235,8 +235,8 @@ public class SamEnvManager {
 	 * 	an specific consumer where info about the installation is going to be communicated
 	 * @return an instance of {@link SamEnvManager}
 	 */
-	public static SamEnvManager create(String path, Consumer<String> consumer) {
-		SamEnvManager installer = new SamEnvManager();
+	public static SamEnvManager_old create(String path, Consumer<String> consumer) {
+		SamEnvManager_old installer = new SamEnvManager_old();
 		installer.path = path;
 		installer.consumer = consumer;
 		installer.mamba = new Mamba(path);
@@ -249,7 +249,7 @@ public class SamEnvManager {
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @return an instance of {@link SamEnvManager}
 	 */
-	public static SamEnvManager create() {
+	public static SamEnvManager_old create() {
 		return create(DEFAULT_DIR);
 	}
 	
@@ -261,7 +261,7 @@ public class SamEnvManager {
 	 * 	an specific consumer where info about the installation is going to be communicated
 	 * @return an instance of {@link SamEnvManager}
 	 */
-	public static SamEnvManager create(Consumer<String> consumer) {
+	public static SamEnvManager_old create(Consumer<String> consumer) {
 		return create(DEFAULT_DIR, consumer);
 	}
 	
@@ -442,7 +442,7 @@ public class SamEnvManager {
 		String zipResourcePath = "efficient_sam_vits.pt.zip";
         String outputDirectory = Paths.get(path, "envs", ESAM_ENV_NAME, ESAM_NAME, "weights").toFile().getAbsolutePath();
         try (
-        	InputStream zipInputStream = SamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+        	InputStream zipInputStream = SamEnvManager_old.class.getClassLoader().getResourceAsStream(zipResourcePath);
         	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
         		) {
         	ZipEntry entry;
@@ -743,7 +743,7 @@ public class SamEnvManager {
 		String zipResourcePath = "appose-python.zip";
         String outputDirectory = mamba.getEnvsDir() + File.separator + envName;
         try (
-            	InputStream zipInputStream = SamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+            	InputStream zipInputStream = SamEnvManager_old.class.getClassLoader().getResourceAsStream(zipResourcePath);
             	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
             		) {
             	ZipEntry entry;
@@ -810,7 +810,7 @@ public class SamEnvManager {
 		String zipResourcePath = "SAM.zip";
         String outputDirectory = mamba.getEnvsDir() + File.separator + SAM_ENV_NAME + File.separator + SAM_NAME;
         try (
-        	InputStream zipInputStream = SamEnvManager.class.getResourceAsStream(zipResourcePath);
+        	InputStream zipInputStream = SamEnvManager_old.class.getResourceAsStream(zipResourcePath);
         	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
         		) {
         	ZipEntry entry;
@@ -873,7 +873,7 @@ public class SamEnvManager {
 		String zipResourcePath = "EfficientSAM.zip";
         String outputDirectory = mamba.getEnvsDir() + File.separator + ESAM_ENV_NAME;
         try (
-        	InputStream zipInputStream = SamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+        	InputStream zipInputStream = SamEnvManager_old.class.getClassLoader().getResourceAsStream(zipResourcePath);
         	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
         		) {
         	ZipEntry entry;
@@ -931,7 +931,7 @@ public class SamEnvManager {
 		String zipResourcePath = "efficientvit.zip";
         String outputDirectory = mamba.getEnvsDir() + File.separator + EVITSAM_ENV_NAME;
         try (
-        	InputStream zipInputStream = SamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+        	InputStream zipInputStream = SamEnvManager_old.class.getClassLoader().getResourceAsStream(zipResourcePath);
         	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
         		) {
         	ZipEntry entry;

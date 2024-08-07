@@ -19,13 +19,13 @@
  */
 package ai.nets.samj.models;
 
-import ai.nets.samj.install.SamEnvManager;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ai.nets.samj.install.EfficientSamEnvManager;
+import ai.nets.samj.install.SamEnvManagerAbstract;
 import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
@@ -90,7 +90,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	private EfficientSamJ(SamEnvManager manager) throws IOException, RuntimeException, InterruptedException {
+	private EfficientSamJ(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
 		this(manager, (t) -> {}, false);
 	}
 
@@ -108,7 +108,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 * 
 	 */
-	private EfficientSamJ(SamEnvManager manager,
+	private EfficientSamJ(SamEnvManagerAbstract manager,
 	                      final DebugTextPrinter debugPrinter,
 	                      final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 
@@ -116,13 +116,13 @@ public class EfficientSamJ extends AbstractSamJ {
 		this.isDebugging = printPythonCode;
 
 		this.env = new Environment() {
-			@Override public String base() { return manager.getEfficientSAMPythonEnv(); }
+			@Override public String base() { return manager.getModelEnv(); }
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		String IMPORTS_FORMATED = String.format(IMPORTS,
-				manager.getEfficientSamEnv() + File.separator + SamEnvManager.ESAM_NAME,
-				manager.getEfficientSAMSmallWeightsPath());
+				manager.getModelEnv() + File.separator + EfficientSamEnvManager.ESAM_NAME,
+				manager.getModelWeigthPath());
 		printScript(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
 		System.out.println(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
@@ -156,7 +156,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientSamJ
-	initializeSam(SamEnvManager manager,
+	initializeSam(SamEnvManagerAbstract manager,
 	              RandomAccessibleInterval<T> image,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
@@ -191,7 +191,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static <T extends RealType<T> & NativeType<T>> EfficientSamJ
-	initializeSam(SamEnvManager manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
+	initializeSam(SamEnvManagerAbstract manager, RandomAccessibleInterval<T> image) throws IOException, RuntimeException, InterruptedException {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager);
@@ -399,7 +399,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
-		try (EfficientSamJ sam = initializeSam(SamEnvManager.create(), img)) {
+		try (EfficientSamJ sam = initializeSam(EfficientSamEnvManager.create(), img)) {
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
 	}

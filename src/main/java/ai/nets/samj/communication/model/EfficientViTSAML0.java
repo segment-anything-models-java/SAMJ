@@ -222,6 +222,7 @@ public class EfficientViTSAML0 implements SAMModel {
 	 */
 	public void closeProcess() {
 		efficientSamJ.close();
+		efficientSamJ = null;
 	}
 
 	@Override

@@ -227,6 +227,7 @@ public class EfficientSAM implements SAMModel {
 	 */
 	public void closeProcess() {
 		efficientSamJ.close();
+		efficientSamJ = null;
 	}
 
 	@Override

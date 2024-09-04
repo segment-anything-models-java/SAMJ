@@ -65,6 +65,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 */
 	final public static String SAM2_SMALL_WEIGHTS_NAME = "sam2_hiera_small.pth";
 	/**
+	 * Name of the file that contains the weights of SAM Huge
+	 */
+	final public static String SAM2_LARGE_WEIGHTS_NAME = "sam2_hiera_large.pth";
+	/**
 	/**
 	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
 	 * General for every supported model.
@@ -100,7 +104,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		SAM2_BYTE_SIZES_MAP.put("tiny", (long) 155906050);
 		SAM2_BYTE_SIZES_MAP.put("small", (long) 184309650);
 		SAM2_BYTE_SIZES_MAP.put("base_plus", (long) -1);
-		SAM2_BYTE_SIZES_MAP.put("large", (long) -1);
+		SAM2_BYTE_SIZES_MAP.put("large", (long) 897952466);
 	}
 	/**
 	 * Name of the environment that contains the code and weigths to run EfficientSAM models

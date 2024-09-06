@@ -69,7 +69,7 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 				"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly"});
 		else 
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-					"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly"});
+					"scikit-image", "pytorch=2.4.1", "torchvision=0.19.0", "cpuonly"});
 	}
 	/**
 	 * Dependencies for every environment that need to be installed using PIP
@@ -77,7 +77,7 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	final public static List<String> INSTALL_PIP_DEPS;
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl=2023.2.2", "appose"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "appose"});
 		else 
 			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"appose"});
 	}
@@ -295,23 +295,20 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 			}
 			ArrayList<String> pipInstall = new ArrayList<String>();
 			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
+			for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
+			try {
+				Mamba.runPythonIn(Paths.get(path,  "envs", ESAM_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
+			} catch (IOException | InterruptedException e) {
+	            thread.interrupt();
+	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
+				throw e;
+			}
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- PYTHON ENVIRONMENT CREATED");
         // TODO remove
         installApposePackage(ESAM_ENV_NAME);
-		installEfficientSAMPackage(force);
-	}
-	
-	/**
-	 * Install the Python package to run EfficientSAM.
-	 * Does not overwrite the package if it already exists.
-	 * @throws IOException if there is any file creation related issue
-	 * @throws InterruptedException if the package installation is interrupted
-	 * @throws MambaInstallException if there is any error with the Mamba installation
-	 */
-	public void installEfficientSAMPackage() throws IOException, InterruptedException, MambaInstallException {
-		installEfficientSAMPackage(false);
+		installEfficientSAMPackage();
 	}
 	
 	/**
@@ -322,23 +319,12 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the package installation is interrupted
 	 * @throws MambaInstallException if there is any error with the Mamba installation
 	 */
-	public void installEfficientSAMPackage(boolean force) throws IOException, InterruptedException, MambaInstallException {
-		if (checkEfficientSAMPackageInstalled() && !force)
+	private void installEfficientSAMPackage() throws IOException, InterruptedException, MambaInstallException {
+		if (checkEfficientSAMPackageInstalled())
 			return;
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to EfficientSAM without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'EFFICIENTSAM' PYTHON PACKAGE");
-		try {
-			mamba.create(ESAM_ENV_NAME, true);
-		} catch (MambaInstallException e) {
-			thread.interrupt();
-			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'EFFICIENTSAM' PYTHON PACKAGE INSTALLATION");
-			throw new MambaInstallException("Unable to install EfficientSAM without first installing Mamba.");
-		} catch (IOException | InterruptedException | RuntimeException e) {
-			thread.interrupt();
-			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'EFFICIENTSAM' PYTHON PACKAGE INSTALLATION");
-			throw e;
-		}
 		String zipResourcePath = "EfficientSAM.zip";
         String outputDirectory = mamba.getEnvsDir() + File.separator + ESAM_ENV_NAME;
         try (

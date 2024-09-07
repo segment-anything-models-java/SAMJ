@@ -208,6 +208,7 @@ public class EfficientSamJ extends AbstractSamJ {
 		code += "im_shm = shared_memory.SharedMemory(name='"
 							+ shma.getNameForPython() + "', size=" + shma.getSize() 
 							+ ")" + System.lineSeparator();
+		code += "task.update('here')" + System.lineSeparator();
 		int size = 1;
 		for (long l : targetDims) {size *= l;}
 		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
@@ -216,20 +217,22 @@ public class EfficientSamJ extends AbstractSamJ {
 			code += ll + ", ";
 		code = code.substring(0, code.length() - 2);
 		code += "])" + System.lineSeparator();
+		code += "task.update('here')" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/crop.npy', im)" + System.lineSeparator();
 		code += "input_h = im.shape[1]" + System.lineSeparator();
 		code += "input_w = im.shape[0]" + System.lineSeparator();
 		code += "globals()['input_h'] = input_h" + System.lineSeparator();
 		code += "globals()['input_w'] = input_w" + System.lineSeparator();
-		code += "task.update(str(im.shape))" + System.lineSeparator();
+		code += "task.update('here')" + System.lineSeparator();
+		//code += "task.update(str(im.shape))" + System.lineSeparator();
 		code += "im = torch.from_numpy(np.transpose(im, (2, 1, 0)))" + System.lineSeparator();
-		code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
+		code += "task.update('here')" + System.lineSeparator();
+		//code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
 		code += "im_shm.unlink()" + System.lineSeparator();
-		//code += "box_shm.close()" + System.lineSeparator();
+		code += "task.update('here')" + System.lineSeparator();
 		this.script += code;
 		this.script += ""
-				+ "task.update(str(im.shape))" + System.lineSeparator()
-				+ "predictor.get_image_embeddings(im[None, ...])";
+				+ "_ = predictor.get_image_embeddings(im[None, ...])" + System.lineSeparator();
 	}
 
 	@Override

@@ -133,7 +133,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	 * Combobox to choose whether to return only the biggest ROI produced by a SAM-based model
 	 * or to return all what is outputed by the model
 	 */
-	private JComboBox<String> cmbROIs = new JComboBox<String>(new String[] {ALL, ONLY_BIGGEST});
+	private JComboBox<String> cmbROIs = new JComboBox<String>(new String[] {ONLY_BIGGEST, ALL});
 	/**
 	 * Checkbox that defines whether to add the segmentations to the roi manager or not
 	 */

@@ -352,12 +352,22 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EFFICIENTVITSAM PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
 				throw e;
 			}
+			ArrayList<String> pipInstall = new ArrayList<String>();
+			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
+			for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
+			try {
+				Mamba.runPythonIn(Paths.get(path,  "envs", EVITSAM_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
+			} catch (IOException | InterruptedException e) {
+	            thread.interrupt();
+	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
+				throw e;
+			}
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM PYTHON ENVIRONMENT CREATED");
         // TODO remove
         installApposePackage(EVITSAM_ENV_NAME);
-        installEfficientViTSAMPackage(force);
+        installEfficientViTSAMPackage();
 	}
 	
 	private void installOnnxsim(File envFile) throws IOException, InterruptedException {
@@ -389,26 +399,13 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Install the Python package to run EfficientSAM.
-	 * Does not overwrite the package if it already exists.
-	 * @throws IOException if there is any file creation related issue
-	 * @throws InterruptedException if the package installation is interrupted
-	 * @throws MambaInstallException if there is any error with the Mamba installation
-	 */
-	public void installEfficientViTSAMPackage() throws IOException, InterruptedException, MambaInstallException {
-		installEfficientViTSAMPackage(false);
-	}
-	
-	/**
 	 * Install the Python package to run EfficientSAM
-	 * @param force
-	 * 	if the package already exists, whether to overwrite it or not
 	 * @throws IOException if there is any file creation related issue
 	 * @throws InterruptedException if the package installation is interrupted
 	 * @throws MambaInstallException if there is any error with the Mamba installation
 	 */
-	public void installEfficientViTSAMPackage(boolean force) throws IOException, InterruptedException, MambaInstallException {
-		if (checkEfficientViTSAMPackageInstalled() && !force)
+	private void installEfficientViTSAMPackage() throws IOException, InterruptedException, MambaInstallException {
+		if (checkEfficientViTSAMPackageInstalled())
 			return;
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to EfficientViTSAM without first installing Mamba. ");

@@ -280,7 +280,7 @@ public abstract class SamEnvManagerAbstract {
 			passToConsumer(startStr);
 			while (currentThread.isAlive()) {
 				try {Thread.sleep(300);} catch (InterruptedException e) {break;}
-				if (System.currentTimeMillis() - millis > 300)
+				if (System.currentTimeMillis() - millis > 300 && currentThread.isAlive())
 					passToConsumer("");
 			}
 		});

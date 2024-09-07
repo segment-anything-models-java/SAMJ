@@ -66,11 +66,15 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * General for every supported model.
 	 */
 	// TODO update final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.0.1", "torchvision=0.15.2", "skimage", "mkl=2024.0.0"});
-	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch", "torchvision", "skimage"});
-	/**
-	 * Dependencies to be checked to make sure that an environment can run an EfficientViTSAM model
-	 */
-	final public static List<String> CHECK_DEPS_EVSAM = Arrays.asList(new String[] {"onnxsim", "timm", "onnx", "segment_anything"});
+	final public static List<String> CHECK_DEPS_EVSAM;
+	static {
+		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
+			CHECK_DEPS_EVSAM = Arrays.asList(new String[] {"appose", "torch", "torchvision", 
+					"skimage", "onnxsim", "timm", "onnx", "segment_anything", "mkl"});
+		else 
+			CHECK_DEPS_EVSAM = Arrays.asList(new String[] {"appose", "torch", "torchvision", 
+					"skimage", "onnxsim", "timm", "onnx", "segment_anything"});
+	}
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
 	 */

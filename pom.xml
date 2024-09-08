@@ -176,4 +176,19 @@
 			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
 	</repositories>
+	<build>
+  		<resources>
+    		<resource>
+      			<directory>src/main/resources</directory>
+      			<filtering>false</filtering>
+    		</resource>
+    		<resource>
+      			<directory>src/main/resources</directory>
+      			<filtering>true</filtering>
+      			<includes>
+        			<include>.samj_properties</include>
+      			</includes>
+    		</resource>
+  		</resources>
+	</build>
 </project>

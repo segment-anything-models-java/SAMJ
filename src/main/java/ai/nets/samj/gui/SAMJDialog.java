@@ -63,6 +63,7 @@ import ai.nets.samj.ui.PromptsResultsDisplay;
 import ai.nets.samj.ui.PromptsResultsDisplay.SAMJException;
 import ai.nets.samj.ui.SAMJLogger;
 import ai.nets.samj.ui.UtilityMethods;
+import ai.nets.samj.utils.Constants;
 
 /**
  * Class that creates a default graphical user interface to interact with SAMJ models
@@ -104,7 +105,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	/**
 	 * Text field containing copyrigth info
 	 */
-	private JTextField txtStatus = new JTextField("(c) SAMJ team 2024 - " + Constants.VERSION);
+	private JTextField txtStatus = new JTextField("(c) SAMJ team 2024 - " + Constants.SAMJ_VERSION);
 	/**
 	 * Button that activates the annotation with SAMJ models using bounding box prompts
 	 */

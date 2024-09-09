@@ -181,8 +181,6 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time
 	 * 
-	 * @param <T>
-	 * 	the ImgLib2 data type of the image provided
 	 * @param modelType
 	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @param manager
@@ -199,7 +197,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
+	public static EfficientViTSamJ
 	initializeSam(String modelType, SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
@@ -219,20 +217,16 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time
 	 * 
-	 * @param <T>
-	 * 	the ImgLib2 data type of the image provided
 	 * @param modelType
 	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @param image
-	 * 	the image where SAM is going to be run on
 	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
+	public static EfficientViTSamJ
 	initializeSam(String modelType, SamEnvManagerAbstract manager) 
 				throws IOException, RuntimeException, InterruptedException {
 		EfficientViTSamJ sam = null;
@@ -253,12 +247,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 
 	 * The model used is the default one {@value SamEnvManager#DEFAULT_EVITSAM}
 	 * 
-	 * @param <T>
-	 * 	the ImgLib2 data type of the image provided
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @param image
-	 * 	the image where SAM is going to be run on
 	 * @param debugPrinter
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
@@ -269,7 +259,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
+	public static EfficientViTSamJ
 	initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
@@ -283,19 +273,15 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 
 	 * The model used is the default one {@value SamEnvManager#DEFAULT_EVITSAM}
 	 * 
-	 * @param <T>
-	 * 	the ImgLib2 data type of the image provided
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @param image
-	 * 	the image where SAM is going to be run on
 	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public static <T extends RealType<T> & NativeType<T>> EfficientViTSamJ
+	public static EfficientViTSamJ
 	initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
 		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager);
 	}

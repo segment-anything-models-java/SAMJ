@@ -140,8 +140,6 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * This method encodes the image provided, so depending on the computer
 	 * it might take some time
 	 * 
-	 * @param <T>
-	 * 	the ImgLib2 data type of the image provided
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link EfficientSamJ} that allows running EfficientSAM on an image
@@ -153,8 +151,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public static <T extends RealType<T> & NativeType<T>> EfficientSamJ
-	initializeSam(SamEnvManagerAbstract manager,
+	public static EfficientSamJ initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
 		EfficientSamJ sam = null;
@@ -174,20 +171,15 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * it might take some time.
 	 * 
 	 * 
-	 * @param <T>
-	 * 	the ImgLib2 data type of the image provided
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @param image
-	 * 	the image where SAM is going to be run on
 	 * @return an instance of {@link EfficientSamJ} that allows running EfficientSAM on an image
 	 * 	with the image already encoded
 	 * @throws IOException if any of the files to create a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public static <T extends RealType<T> & NativeType<T>> EfficientSamJ
-	initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+	public static EfficientSamJ initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager);

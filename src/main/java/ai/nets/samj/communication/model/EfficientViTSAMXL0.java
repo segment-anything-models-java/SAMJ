@@ -125,10 +125,6 @@ public class EfficientViTSAMXL0 implements SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
-	 * @param image
-	 * 	the image to be encoded
-	 * @param log
-	 * 	a logging functional interface to be able to keep track of what the model is doing
 	 * @throws IOException if any of the files to run a Python process is missing
 	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted

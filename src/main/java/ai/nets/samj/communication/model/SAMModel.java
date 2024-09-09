@@ -61,7 +61,10 @@ public interface SAMModel {
 	 * @return a text describing the model.
 	 */
 	String getDescription();
-	
+	/**
+	 * 
+	 * @return the {@link SamEnvManagerAbstract} used to install this model
+	 */
 	SamEnvManagerAbstract getInstallationManger();
 	/**
 	 * 
@@ -72,6 +75,7 @@ public interface SAMModel {
 	/**
 	 * Set whether the model is installed or
 	 * @param installed
+	 * 	whether the model has been installed or not
 	 */
 	void setInstalled(boolean installed);
 

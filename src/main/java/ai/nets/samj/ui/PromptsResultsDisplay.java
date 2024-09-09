@@ -156,7 +156,7 @@ public interface PromptsResultsDisplay {
 	
 	/**
 	 * Return the image that is being processed/annotated
-	 * @return
+	 * @return the object corresponding to the focused image
 	 */
 	Object getFocusedImage();
 	

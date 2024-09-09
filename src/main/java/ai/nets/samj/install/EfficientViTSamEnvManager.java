@@ -149,7 +149,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
 	 * @param modelType
-	 * 	which of the possible EfficientViT SAM wants to be used. The possible variants are the keys of the {@value #EFFICIENTVITSAM_BYTE_SIZES_MAP} map
+	 * 	which of the possible EfficientViT SAM wants to be used. The possible variants are the keys of the {@link #EFFICIENTVITSAM_BYTE_SIZES_MAP} map
 	 * @return an instance of {@link EfficientViTSamEnvManager}
 	 */
 	public static EfficientViTSamEnvManager create(String path, String modelType) {
@@ -222,7 +222,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Check whether the Python package to run EfficientSAM has been installed. The package will be in the folder
-	 * {@value #ESAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #COMMON_ENV_NAME}
+	 * {@value #ESAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #EVITSAM_ENV_NAME}
 	 * @return whether the Python package to run EfficientSAM has been installed.
 	 */
 	public boolean checkEfficientViTSAMPackageInstalled() {

@@ -245,7 +245,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time.
 	 * 
-	 * The model used is the default one {@value SamEnvManager#DEFAULT_EVITSAM}
+	 * The model used is the default one {@value EfficientViTSamEnvManager#DEFAULT_EVITSAM}
 	 * 
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
@@ -271,7 +271,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time.
 	 * 
-	 * The model used is the default one {@value SamEnvManager#DEFAULT_EVITSAM}
+	 * The model used is the default one {@value EfficientViTSamEnvManager#DEFAULT_EVITSAM}
 	 * 
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights

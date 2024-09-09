@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -133,11 +134,10 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	final static private String EVITSAM_URL = "https://huggingface.co/han-cai/efficientvit-sam/resolve/main/%s.pt?download=true";
 	
 	private EfficientViTSamEnvManager(String modelType) {
-		if (!modelType.equals("l0") && !modelType.equals("l1")
-				&& !modelType.equals("l2") && !modelType.equals("xl0")
-				&& !modelType.equals("xl1")) {
+		List<String> modelTypes = EFFICIENTVITSAM_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
+		if (!modelTypes.contains(modelType)) {
 			throw new IllegalArgumentException("Invalid model variant chosen: '" + modelType + "'."
-					+ "The only supported variants are: l0, l1, l2, xl0 and xl1.");
+					+ "The only supported variants are: " + modelTypes.toString());
 		}
 		this.modelType = modelType;
 	}
@@ -149,7 +149,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
 	 * @param modelType
-	 * 	which of the possible EfficientViT SAM (l0, l1, l2, xl0 or xl1) wants to be used
+	 * 	which of the possible EfficientViT SAM wants to be used. The possible variants are the keys of the {@value #EFFICIENTVITSAM_BYTE_SIZES_MAP} map
 	 * @return an instance of {@link EfficientViTSamEnvManager}
 	 */
 	public static EfficientViTSamEnvManager create(String path, String modelType) {
@@ -162,6 +162,9 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
+	 * @param modelType
+	 * 	each of the possible model types (sizes) that EfficientiTSAM can have. They are the keys of
+	 * 	the following map {@link #EFFICIENTVITSAM_BYTE_SIZES_MAP}
 	 * @param consumer
 	 * 	an specific consumer where info about the installation is going to be communicated
 	 * @return an instance of {@link EfficientViTSamEnvManager}
@@ -198,7 +201,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Check whether the Python environment with the corresponding packages needed to run EfficientSAM
-	 * has been installed or not. The environment folder should be named {@value #COMMON_ENV_NAME} 
+	 * has been installed or not. The environment folder should be named {@value #EVITSAM_ENV_NAME} 
 	 * @return whether the Python environment with the corresponding packages needed to run EfficientSAM
 	 * has been installed or not
 	 */

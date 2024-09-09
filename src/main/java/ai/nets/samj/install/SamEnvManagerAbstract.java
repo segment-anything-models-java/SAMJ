@@ -233,6 +233,8 @@ public abstract class SamEnvManagerAbstract {
 	 * 	url of the file to be downloaded
 	 * @param targetFile
 	 * 	file where the file from the url will be downloaded too
+	 * @param parentThread
+	 * 	main thread that launched the current one where the download is happening
 	 * @throws IOException if there si any error downloading the file
 	 * @throws URISyntaxException if there is any error in the URL syntax
 	 * @throws InterruptedException if the parent thread is stopped and the download stopped

@@ -69,16 +69,15 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * Name of the file that contains the weights of SAM Huge
 	 */
 	final public static String SAM2_LARGE_WEIGHTS_NAME = "sam2_hiera_large.pth";
-	/**
-	/**
-	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
-	 * General for every supported model.
-	 */
-	/**
+	/*
 	 * TODO add hard version deps when JDLL mamba is fixed
 	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.4.0", 
 			"torchvision=0.19.0", "skimage", "sam2", "pytest"});
 			*/
+	/**
+	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
+	 * General for every supported model.
+	 */
 	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch", 
 			"torchvision", "skimage", "sam2", "pytest"});
 	/**

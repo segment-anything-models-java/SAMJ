@@ -247,7 +247,7 @@ public abstract class SamEnvManagerAbstract {
 			URL website = new URL(downloadURL);
 	        HttpURLConnection conn = (HttpURLConnection) website.openConnection();
 	        conn.setRequestMethod("GET");
-	        conn.setRequestProperty("User-Agent", CommonUtils.getJDLLUserAgent());//"jdll/0.5.6 (Linux; Java 1.8.0_292)");
+	        conn.setRequestProperty("User-Agent", CommonUtils.getJDLLUserAgent());
 	        rbc = Channels.newChannel(conn.getInputStream());
 			// TODO rbc = Channels.newChannel(website.openStream());
 			// Create the new model file as a zip

@@ -74,8 +74,13 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
 	 * General for every supported model.
 	 */
+	/**
+	 * TODO add hard version deps when JDLL mamba is fixed
 	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.4.0", 
 			"torchvision=0.19.0", "skimage", "sam2", "pytest"});
+			*/
+	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch", 
+			"torchvision", "skimage", "sam2", "pytest"});
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
 	 */

@@ -351,7 +351,7 @@ public class SAMJDialog extends JPanel implements ActionListener, PopupMenuListe
 	
 	/**
 	 * 
-	 * @return the {@link SamEnvManager} used to install and manage the models
+	 * @return the {@link SamEnvManagerAbstract} used to install and manage the models
 	 */
 	public SamEnvManagerAbstract getModelInstallationManager() {
 		return this.panelModel.getInstallationManager();

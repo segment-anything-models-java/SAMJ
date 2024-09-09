@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
@@ -120,11 +121,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	final static public String SAM2_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_%s.pt";
 	
 	private Sam2EnvManager(String modelType) {
-		if (!modelType.equals("tiny") && !modelType.equals("small")
-				&& !modelType.equals("base") && !modelType.equals("base_plus")
-				&& !modelType.equals("large")) {
+		List<String> modelTypes = SAM2_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
+		if (!modelTypes.contains(modelType) && !modelType.equals("base")) {
 			throw new IllegalArgumentException("Invalid model variant chosen: '" + modelType + "'."
-					+ "The only supported variants are: tiny, small, base_plus and large.");
+					+ "The only supported variants are: " + modelTypes);
 		}
 		if (modelType.equals("base"))
 			modelType = "base_plus";
@@ -138,7 +138,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
 	 * @param modelType
-	 * 	which of the possible SAM2 (tiny, small, base_plus and large) wants to be used
+	 * 	which of the possible SAM2 wants to be used. The possible variants are the keys of the following map: {@link #SAM2_BYTE_SIZES_MAP}
 	 * @return an instance of {@link Sam2EnvManager}
 	 */
 	public static Sam2EnvManager create(String path, String modelType) {
@@ -151,6 +151,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
+	 * @param modelType
+	 * 	which of the possible SAM2 wants to be used. The possible variants are the keys of the following map: {@link #SAM2_BYTE_SIZES_MAP}
 	 * @param consumer
 	 * 	an specific consumer where info about the installation is going to be communicated
 	 * @return an instance of {@link Sam2EnvManager}
@@ -165,7 +167,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Creates an instance of {@link Sam2EnvManager} that uses a micromamba installed at the default
-	 * directory {@link #DEFAULT_DIR}. Uses the default model {@link #DEFAULT_EVITSAM}
+	 * directory {@link #DEFAULT_DIR}. Uses the default model {@link #DEFAULT_SAM2}
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @return an instance of {@link Sam2EnvManager}
 	 */
@@ -187,7 +189,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Check whether the Python environment with the corresponding packages needed to run EfficientSAM
-	 * has been installed or not. The environment folder should be named {@value #COMMON_ENV_NAME} 
+	 * has been installed or not. The environment folder should be named {@value #SAM2_ENV_NAME} 
 	 * @return whether the Python environment with the corresponding packages needed to run EfficientSAM
 	 * has been installed or not
 	 */

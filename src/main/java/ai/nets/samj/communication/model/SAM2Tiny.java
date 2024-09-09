@@ -67,7 +67,6 @@ public class SAM2Tiny implements SAMModel {
 	        + "<strong>Paper:</strong> <a href=\"https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/\">SAM 2: Segment Anything in Images and Videos\n"
 	        + "Anything</a>";
 	
-	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is computationally heavy. It is not recommended to use it on lower-end computers.</p>";
 	
 
 	/**
@@ -93,7 +92,7 @@ public class SAM2Tiny implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.installed ? SAMModel.HTML_NOT_INSTALLED : CAUTION_STRING);
+		return HTML_DESCRIPTION + (!this.installed ? SAMModel.HTML_NOT_INSTALLED : "");
 	}
 
 	@Override

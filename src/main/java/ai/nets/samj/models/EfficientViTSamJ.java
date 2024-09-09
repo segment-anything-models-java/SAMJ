@@ -185,8 +185,6 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @param image
-	 * 	the image where SAM is going to be run on
 	 * @param debugPrinter
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode

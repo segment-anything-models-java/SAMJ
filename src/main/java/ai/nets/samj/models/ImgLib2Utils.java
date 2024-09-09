@@ -139,7 +139,7 @@ public class ImgLib2Utils {
 	 * If they are not, the RAI will be subject to {@link Converters#convert(RandomAccessibleInterval, Converter, Type)}
 	 * with here-created Converter that knows how to bring the pixel values into the interval [0,255].
 	 *
-	 *@param T
+	 *@param <T>
 	 * 	the ImgLib2 data types that the {@link RandomAccessibleInterval} can have
 	 * @param inImg
 	 *  RAI to be potentially converted to RGB.

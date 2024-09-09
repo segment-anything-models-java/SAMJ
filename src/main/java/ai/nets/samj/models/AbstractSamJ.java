@@ -531,6 +531,9 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	of length 2, first position is x-axis, second y-axis
 	 * @param pointsNegList
 	 * 	the list of points that does not point to the instance of interest, but the background
+	 * @param encodingArea
+	 * 	area that needs to be encoded for the points to segment the wanted object. Cannot be null.
+	 * 	This parameter defines the size of the object that is going to be segmented.
 	 * @param returnAll
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
@@ -983,8 +986,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	/**
 	 * TODO what to do, is there a bounding box that is too big with respect to the encoded crop?
+	 * Whether the bounding box lays on the encoded area and is of the wanted scale with respect to 
+	 * the encoded crop or not
 	 * @param boundingBox
-	 * @return
+	 * 	the bounding box of interest
+	 * @return true of the bounding box is too big or false otherwise
 	 */
 	public boolean boundingBoxTooBig(int[] boundingBox) {
 		long xSize = boundingBox[2] - boundingBox[0];

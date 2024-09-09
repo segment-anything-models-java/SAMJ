@@ -152,7 +152,7 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Check whether the Python environment with the corresponding packages needed to run EfficientSAM
-	 * has been installed or not. The environment folder should be named {@value #COMMON_ENV_NAME} 
+	 * has been installed or not. The environment folder should be named {@value #ESAM_ENV_NAME} 
 	 * @return whether the Python environment with the corresponding packages needed to run EfficientSAM
 	 * has been installed or not
 	 */
@@ -173,7 +173,7 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Check whether the Python package to run EfficientSAM has been installed. The package will be in the folder
-	 * {@value #ESAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #COMMON_ENV_NAME}
+	 * {@value #ESAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #ESAM_ENV_NAME}
 	 * @return whether the Python package to run EfficientSAM has been installed.
 	 */
 	public boolean checkEfficientSAMPackageInstalled() {

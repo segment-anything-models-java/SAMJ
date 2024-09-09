@@ -222,10 +222,10 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Check whether the Python package to run EfficientSAM has been installed. The package will be in the folder
-	 * {@value #ESAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #EVITSAM_ENV_NAME}
+	 * {@value #EVITSAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #EVITSAM_ENV_NAME}
 	 * @return whether the Python package to run EfficientSAM has been installed.
 	 */
-	public boolean checkEfficientViTSAMPackageInstalled() {
+	private boolean checkEfficientViTSAMPackageInstalled() {
 		if (!checkMambaInstalled()) return false;
 		File pythonEnv = Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME).toFile();
 		if (!pythonEnv.exists() || pythonEnv.list().length <= 1) return false;

@@ -176,7 +176,7 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * {@value #ESAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #ESAM_ENV_NAME}
 	 * @return whether the Python package to run EfficientSAM has been installed.
 	 */
-	public boolean checkEfficientSAMPackageInstalled() {
+	private boolean checkEfficientSAMPackageInstalled() {
 		if (!checkMambaInstalled()) return false;
 		File pythonEnv = Paths.get(this.path, "envs", ESAM_ENV_NAME, ESAM_NAME).toFile();
 		if (!pythonEnv.exists() || pythonEnv.list().length <= 1) return false;

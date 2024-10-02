@@ -66,8 +66,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
 	 * General for every supported model.
 	 */
-	// TODO Find way to identify whether mkl is installed or not on non-macos machines
-	final public static List<String> CHECK_DEPS_EVSAM = Arrays.asList(new String[] {"appose", "torch", "torchvision", 
+	final public static List<String> CHECK_DEPS_EVSAM = Arrays.asList(new String[] {"appose", "torch=2.4.0", "torchvision=0.19.0", 
 			"skimage", "onnxsim", "timm", "onnx", "segment_anything"});
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
@@ -76,10 +75,10 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-				"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly"});
+				"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0", "cpuonly"});
 		else 
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-					"scikit-image", "pytorch=2.0.1", "torchvision=0.15.2", "cpuonly"});
+					"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0", "cpuonly"});
 	}
 	/**
 	 * Dependencies that have to be installed using Mamba or Conda in environments that are going

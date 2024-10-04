@@ -45,7 +45,7 @@ import ai.nets.samj.ui.SAMJLogger;
  */
 public class SAM2Tiny implements SAMModel {
 
-	private Sam2 efficientSamJ;
+	private Sam2 samj;
 	private final SamEnvManagerAbstract manager;
 	private SAMJLogger log;
 	private Boolean installed = false;
@@ -115,10 +115,10 @@ public class SAM2Tiny implements SAMModel {
 			if (idx > 0) this.log.info( text.substring(0,idx) );
 			else this.log.info( text );
 		};
-		if (this.efficientSamJ == null)
-			efficientSamJ = Sam2.initializeSam("tiny", manager, filteringLogger, false);
+		if (this.samj == null)
+			samj = Sam2.initializeSam("tiny", manager, filteringLogger, false);
 		try {
-			this.efficientSamJ.setImage(Cast.unchecked(image));;
+			this.samj.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
@@ -144,8 +144,8 @@ public class SAM2Tiny implements SAMModel {
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			List<int[]> negList = listOfNegPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
-			if (negList.size() == 0) return efficientSamJ.processPoints(list, !onlyBiggest);
-			else return efficientSamJ.processPoints(list, negList, !onlyBiggest);
+			if (negList.size() == 0) return samj.processPoints(list, !onlyBiggest);
+			else return samj.processPoints(list, negList, !onlyBiggest);
 		} catch (IOException | RuntimeException | InterruptedException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
@@ -163,8 +163,8 @@ public class SAM2Tiny implements SAMModel {
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			List<int[]> negList = listOfNegPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
-			if (negList.size() == 0) return efficientSamJ.processPoints(list, zoomedRectangle, !onlyBiggest);
-			else return efficientSamJ.processPoints(list, negList, zoomedRectangle, !onlyBiggest);
+			if (negList.size() == 0) return samj.processPoints(list, zoomedRectangle, !onlyBiggest);
+			else return samj.processPoints(list, negList, zoomedRectangle, !onlyBiggest);
 		} catch (IOException | RuntimeException | InterruptedException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
@@ -185,7 +185,7 @@ public class SAM2Tiny implements SAMModel {
 				(int)boundingBox2D.max(0),
 				(int)boundingBox2D.max(1)
 			};
-			return efficientSamJ.processBox(bbox, !onlyBiggest);
+			return samj.processBox(bbox, !onlyBiggest);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
@@ -199,7 +199,7 @@ public class SAM2Tiny implements SAMModel {
 	public <T extends RealType<T> & NativeType<T>> List<Polygon> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) 
 			throws IOException, InterruptedException, RuntimeException {
 		try {
-			return efficientSamJ.processMask(rai, !onlyBiggest);
+			return samj.processMask(rai, !onlyBiggest);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
@@ -221,9 +221,9 @@ public class SAM2Tiny implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public void closeProcess() {
-	if (efficientSamJ != null)
-			efficientSamJ.close();
-		efficientSamJ = null;
+	if (samj != null)
+			samj.close();
+		samj = null;
 	}
 
 	@Override
@@ -242,7 +242,7 @@ public class SAM2Tiny implements SAMModel {
 	@Override
 	public String persistEncoding() throws IOException, InterruptedException {
 		try {
-			return efficientSamJ.persistEncoding();
+			return samj.persistEncoding();
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME+", unable to persist the encoding: "+e.getMessage());
 			throw e;
@@ -252,7 +252,7 @@ public class SAM2Tiny implements SAMModel {
 	@Override
 	public void selectEncoding(String encodingName) throws IOException, InterruptedException {
 		try {
-			efficientSamJ.selectEncoding(encodingName);
+			samj.selectEncoding(encodingName);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME+", unable to persist the encoding named '" + encodingName + "': "+e.getMessage());
 			throw e;
@@ -262,7 +262,7 @@ public class SAM2Tiny implements SAMModel {
 	@Override
 	public void deleteEncoding(String encodingName) throws IOException, InterruptedException {
 		try {
-			efficientSamJ.deleteEncoding(encodingName);
+			samj.deleteEncoding(encodingName);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME+", unable to delete the encoding named '" + encodingName + "': "+e.getMessage());
 			throw e;

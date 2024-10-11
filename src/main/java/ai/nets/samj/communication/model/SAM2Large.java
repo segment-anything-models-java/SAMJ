@@ -30,6 +30,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import ai.nets.samj.models.AbstractSamJ;
@@ -127,7 +128,9 @@ public class SAM2Large implements SAMModel {
 	 */
 	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
-		this.log = useThisLoggerForIt;
+		Objects.requireNonNull(image, "The image cannot be null.");
+		if (useThisLoggerForIt != null) 
+			this.log = useThisLoggerForIt;
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 			int idx = text.indexOf("contours_x");
 			if (idx > 0) this.log.info( text.substring(0,idx) );

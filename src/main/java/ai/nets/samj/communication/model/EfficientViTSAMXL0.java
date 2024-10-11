@@ -47,7 +47,24 @@ public class EfficientViTSAMXL0 implements SAMModel {
 
 	private EfficientViTSamJ efficientSamJ;
 	private final SamEnvManagerAbstract manager;
-	private SAMJLogger log;
+	private SAMJLogger log = new SAMJLogger() {
+
+		@Override
+		public void info(String text) {
+			System.out.println(text);
+		}
+
+		@Override
+		public void warn(String text) {
+			System.err.println("[WARNING] -- " + text);
+		}
+
+		@Override
+		public void error(String text) {
+			System.err.println(text);
+		}
+		
+	};
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
 	/**

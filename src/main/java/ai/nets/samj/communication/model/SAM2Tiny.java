@@ -30,6 +30,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import ai.nets.samj.models.AbstractSamJ;
@@ -47,7 +48,24 @@ public class SAM2Tiny implements SAMModel {
 
 	private Sam2 samj;
 	private final SamEnvManagerAbstract manager;
-	private SAMJLogger log;
+	private SAMJLogger log = new SAMJLogger() {
+
+		@Override
+		public void info(String text) {
+			System.out.println(text);
+		}
+
+		@Override
+		public void warn(String text) {
+			System.err.println("[WARNING] -- " + text);
+		}
+
+		@Override
+		public void error(String text) {
+			System.err.println(text);
+		}
+		
+	};
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
 	/**
@@ -109,7 +127,9 @@ public class SAM2Tiny implements SAMModel {
 	 */
 	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
-		this.log = useThisLoggerForIt;
+		Objects.requireNonNull(image, "The image cannot be null.");
+		if (useThisLoggerForIt != null) 
+			this.log = useThisLoggerForIt;
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 			int idx = text.indexOf("contours_x");
 			if (idx > 0) this.log.info( text.substring(0,idx) );

@@ -90,7 +90,9 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 */
 	final public static List<String> INSTALL_PIP_DEPS;
 	static {
-		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
+		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta() && PlatformDetection.isMacOS())
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2023.2.2", "appose"});
+		else if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
 			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "appose"});
 		else 
 			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"appose"});

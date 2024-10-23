@@ -486,11 +486,12 @@ public class SAMModelPanel extends JPanel implements ActionListener {
      * @return the message to be print in the html panel
      */
     private String manageEmptyMessage(String html) {
+    	String working = "Working, this might take several minutes";
     	if (html.trim().isEmpty() && waitingIter == 0) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- Working, this migh take several minutes .";
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " .";
         	waitingIter += 1;
         } else if (html.trim().isEmpty() && waitingIter % 3 == 1) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- Working, this migh take several minutes . .";
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " . .";
         	int len = html.length() - (" .").length() + System.lineSeparator().length();
         	SwingUtilities.invokeLater(() -> {
         		HTMLDocument doc = (HTMLDocument) info.getDocument();
@@ -498,7 +499,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
         	});
         	waitingIter += 1;
         } else if (html.trim().isEmpty() && waitingIter % 3 == 2) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- Working, this migh take several minutes . . .";
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " . . .";
         	int len = html.length() - (" .").length() + System.lineSeparator().length();
         	SwingUtilities.invokeLater(() -> {
         		HTMLDocument doc = (HTMLDocument) info.getDocument();
@@ -506,7 +507,7 @@ public class SAMModelPanel extends JPanel implements ActionListener {
         	});
         	waitingIter += 1;
         } else if (html.trim().isEmpty() && waitingIter % 3 == 0) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- Working, this migh take several minutes .";
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " .";
         	int len = html.length() + (" . .").length() + System.lineSeparator().length();
         	SwingUtilities.invokeLater(() -> {
         		HTMLDocument doc = (HTMLDocument) info.getDocument();

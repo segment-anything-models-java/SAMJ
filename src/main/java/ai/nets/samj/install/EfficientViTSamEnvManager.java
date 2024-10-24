@@ -125,7 +125,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * URL to download the EfficientViTSAM model. It needs to be used with String.format(EVITSAM_URL, "l0"), whre l0 could be any of 
 	 * the existing EfficientVitSAM model 
 	 */
-	final static private String EVITSAM_URL = "https://huggingface.co/han-cai/efficientvit-sam/resolve/main/%s.pt?download=true";
+	final static private String EVITSAM_URL = "https://huggingface.co/mit-han-lab/efficientvit-sam/resolve/main/efficientvit_sam_%s.pt";
 	
 	private EfficientViTSamEnvManager(String modelType) {
 		List<String> modelTypes = EFFICIENTVITSAM_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());

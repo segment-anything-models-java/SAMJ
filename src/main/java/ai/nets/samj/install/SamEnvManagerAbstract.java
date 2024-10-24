@@ -113,6 +113,8 @@ public abstract class SamEnvManagerAbstract {
 	
 	public void setConsumer(Consumer<String> consumer) {
 		this.consumer = consumer;
+		this.mamba.setConsoleOutputConsumer(this.consumer);
+		this.mamba.setErrorOutputConsumer(this.consumer);
 	}
 	
 	/**

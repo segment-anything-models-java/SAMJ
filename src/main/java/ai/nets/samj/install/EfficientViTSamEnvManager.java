@@ -235,7 +235,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 		if (!EfficientViTSamJ.getListOfSupportedEfficientViTSAM().contains(modelType))
 			throw new IllegalArgumentException("The provided model is not one of the supported EfficientViT models: " 
 												+ EfficientViTSamJ.getListOfSupportedEfficientViTSAM());
-		File weightsFile = Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", modelType + ".pt").toFile();
+		File weightsFile = Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", "efficientvit_sam_" + modelType + ".pt").toFile();
 		if (!weightsFile.isFile()) return false;
 		if (weightsFile.length() != EFFICIENTVITSAM_BYTE_SIZES_MAP.get(modelType)) return false;
 		return true;

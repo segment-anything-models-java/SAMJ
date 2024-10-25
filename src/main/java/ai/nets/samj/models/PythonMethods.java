@@ -109,7 +109,7 @@ public class PythonMethods {
 	 * Run-Length Encoding (RLE) algorithm
 	 */
 	protected static String RLE_METHOD = ""
-			+ "def encode_rle(mask: np.ndarray) -> List[int]:" +  System.lineSeparator()
+			+ "def encode_rle(mask):" +  System.lineSeparator()
 			+ "    \"\"\"" +  System.lineSeparator()
 			+ "    Encode a binary mask using Run-Length Encoding (RLE)." +  System.lineSeparator()
 			+ "    " +  System.lineSeparator()

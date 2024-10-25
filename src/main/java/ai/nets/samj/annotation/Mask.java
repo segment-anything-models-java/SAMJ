@@ -76,8 +76,9 @@ public class Mask {
 		
 		for (Mask mask : masks) {
 			for (int i = 0; i < mask.getRLEMask().length; i += 2) {
-				int cropStart = mask.crop.x;
-				int start = cropStart + (int) mask.getRLEMask()[i];
+				int cropStartx = mask.crop.x;
+				int cropStarty = mask.crop.y;
+				int start = (int) (width * (cropStarty + i / 2) + cropStartx + mask.getRLEMask()[i]);
 				int len = (int) mask.getRLEMask()[i+ 1];
 				Arrays.fill(arr, start, start + len, (byte) 1);
 			}

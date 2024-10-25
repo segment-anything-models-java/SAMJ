@@ -123,9 +123,8 @@ public class EfficientSamJ extends AbstractSamJ {
 		String IMPORTS_FORMATED = String.format(IMPORTS,
 				manager.getModelEnv() + File.separator + EfficientSamEnvManager.ESAM_NAME,
 				manager.getModelWeigthPath());
-		printScript(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES, "Edges tracing code");
-		Task task = python.task(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
-		System.out.println(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
+		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
+		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
 			throw new RuntimeException();

@@ -164,9 +164,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 									manager.getModelEnv() + File.separator + EfficientViTSamEnvManager.EVITSAM_NAME,
 									MODELS_DICT.get(type), MODELS_DICT.get(type), manager.getModelWeigthPath());
 		
-		printScript(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES, "Edges tracing code");
-		Task task = python.task(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
-		System.out.println(IMPORTS_FORMATED + PythonMethods.TRACE_EDGES);
+		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
+		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
 			throw new RuntimeException();

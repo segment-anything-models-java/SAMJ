@@ -340,6 +340,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 		code += "different_mask_vals = np.unique(mask)" + System.lineSeparator();
 		code += "contours_x = []" + System.lineSeparator();
 		code += "contours_y = []" + System.lineSeparator();
+		code += "rle_masks = []" + System.lineSeparator();
 		code += "for val in different_mask_vals:" + System.lineSeparator()
 			  + "  if val < 1:" + System.lineSeparator()
 			  + "    continue" + System.lineSeparator()
@@ -362,9 +363,10 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			  + "    box=None,)" + System.lineSeparator()
 			  //+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask_val[0, 1:, 1:] += mask_val[0, :-1, :-1]" : "") + System.lineSeparator()
-			  + "  contours_x_val,contours_y_val = get_polygons_from_binary_mask(mask_val[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+			  + "  contours_x_val,contours_y_val,rle_val = get_polygons_from_binary_mask(mask_val[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 			  + "  contours_x += contours_x_val" + System.lineSeparator()
 			  + "  contours_y += contours_y_val" + System.lineSeparator()
+			  + "  rle_masks += rle_val" + System.lineSeparator()
 			  + "task.update('all contours traced')" + System.lineSeparator()
 			  + "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 			  + "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
@@ -403,7 +405,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				//+ (this.isIJROIManager ? "mask[0, :, 1:] += mask[0, :, :-1]" : "") + System.lineSeparator()
 				//+ "np.save('/home/carlos/git/aa.npy', mask)" + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
@@ -425,7 +427,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				//+ "np.save('/home/carlos/git/mask.npy', mask)" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
-				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				+ "contours_x,contours_y,rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()

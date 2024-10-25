@@ -105,12 +105,12 @@ public class PythonMethods {
 	 * Run-Length Encoding (RLE) algorithm
 	 */
 	protected static String RLE_METHOD = ""
-			+ "def encode_rle(mask: Union[np.ndarray, List[List[int]]]) -> List[int]:" +  System.lineSeparator()
+			+ "def encode_rle(mask: np.ndarray) -> List[int]:" +  System.lineSeparator()
 			+ "    \"\"\"" +  System.lineSeparator()
 			+ "    Encode a binary mask using Run-Length Encoding (RLE)." +  System.lineSeparator()
 			+ "    " +  System.lineSeparator()
 			+ "    Args:" +  System.lineSeparator()
-			+ "        mask: A 2D binary array (numpy array or list of lists) where 1 represents the object" +  System.lineSeparator()
+			+ "        mask: A 2D binary array (numpy array) where 1 represents the object" +  System.lineSeparator()
 			+ "             and 0 represents the background" +  System.lineSeparator()
 			+ "    " +  System.lineSeparator()
 			+ "    Returns:" +  System.lineSeparator()
@@ -139,7 +139,8 @@ public class PythonMethods {
 			+ "        if binary[start] == 1:" +  System.lineSeparator()
 			+ "            rle.extend([start, length])" +  System.lineSeparator()
 			+ "    " +  System.lineSeparator()
-			+ "    return rle" +  System.lineSeparator();
+			+ "    return rle" +  System.lineSeparator()
+			+ "globals()['encode_rle'] = encode_rle" + System.lineSeparator();
 	
 	
 	protected static String SAM_EVERYTHING = ""

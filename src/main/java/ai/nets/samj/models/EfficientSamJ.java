@@ -275,7 +275,8 @@ public class EfficientSamJ extends AbstractSamJ {
 			  + "  cont_y += cont_y_val" + System.lineSeparator()
 			  + "task.update('all contours traced')" + System.lineSeparator()
 			  + "task.outputs['contours_x'] = cont_x" + System.lineSeparator()
-			  + "task.outputs['contours_y'] = cont_y" + System.lineSeparator();
+			  + "task.outputs['contours_y'] = cont_y" + System.lineSeparator()
+			  + "task.outputs['rle'] = rle_masks" + System.lineSeparator();
 		code += "mask = 0" + System.lineSeparator();
 		code += "shm_mask.close()" + System.lineSeparator();
 		code += "shm_mask.unlink()" + System.lineSeparator();
@@ -319,7 +320,8 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
-				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
+				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
+				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
 		this.script = code;
 	}
 
@@ -350,7 +352,8 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "contours_x,contours_y = get_polygons_from_binary_mask(mask, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
-				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator();
+				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
+				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
 		this.script = code;
 	}
 

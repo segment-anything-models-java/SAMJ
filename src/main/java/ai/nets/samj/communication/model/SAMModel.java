@@ -19,11 +19,11 @@
  */
 package ai.nets.samj.communication.model;
 
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
 
+import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.ui.SAMJLogger;
 import net.imglib2.Interval;
@@ -103,7 +103,7 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	List<Polygon> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) throws IOException, RuntimeException, InterruptedException;
+	List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using two lists of points as the prompts. 
@@ -119,7 +119,7 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	List<Polygon> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D, Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException;
+	List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D, Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using a bounding box as the prompt. 
@@ -130,7 +130,7 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	List<Polygon> fetch2dSegmentation(Interval boundingBox2D) throws IOException, RuntimeException, InterruptedException;
+	List<Mask> fetch2dSegmentation(Interval boundingBox2D) throws IOException, RuntimeException, InterruptedException;
 	
 	/**
 	 * Set whether SAMJ will only return the biggest ROI or all of them when several are obtained from the model
@@ -150,7 +150,7 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	public <T extends RealType<T> & NativeType<T>> List<Polygon> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException;
+	public <T extends RealType<T> & NativeType<T>> List<Mask> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException;
 
 	
 	public String persistEncoding() throws IOException, InterruptedException;

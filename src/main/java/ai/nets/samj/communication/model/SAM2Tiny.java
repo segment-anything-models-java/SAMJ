@@ -26,7 +26,6 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
@@ -35,6 +34,7 @@ import java.util.stream.Collectors;
 
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.Sam2;
+import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.ui.SAMJLogger;
@@ -157,7 +157,7 @@ public class SAM2Tiny implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<Polygon> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) 
+	public List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) 
 			throws IOException, InterruptedException, RuntimeException {
 		try {
 			List<int[]> list = listOfPoints2D.stream()
@@ -176,7 +176,7 @@ public class SAM2Tiny implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<Polygon> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D,
+	public List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D,
 			Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException {
 		try {
 			List<int[]> list = listOfPoints2D.stream()
@@ -195,7 +195,7 @@ public class SAM2Tiny implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<Polygon> fetch2dSegmentation(Interval boundingBox2D) 
+	public List<Mask> fetch2dSegmentation(Interval boundingBox2D) 
 			throws IOException, InterruptedException, RuntimeException {
 		try {
 			//order to processBox() should be: x0,y0, x1,y1
@@ -216,7 +216,7 @@ public class SAM2Tiny implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public <T extends RealType<T> & NativeType<T>> List<Polygon> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) 
+	public <T extends RealType<T> & NativeType<T>> List<Mask> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) 
 			throws IOException, InterruptedException, RuntimeException {
 		try {
 			return samj.processMask(rai, !onlyBiggest);

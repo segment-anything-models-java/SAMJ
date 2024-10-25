@@ -20,9 +20,12 @@
 package ai.nets.samj.annotation;
 
 import java.awt.Polygon;
+import java.util.Arrays;
 import java.util.List;
 
+import io.bioimage.modelrunner.tensor.Utils;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 /**
@@ -54,7 +57,26 @@ public class Mask {
 		return this.rleEncoding;
 	}
 	
-	public static RandomAccessibleInterval<UnsignedByteType> getMask(long width, long height, List<Mask> objects) {
-		return null;
+	/**
+	 * Mehtod that creates an annotation mask from several object masks in an efficient manner using RLE algorithm
+	 * @param width
+	 * 	width of the image
+	 * @param height
+	 * 	height of the image
+	 * @param masks
+	 * 	all the masks of the objects image
+	 * @return the whole mask with all the objects
+	 */
+	public static RandomAccessibleInterval<UnsignedByteType> getMask(long width, long height, List<Mask> masks) {
+		byte[] arr = new byte[(int) (width * height)];
+		
+		for (Mask mask : masks) {
+			for (int i = 0; i < mask.getRLEMask().length; i += 2) {
+				int start = (int) mask.getRLEMask()[i];
+				int len = (int) mask.getRLEMask()[i+ 1];
+				Arrays.fill(arr, start, start + len, (byte) 1);
+			}
+		}
+		return Utils.transpose(ArrayImgs.unsignedBytes(arr, new long[] {height, width}));
 	}
 }

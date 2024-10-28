@@ -90,7 +90,7 @@ public class PythonMethods {
 			+ "            x_coords,y_coords = trace_contour(obj.image, obj.num_pixels, obj.bbox[1],obj.bbox[0])" + System.lineSeparator()
 			+ "            rles = encode_rle(obj.image)" + System.lineSeparator()
 			+ "            for i in range(0, len(lst), 2):" + System.lineSeparator()
-			+ "              rles[i] += sam_result.shape[1] * (obj.bbox[0] + i) +  obj.bbox[1]:" + System.lineSeparator()
+			+ "              rles[i] += sam_result.shape[1] * (obj.bbox[0] + i) +  obj.bbox[1]" + System.lineSeparator()
 			+ "            rles.append(encode_rle(obj.image))" + System.lineSeparator()
 			+ "            x_contours.append(x_coords)" + System.lineSeparator()
 			+ "            y_contours.append(y_coords)" + System.lineSeparator()

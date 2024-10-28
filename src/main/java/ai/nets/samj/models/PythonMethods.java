@@ -130,6 +130,7 @@ public class PythonMethods {
 			+ "        mask = np.array(mask)" +  System.lineSeparator()
 			+ "    " +  System.lineSeparator()
 			+ "    # Flatten the mask in row-major order" +  System.lineSeparator()
+			+ "    ww = mask.shape[1]" +  System.lineSeparator()
 			+ "    binary = mask.flatten()" +  System.lineSeparator()
 			+ "    " +  System.lineSeparator()
 			+ "    # Find positions where values change" +  System.lineSeparator()

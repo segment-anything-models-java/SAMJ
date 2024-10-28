@@ -371,6 +371,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				throw new RuntimeException();
 			else if (task.outputs.get("contours_y") == null)
 				throw new RuntimeException();
+			else if (task.outputs.get("rles") == null)
+				throw new RuntimeException();
 			results = task.outputs;
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			try {

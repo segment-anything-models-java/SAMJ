@@ -75,7 +75,8 @@ public class Mask {
 		byte[] arr = new byte[(int) (width * height)];
 		
 		for (Mask mask : masks) {
-			for (int i = 0; i < mask.getRLEMask().length; i += 2) {
+			long[] rle = mask.getRLEMask();
+			for (int i = 0; i < rle.length; i += 2) {
 				int cropStartx = mask.crop.x;
 				int cropStarty = mask.crop.y;
 				int start = (int) (width * (cropStarty + i / 2) + cropStartx + mask.getRLEMask()[i]);

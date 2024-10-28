@@ -23,10 +23,9 @@ import java.awt.Polygon;
 import java.util.Arrays;
 import java.util.List;
 
-import io.bioimage.modelrunner.tensor.Utils;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 /**
  * Class that contains the information required to create the contour and mask about the object annotated in an image
@@ -67,17 +66,19 @@ public class Mask {
 	 * 	all the masks of the objects image
 	 * @return the whole mask with all the objects
 	 */
-	public static RandomAccessibleInterval<UnsignedByteType> getMask(long width, long height, List<Mask> masks) {
-		byte[] arr = new byte[(int) (width * height)];
-		
+	public static RandomAccessibleInterval<UnsignedShortType> getMask(long width, long height, List<Mask> masks) {
+		short[] arr = new short[(int) (width * height)];
+		int n = 1;
 		for (Mask mask : masks) {
 			long[] rle = mask.getRLEMask();
 			for (int i = 0; i < rle.length; i += 2) {
 				int start = (int) mask.getRLEMask()[i];
 				int len = (int) mask.getRLEMask()[i+ 1];
-				Arrays.fill(arr, start, start + len, (byte) 1);
+				Arrays.fill(arr, start, start + len, (short) n);
 			}
+			n ++;
 		}
-		return Utils.transpose(ArrayImgs.unsignedBytes(arr, new long[] {height, width}));
+		//return Utils.transpose(ArrayImgs.unsignedBytes(arr, new long[] {height, width}));
+		return (ArrayImgs.unsignedShorts(arr, new long[] {width, height}));
 	}
 }

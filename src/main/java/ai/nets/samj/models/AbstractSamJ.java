@@ -371,7 +371,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				throw new RuntimeException();
 			else if (task.outputs.get("contours_y") == null)
 				throw new RuntimeException();
-			else if (task.outputs.get("rles") == null)
+			else if (task.outputs.get("rle") == null)
 				throw new RuntimeException();
 			results = task.outputs;
 		} catch (IOException | InterruptedException | RuntimeException e) {
@@ -393,7 +393,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			int[] xArr = contours_x.next().stream().mapToInt(Number::intValue).toArray();
 			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
 			long[] rle = rles.next().stream().mapToLong(Number::longValue).toArray();
-			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle, cropRect));
+			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle));
 		}
 		return masks;
 	}
@@ -1034,15 +1034,19 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * to detect small objects compared to the size of the whole image, SAMJ might encode crops of
 	 * the total image, thus the coordinates of the polygons obtained need to be shifted in order
 	 * to match the original image.
-	 * @param polys
-	 * 	polys obtained by SAMJ on the encoded crop
+	 * @param masks
+	 * 	masks obtained by SAMJ on the encoded crop
 	 * @param encodeCoords
 	 * 	position of the crop in the total image
 	 */
-	protected void recalculatePolys(List<Mask> polys, long[] encodeCoords) {
-		polys.stream().forEach(pp -> {
+	protected void recalculatePolys(List<Mask> masks, long[] encodeCoords) {
+		masks.stream().forEach(pp -> {
 			pp.getContour().xpoints = Arrays.stream(pp.getContour().xpoints).map(x -> x + (int) encodeCoords[0]).toArray();
 			pp.getContour().ypoints = Arrays.stream(pp.getContour().ypoints).map(y -> y + (int) encodeCoords[1]).toArray();
+			for (int i = 0; i < pp.getRLEMask().length; i += 2) {
+				pp.getRLEMask()[i] = encodeCoords[0] + pp.getRLEMask()[i] % this.targetDims[0] 
+						+ (((int) (pp.getRLEMask()[i] / this.targetDims[0])) + encodeCoords[1]) * this.targetDims[0];
+			}
 		});
 	}
 

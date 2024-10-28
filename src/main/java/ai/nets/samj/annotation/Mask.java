@@ -20,7 +20,6 @@
 package ai.nets.samj.annotation;
 
 import java.awt.Polygon;
-import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,16 +40,13 @@ public class Mask {
 	
 	private final long[] rleEncoding;
 	
-	private final Rectangle crop;
-	
-	private Mask(Polygon contour, long[] rleEncoding, Rectangle crop) {
+	private Mask(Polygon contour, long[] rleEncoding) {
 		this.contour = contour;
 		this.rleEncoding = rleEncoding;
-		this.crop = crop;
 	}
 	
-	public static Mask build(Polygon contour, long[] rleEncoding, Rectangle crop) {
-		return new Mask(contour, rleEncoding, crop);
+	public static Mask build(Polygon contour, long[] rleEncoding) {
+		return new Mask(contour, rleEncoding);
 	}
 	
 	public Polygon getContour() {
@@ -77,9 +73,7 @@ public class Mask {
 		for (Mask mask : masks) {
 			long[] rle = mask.getRLEMask();
 			for (int i = 0; i < rle.length; i += 2) {
-				int cropStartx = mask.crop.x;
-				int cropStarty = mask.crop.y;
-				int start = (int) (width * (cropStarty + i / 2) + cropStartx + mask.getRLEMask()[i]);
+				int start = (int) mask.getRLEMask()[i];
 				int len = (int) mask.getRLEMask()[i+ 1];
 				Arrays.fill(arr, start, start + len, (byte) 1);
 			}

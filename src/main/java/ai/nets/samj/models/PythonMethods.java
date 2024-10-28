@@ -92,7 +92,7 @@ public class PythonMethods {
 			+ "            rle = encode_rle(obj.image)" + System.lineSeparator()
 			+ "            bbox_w = obj.bbox[3] - obj.bbox[1]" + System.lineSeparator()
 			+ "            for i in range(0, len(rle), 2):" + System.lineSeparator()
-			+ "              rle[i] = sam_result.shape[1] * (obj.bbox[0] - 1 + rle[i] // bbox_w) + obj.bbox[1] + rle[i] % bbox_w" + System.lineSeparator()
+			+ "              rle[i] = sam_result.shape[1] * (obj.bbox[0] + rle[i] // bbox_w) + obj.bbox[1] + rle[i] % bbox_w" + System.lineSeparator()
 			+ "            rles.append(rle)" + System.lineSeparator()
 			+ "            x_contours.append(x_coords)" + System.lineSeparator()
 			+ "            y_contours.append(y_coords)" + System.lineSeparator()

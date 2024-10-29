@@ -75,6 +75,7 @@ public class Sam2 extends AbstractSamJ {
 			+ "from skimage import measure" + System.lineSeparator()
 			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
+			+ "from scipy.ndimage import binary_fill_holes" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
 			+ "import os" + System.lineSeparator()
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
@@ -92,6 +93,7 @@ public class Sam2 extends AbstractSamJ {
 			+ "globals()['measure'] = measure" + System.lineSeparator()
 			+ "globals()['np'] = np" + System.lineSeparator()
 			+ "globals()['torch'] = torch" + System.lineSeparator()
+			+ "globals()['binary_fill_holes'] = binary_fill_holes" + System.lineSeparator()
 			+ "globals()['predictor'] = predictor" + System.lineSeparator();
 	/**
 	 * String containing the Python imports code after it has been formated with the correct 

@@ -37,7 +37,8 @@ public class Mask {
 
 	private final Polygon contour;
 	
-	private final long[] rleEncoding;
+	// TODO private final long[] rleEncoding;
+	public long[] rleEncoding;
 	
 	private Mask(Polygon contour, long[] rleEncoding) {
 		this.contour = contour;

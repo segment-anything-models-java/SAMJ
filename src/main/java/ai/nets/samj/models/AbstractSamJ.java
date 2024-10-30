@@ -987,11 +987,19 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		masks.stream().forEach(pp -> {
 			pp.getContour().xpoints = Arrays.stream(pp.getContour().xpoints).map(x -> x * scale + (int) encodeCoords[0]).toArray();
 			pp.getContour().ypoints = Arrays.stream(pp.getContour().ypoints).map(y -> y * scale + (int) encodeCoords[1]).toArray();
+			long[] upscaledRLE = new long[pp.getRLEMask().length * scale];
 			for (int i = 0; i < pp.getRLEMask().length; i += 2) {
-				pp.getRLEMask()[i] = encodeCoords[0] + (pp.getRLEMask()[i] * scale) % this.targetDims[0] 
-						+ (((int) ((pp.getRLEMask()[i] * scale) / this.targetDims[0])) + encodeCoords[1]) * this.targetDims[0];
-				pp.getRLEMask()[i] *= scale;
+				int x = (int) (pp.getRLEMask()[i] % Math.ceil(this.targetDims[0] / (double) scale));
+				int y = (int) (pp.getRLEMask()[i] / Math.ceil(this.targetDims[0] / (double) scale));
+				int newX = x * scale;
+				int newY = y * scale;
+				long newLen = pp.getRLEMask()[i + 1] * scale;
+				for (int j = 0; j < scale; j ++) {
+					upscaledRLE[i * scale + j * 2] = newX + encodeCoords[0] + (newY + j) * this.img.dimensionsAsLongArray()[0];
+					upscaledRLE[i * scale + j * 2 + 1] = newLen;
+				}
 			}
+			pp.rleEncoding = upscaledRLE;
 		});
 	}
 

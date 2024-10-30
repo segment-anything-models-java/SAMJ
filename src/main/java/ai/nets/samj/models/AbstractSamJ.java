@@ -219,7 +219,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @param designationOfTheScript
 	 * 	the name (or some string to design) of the text that is going to be printed
 	 */
-	public void printScript(final String script, final String designationOfTheScript) {
+	public <T extends RealType<T> & NativeType<T>> void printScript(final String script, final String designationOfTheScript) {
 		if (!isDebugging) return;
 		debugPrinter.printText("START: =========== "+designationOfTheScript+" ===========");
 		debugPrinter.printText(LocalDateTime.now().toString());
@@ -272,6 +272,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			this.targetDims = new long[] {0, 0, 0};
 			this.imageSmall = false;
 			return;
+		} else {
+			scale = 1;
 		}
 		this.script = "";
 		sendImgLib2AsNp();
@@ -329,7 +331,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected <T extends RealType<T> & NativeType<T>> 
 	void sendImgLib2AsNp() {
-		createSHMArray((RandomAccessibleInterval<T>) this.img);
+		createSHMArray(Cast.unchecked(this.img));
 	}
 		
 	private <T extends RealType<T> & NativeType<T>> void sendCropAsNp(long[] cropSize) {
@@ -346,13 +348,19 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		targetDims = crop.dimensionsAsLongArray();
 		
 		scale = (int) (Math.min(targetDims[0], targetDims[1]) / MAX_IMG_SIZE);
-		RandomAccessibleInterval<T> subsampledCrop = Views.subsample(crop, 
-				new long[] {scale, scale, 1});
-		targetReescaledDims = crop.dimensionsAsLongArray();
-		createSHMArray(subsampledCrop);
+		scale = Math.max(scale, 1);
+		if (scale == 1) {
+			createSHMArray(crop);
+		} else {
+			RandomAccessibleInterval<T> subsampledCrop = Views.subsample(crop, 
+					new long[] {scale, scale, 1});
+			targetReescaledDims = subsampledCrop.dimensionsAsLongArray();
+			createSHMArray(subsampledCrop);
+		}
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs) 
 			throws IOException, RuntimeException, InterruptedException {
 		Map<String, Object> results = null;
@@ -388,7 +396,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		final Iterator<List<Number>> contours_y = ((List<List<Number>>)results.get("contours_y")).iterator();
 		final Iterator<List<Number>> rles = ((List<List<Number>>)results.get("rle")).iterator();
 		final List<Mask> masks = new ArrayList<Mask>(contours_x_container.size());
-		Rectangle cropRect = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], (int) targetDims[0], (int) targetDims[1]);
 		while (contours_x.hasNext()) {
 			int[] xArr = contours_x.next().stream().mapToInt(Number::intValue).toArray();
 			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
@@ -565,8 +572,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	private List<int[]> adaptPointPrompts(List<int[]> pointsList) {
 		pointsList = pointsList.stream().map(pp -> {
 			int[] newPoint = new int[2];
-			newPoint[0] = (int) ((pp[0] - this.encodeCoords[0]) / scale);
-			newPoint[1] = (int) ((pp[1] - this.encodeCoords[1]) / scale);
+			newPoint[0] = (int) Math.ceil((pp[0] - this.encodeCoords[0]) / (double) scale);
+			newPoint[1] = (int) Math.ceil((pp[1] - this.encodeCoords[1]) / (double) scale);
 			return newPoint;
 			}).collect(Collectors.toList());
 		return pointsList;
@@ -619,9 +626,9 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				reencodeCrop();
 			}
 		}
-		int[] adaptedBoundingBox = new int[] {(int) ((boundingBox[0] - encodeCoords[0]) / scale), 
-				(int) ((boundingBox[1] - encodeCoords[1]) / scale),
-				(int) ((boundingBox[2] - encodeCoords[0]) / scale), (int) ((boundingBox[3] - encodeCoords[1]) / scale)};;
+		int[] adaptedBoundingBox = new int[] {(int) Math.ceil((boundingBox[0] - encodeCoords[0]) / (double) scale), 
+				(int) Math.ceil((boundingBox[1] - encodeCoords[1]) / (double) scale),
+				(int) Math.ceil((boundingBox[2] - encodeCoords[0]) / (double) scale), (int) Math.ceil((boundingBox[3] - encodeCoords[1]) / (double) scale)};;
 		this.script = "";
 		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
@@ -761,7 +768,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		Rectangle alreadyEncoded = getCurrentlyEncodedArea();
 		Rectangle neededArea = getApproximateAreaNeeded(pointsList, pointsNegList, rect);
 		if (rect.equals(alreadyEncoded)) neededArea = getApproximateAreaNeeded(pointsList, pointsNegList);
-		ArrayList<int[]> notInRect = getPointsNotInRect(pointsList, pointsNegList, rect);
 		
 		if (rectContainsRect(alreadyEncoded, neededArea)
 				&& alreadyEncoded.width * 0.7 < extendedRect.width && alreadyEncoded.height * 0.7 < extendedRect.height) {

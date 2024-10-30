@@ -20,6 +20,7 @@
 package ai.nets.samj.models;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import ai.nets.samj.install.Sam2EnvManager;
@@ -33,6 +34,7 @@ import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
@@ -286,13 +288,15 @@ public class Sam2 extends AbstractSamJ {
 		script += "im_shm = shared_memory.SharedMemory(name='"
 				+ shma.getNameForPython() + "', size=" + shma.getSize() 
 				+ ")" + System.lineSeparator();
-		int size = 1;
-		for (long l : targetDims) {size *= l;}
+		int size = (int) targetDims[2];
+		for (int i = 0; i < targetDims.length - 1; i ++) {
+			size *= Math.ceil(targetDims[i] / (double) scale);
+			}
 		script += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
 				+ "', buffer=im_shm.buf).reshape([";
-		for (long ll : targetDims)
-			script += ll + ", ";
-		script = script.substring(0, script.length() - 2);
+		for (int i = 0; i < targetDims.length - 1; i ++)
+			script += (int) Math.ceil(targetDims[i] / (double) scale) + ", ";
+		script += targetDims[2];
 		script += "])" + System.lineSeparator();
 		script += "im = np.transpose(im, (1, 0, 2))" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();
@@ -436,9 +440,10 @@ public class Sam2 extends AbstractSamJ {
 	private <T extends RealType<T> & NativeType<T>>
 	void adaptImageToModel(RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<T> targetImg) {
 		if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 3) {
-			for (int i = 0; i < 3; i ++) 
+			for (int i = 0; i < 3; i ++) {
 				RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), 
 						Views.hyperSlice(targetImg, 2, i) );
+			}
 		} else if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 1) {
 			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
 			IntervalView<UnsignedByteType> resIm = 

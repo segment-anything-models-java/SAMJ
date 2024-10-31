@@ -201,13 +201,15 @@ public class EfficientSamJ extends AbstractSamJ {
 		code += "im_shm = shared_memory.SharedMemory(name='"
 							+ shma.getNameForPython() + "', size=" + shma.getSize() 
 							+ ")" + System.lineSeparator();
-		int size = 1;
-		for (long l : targetDims) {size *= l;}
+		int size = (int) targetDims[2];
+		for (int i = 0; i < targetDims.length - 1; i ++) {
+			size *= Math.ceil(targetDims[i] / (double) scale);
+			}
 		code += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
 			  + "', buffer=im_shm.buf).reshape([";
-		for (long ll : targetDims)
-			code += ll + ", ";
-		code = code.substring(0, code.length() - 2);
+		for (int i = 0; i < targetDims.length - 1; i ++)
+			code += (int) Math.ceil(targetDims[i] / (double) scale) + ", ";
+		code += targetDims[2];
 		code += "])" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/crop.npy', im)" + System.lineSeparator();
 		code += "input_h = im.shape[1]" + System.lineSeparator();

@@ -71,7 +71,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected static long ENCODE_MARGIN = 64;
 	
-	protected static int MAX_IMG_SIZE = 2048;
+	protected static int MAX_IMG_SIZE = 2024;
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface DebugTextPrinter { void printText(String text); }
@@ -995,7 +995,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				int newY = y * scale;
 				long newLen = pp.getRLEMask()[i + 1] * scale;
 				for (int j = 0; j < scale; j ++) {
-					upscaledRLE[i * scale + j * 2] = newX + encodeCoords[0] + (newY + j) * this.img.dimensionsAsLongArray()[0];
+					upscaledRLE[i * scale + j * 2] = newX + encodeCoords[0] + (encodeCoords[1] + newY + j) * this.img.dimensionsAsLongArray()[0];
 					upscaledRLE[i * scale + j * 2 + 1] = newLen;
 				}
 			}

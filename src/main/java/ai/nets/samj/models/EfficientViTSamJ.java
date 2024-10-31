@@ -305,13 +305,15 @@ public class EfficientViTSamJ extends AbstractSamJ {
 		script += "im_shm = shared_memory.SharedMemory(name='"
 				+ shma.getNameForPython() + "', size=" + shma.getSize() 
 				+ ")" + System.lineSeparator();
-		int size = 1;
-		for (long l : targetDims) {size *= l;}
+		int size = (int) targetDims[2];
+		for (int i = 0; i < targetDims.length - 1; i ++) {
+			size *= Math.ceil(targetDims[i] / (double) scale);
+			}
 		script += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
 				+ "', buffer=im_shm.buf).reshape([";
-		for (long ll : targetDims)
-			script += ll + ", ";
-		script = script.substring(0, script.length() - 2);
+		for (int i = 0; i < targetDims.length - 1; i ++)
+			script += (int) Math.ceil(targetDims[i] / (double) scale) + ", ";
+		script += targetDims[2];
 		script += "])" + System.lineSeparator();
 		script += "im = np.transpose(im, (1, 0, 2))" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();

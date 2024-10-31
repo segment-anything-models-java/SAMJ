@@ -470,7 +470,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * @return the path to the EfficientSAM Small weights file
 	 */
 	public String getModelWeightsPath() {
-		File file = Paths.get(path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", modelType + ".pt").toFile();
+		File file = Paths.get(path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", "efficientvit_sam_" + modelType + ".pt").toFile();
 		if (!file.isFile()) return null;
 		return file.getAbsolutePath();
 	}
@@ -495,7 +495,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 
 	@Override
 	public String getModelWeigthPath() {
-		return Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", modelType + ".pt").toAbsolutePath().toString();
+		return Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", "efficientvit_sam_" + modelType + ".pt").toAbsolutePath().toString();
 	}
 
 	@Override

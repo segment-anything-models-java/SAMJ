@@ -622,7 +622,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			throws IOException, RuntimeException, InterruptedException {
 		if (!this.imageSmall || this.encodeCoords[0] != 0 || this.encodeCoords[1] != 0 
 				|| targetDims[0] != img.dimensionsAsLongArray()[0] || targetDims[1] != img.dimensionsAsLongArray()[1]) {
-			if (needsMoreResolution(boundingBox)) {
+			if (allowAutoCropping && needsMoreResolution(boundingBox)) {
 				this.encodeCoords = calculateEncodingNewCoords(boundingBox, this.img.dimensionsAsLongArray());
 				reencodeCrop();
 			} else if (!isAreaEncoded(boundingBox)) {
@@ -642,7 +642,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
 		return polys;
 	}
-	
+
+	public void setAutoCropping(boolean doCroppingAndReencoding) {
+		allowAutoCropping = doCroppingAndReencoding;
+	}
+	boolean allowAutoCropping = true;
+
 	/**
 	 * Method used that runs EfficientSAM using a mask as the prompt. The mask should be a 2D single-channel
 	 * image {@link RandomAccessibleInterval} of the same x and y sizes as the image of interest, the image 

@@ -68,6 +68,7 @@ public class SAM2Large implements SAMModel {
 	};
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
+	private boolean allowAutoCropping = true;
 	/**
 	 * Name of the model
 	 */
@@ -136,8 +137,10 @@ public class SAM2Large implements SAMModel {
 			if (idx > 0) this.log.info( text.substring(0,idx) );
 			else this.log.info( text );
 		};
-		if (this.efficientSamJ == null)
+		if (this.efficientSamJ == null) {
 			efficientSamJ = Sam2.initializeSam("large", manager, filteringLogger, false);
+			efficientSamJ.setAutoCropping(allowAutoCropping);
+		}
 		try {
 			this.efficientSamJ.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {
@@ -258,6 +261,11 @@ public class SAM2Large implements SAMModel {
 	@Override
 	public void setReturnOnlyBiggest(boolean onlyBiggest) {
 		this.onlyBiggest = onlyBiggest;
+	}
+
+	@Override
+	public void setAutoCropping(boolean doCroppingAndReencoding) {
+		this.allowAutoCropping = doCroppingAndReencoding;
 	}
 
 	@Override

@@ -68,7 +68,8 @@ public class EfficientViTSAMXL1 implements SAMModel {
 	};
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
-	
+	private boolean allowAutoCropping = true;
+
 	/**
 	 * Name of the model
 	 */
@@ -121,8 +122,10 @@ public class EfficientViTSAMXL1 implements SAMModel {
 		Objects.requireNonNull(image, "The image cannot be null.");
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
-		if (this.efficientSamJ == null)
+		if (this.efficientSamJ == null) {
 			this.efficientSamJ = EfficientViTSamJ.initializeSam("xl1", manager);
+			this.efficientSamJ.setAutoCropping(allowAutoCropping);
+		}
 		try {
 			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 				int idx = text.indexOf("contours_x");
@@ -256,6 +259,11 @@ public class EfficientViTSAMXL1 implements SAMModel {
 	@Override
 	public void setReturnOnlyBiggest(boolean onlyBiggest) {
 		this.onlyBiggest = onlyBiggest;
+	}
+
+	@Override
+	public void setAutoCropping(boolean doCroppingAndReencoding) {
+		this.allowAutoCropping = doCroppingAndReencoding;
 	}
 
 	@Override

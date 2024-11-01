@@ -139,6 +139,8 @@ public interface SAMModel {
 	 */
 	void setReturnOnlyBiggest(boolean onlyBiggest);
 
+	void setAutoCropping(boolean doCroppingAndReencoding);
+
 	/**
 	 * Get a 2D segmentation/annotation using an existing mask as the prompt. 
 	 * @param <T>

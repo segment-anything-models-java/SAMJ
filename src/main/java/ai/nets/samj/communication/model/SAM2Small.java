@@ -68,6 +68,7 @@ public class SAM2Small implements SAMModel {
 	};
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
+	private boolean allowAutoCropping = true;
 	/**
 	 * Name of the model
 	 */
@@ -131,8 +132,10 @@ public class SAM2Small implements SAMModel {
 		Objects.requireNonNull(image, "The image cannot be null.");
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
-		if (this.efficientSamJ == null)
+		if (this.efficientSamJ == null) {
 			efficientSamJ = Sam2.initializeSam("small", manager);
+			efficientSamJ.setAutoCropping(allowAutoCropping);
+		}
 		try {
 			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 				int idx = text.indexOf("contours_x");
@@ -258,6 +261,11 @@ public class SAM2Small implements SAMModel {
 	@Override
 	public void setReturnOnlyBiggest(boolean onlyBiggest) {
 		this.onlyBiggest = onlyBiggest;
+	}
+
+	@Override
+	public void setAutoCropping(boolean doCroppingAndReencoding) {
+		this.allowAutoCropping = doCroppingAndReencoding;
 	}
 
 	@Override

@@ -68,6 +68,7 @@ public class SAM2Tiny implements SAMModel {
 	};
 	private Boolean installed = false;
 	private boolean onlyBiggest = false;
+	private boolean allowAutoCropping = true;
 	/**
 	 * Name of the model
 	 */
@@ -135,8 +136,10 @@ public class SAM2Tiny implements SAMModel {
 			if (idx > 0) this.log.info( text.substring(0,idx) );
 			else this.log.info( text );
 		};
-		if (this.samj == null)
+		if (this.samj == null) {
 			samj = Sam2.initializeSam("tiny", manager, filteringLogger, false);
+			samj.setAutoCropping(allowAutoCropping);
+		}
 		try {
 			this.samj.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {
@@ -257,6 +260,11 @@ public class SAM2Tiny implements SAMModel {
 	@Override
 	public void setReturnOnlyBiggest(boolean onlyBiggest) {
 		this.onlyBiggest = onlyBiggest;
+	}
+
+	@Override
+	public void setAutoCropping(boolean doCroppingAndReencoding) {
+		this.allowAutoCropping = doCroppingAndReencoding;
 	}
 
 	@Override

@@ -159,7 +159,7 @@
 			<artifactId>appose</artifactId>
 			<version>0.1.1</version>
 		</dependency>
-		NOTE: dl-modelrunner @ 0.5.5 (which is what is used here)
+		NOTE: dl-modelrunner @ 0.5.10 (which is what is used here)
 		copied-in the apposed project and thus the dependency
 		on apposed is not necessary here.
 		-->

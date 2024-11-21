@@ -8,7 +8,6 @@ import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
-import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.ui.UtilityMethods;
 import ai.nets.samj.utils.Constants;
 
@@ -26,7 +25,6 @@ public class MainGUI extends JFrame {
 
     private boolean isDrawerOpen = false;
     private final List<SAMModel> modelList;
-    private ModelSelectionListener modelListener;
     private ImageSelectionListener imageListener;
 
 	private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
@@ -76,7 +74,7 @@ public class MainGUI extends JFrame {
 		
 		if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
 		else this.modelList = modelList;
-		cmbModels = ModelSelection.create(modelList, modelListener);
+		cmbModels = ModelSelection.create(modelList);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -327,13 +325,6 @@ public class MainGUI extends JFrame {
     }
     
     private void createListeners() {
-		
-		modelListener = new ModelSelectionListener() {
-		    @Override
-		    public void modelChanged(SAMModel selectedModel) {
-		        // Perform the action needed when a new model is selected
-		    }
-		};
 		
 		imageListener = new ImageSelectionListener() {
 

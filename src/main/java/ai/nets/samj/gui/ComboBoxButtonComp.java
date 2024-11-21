@@ -5,25 +5,23 @@ import java.awt.FontMetrics;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-import ai.nets.samj.gui.components.ComboBoxItem;
-import io.bioimage.modelrunner.model.Model;
 
-public class ModelSelection extends JPanel {
+public class ComboBoxButtonComp<T> extends JPanel {
 
     private static final long serialVersionUID = 2478618937640492286L;
 
-    private JComboBox<String> modelCombobox = new JComboBox<String>();
+    private final JComboBox<T> modelCombobox;
     private JButton btn = new JButton("▶");
     private static final double RATIO_CBX_BTN = 10.0;
 
-    public ModelSelection(List<Model> models) {
+    public ComboBoxButtonComp(JComboBox<T> modelCombobox) {
         // Populate the JComboBox with models
-        modelCombobox.addItem("GAGA");
+        this.modelCombobox = modelCombobox;
+        btn.setMargin(new Insets(2, 3, 2, 2));
 
         // Set layout manager to null for absolute positioning
         setLayout(null);
@@ -86,7 +84,7 @@ public class ModelSelection extends JPanel {
         int availableWidth = btnWidth - insets.left - insets.right;
 
         // Start with a font size based on button height
-        int fontSize = btnHeight - insets.top - insets.bottom - 4; // Subtract padding
+        int fontSize = btnHeight - insets.top - insets.bottom;// - 4; // Subtract padding
 
         // Get the current font
         Font originalFont = btn.getFont();
@@ -115,7 +113,7 @@ public class ModelSelection extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             javax.swing.JFrame frame = new javax.swing.JFrame("Model Selection");
             frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-            frame.add(new ModelSelection(null));
+            frame.add(new ComboBoxButtonComp(null));
             frame.setSize(400, 100); // Adjust the size as needed
             frame.setVisible(true);
         });

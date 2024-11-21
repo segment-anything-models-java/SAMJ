@@ -64,6 +64,10 @@ public abstract class ConsumerInterface {
 	 * numbered from 1.
 	 */
 	public abstract void exportImageLabeling();
+	
+	public abstract void activateListeners();
+	
+	public abstract void deactivateListeners();
 
 	public abstract void setFocusedImage(Object image);
 	

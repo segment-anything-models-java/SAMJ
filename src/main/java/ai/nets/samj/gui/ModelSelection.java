@@ -1,5 +1,6 @@
 package ai.nets.samj.gui;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -8,6 +9,10 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
 import ai.nets.samj.gui.components.ComboBoxButtonComp;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.SAMModel;
 
 public class ModelSelection extends ComboBoxButtonComp<String> implements PopupMenuListener {
@@ -33,16 +38,20 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 		return new ModelSelection(models);
 	}
 	
+	protected SAMModel getSelectedModel() {
+		return selected;
+	}
+	
 	protected JButton getButton() {
 		return this.btn;
 	}
 	
-	protected void loadModel() {
-		
+	protected <T extends RealType<T> & NativeType<T>> void loadModel(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
+		selected.setImage(rai, null);
 	}
 	
-	protected void unLooadModel() {
-		
+	protected void unLoadModel() {
+		selected.closeProcess();
 	}
 
 	@Override
@@ -59,9 +68,8 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 		SAMModel nSelectedModel = models.get(cmbBox.getSelectedIndex());
 		if (nSelectedModel != selected) {
-			unLooadModel();
+			unLoadModel();
 			selected = nSelectedModel;
-			loadModel();
 		}
 	}
 

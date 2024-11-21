@@ -10,40 +10,47 @@ import javax.swing.event.PopupMenuListener;
 
 import ai.nets.samj.gui.components.ComboBoxButtonComp;
 import ai.nets.samj.gui.components.ComboBoxItem;
+import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.ui.UtilityMethods;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements PopupMenuListener {
 
-	private final UtilityMethods consumerUtils;
+	private final ConsumerInterface consumer;
 	private final ImageSelectionListener listener;
 	
 	private ComboBoxItem selected;
 
 	private static final long serialVersionUID = 2478618937640492286L;
 
-	private ImageSelection(UtilityMethods consumerUtils, ImageSelectionListener listener) {
+	private ImageSelection(ConsumerInterface consumer, ImageSelectionListener listener) {
 		super(new JComboBox<ComboBoxItem>());
-		this.consumerUtils = consumerUtils;
+		this.consumer = consumer;
 		this.listener = listener;
-		if (consumerUtils == null)
-			return;
-		List<ComboBoxItem> listImages = this.consumerUtils.getListOfOpenImages();
+		List<ComboBoxItem> listImages = this.consumer.getListOfOpenImages();
 		for(ComboBoxItem item : listImages)
 			this.cmbBox.addItem(item);
 	}
 	
-	protected static ImageSelection create(UtilityMethods consumerUtils, ImageSelectionListener listener) {
-		return new ImageSelection(consumerUtils, listener);
+	protected static ImageSelection create(ConsumerInterface consumer, ImageSelectionListener listener) {
+		return new ImageSelection(consumer, listener);
 	}
 	
 	protected Object getSelectedObject() {
 		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getValue();
 	}
+	
+	protected <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> getSelectedRai() {
+		//return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getValue();
+		return null;
+	}
 
 	@Override
 	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 		Object item = this.cmbBox.getSelectedItem();
-        List<ComboBoxItem> openSeqs = consumerUtils.getListOfOpenImages();
+        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
         ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
         for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
         DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);

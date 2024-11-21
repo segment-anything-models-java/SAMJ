@@ -8,13 +8,18 @@ import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
+import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.ui.UtilityMethods;
 import ai.nets.samj.utils.Constants;
+import net.imglib2.util.Cast;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +31,10 @@ public class MainGUI extends JFrame {
     private boolean isDrawerOpen = false;
     private final List<SAMModel> modelList;
     private ImageSelectionListener imageListener;
+    private ConsumerInterface consumer;
 
 	private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
-	private JCheckBox chkReturnLargest = new JCheckBox("Only return largest ROI", true);
+	private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
 	private JSwitchButtonNew chkInstant = new JSwitchButtonNew("LIVE", "OFF");
 	private JButton go = new JButton("Go");
     private JButton btnBatchSAMize = new JButton("Batch SAMize");
@@ -62,21 +68,31 @@ public class MainGUI extends JFrame {
 		DEFAULT_MODEL_LIST.add(new EfficientViTSAML2());
 	}
 
-    public MainGUI(UtilityMethods methods) {
-    	this(null, methods);
+    public MainGUI(ConsumerInterface consumer) {
+    	this(null, consumer);
     }
 
-    public MainGUI(List<SAMModel> modelList, UtilityMethods methods) {
+    public MainGUI(List<SAMModel> modelList, ConsumerInterface consumer) {
 		super(Constants.JAR_NAME + "-" + Constants.SAMJ_VERSION);
 		
 		createListeners();
-		cmbImages = ImageSelection.create(methods, imageListener);
+		this.consumer = consumer;
+		cmbImages = ImageSelection.create(this.consumer, imageListener);
 		
 		if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
 		else this.modelList = modelList;
-		cmbModels = ModelSelection.create(modelList);
+		cmbModels = ModelSelection.create(this.modelList);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        go.addActionListener(e -> loadModel());
+        export.addActionListener(e -> consumer.exportImageLabeling());
+        chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected()));
+        chkRoiManager.addActionListener(e -> consumer.enableAddingToRoiManager(chkRoiManager.isSelected()));
+        retunLargest.addActionListener(e -> cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected()));
+        btnBatchSAMize.addActionListener(e -> consumer.exportImageLabeling());
+        close.addActionListener(e -> dispose());
+        help.addActionListener(e -> consumer.exportImageLabeling());
 
         // Use BorderLayout for the main frame
         setLayout(new BorderLayout());
@@ -106,8 +122,50 @@ public class MainGUI extends JFrame {
         // Set the initial size of the frame
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE); // Width x Height
 
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                close();
+            }
+        });
         // Make the frame visible
         setVisible(true);
+    }
+    
+    private void setInstantPromptsEnabled(boolean enabled) {
+    	if (enabled)
+    		consumer.activateListeners();
+    	else
+    		consumer.deactivateListeners();
+    }
+    
+    private void setTwoThridsEnabled(boolean enabled) {
+    	this.chkInstant.setEnabled(enabled);
+    	this.retunLargest.setEnabled(enabled);
+    	this.chkRoiManager.setEnabled(enabled);
+    	this.btnBatchSAMize.setEnabled(enabled);
+    	this.export.setEnabled(enabled);
+    }
+    
+    private void loadModel() {
+    	SwingUtilities.invokeLater(() -> {
+    		go.setEnabled(false);
+    		setTwoThridsEnabled(false);
+    	});
+    	new Thread(() -> {
+    		try {
+    			// TODO try removing Cast
+    			cmbModels.loadModel(Cast.unchecked(cmbImages.getSelectedRai()));
+    			consumer.setFocusedImage(cmbImages.getSelectedObject());
+        		setTwoThridsEnabled(true);
+    		} catch (IOException | RuntimeException | InterruptedException ex) {
+    			ex.printStackTrace();
+    		}
+    	}).start();;
+    }
+    
+    private void close() {
+    	cmbModels.unLoadModel();
     }
 
     // Method to create the title panel
@@ -314,7 +372,7 @@ public class MainGUI extends JFrame {
 
         // Second checkbox
         gbc.gridy = 1;
-        thirdComponent.add(this.chkReturnLargest, gbc);
+        thirdComponent.add(this.retunLargest, gbc);
 
         // Button
         gbc.gridy = 2;

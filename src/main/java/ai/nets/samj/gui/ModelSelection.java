@@ -8,30 +8,30 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
 import ai.nets.samj.gui.components.ComboBoxButtonComp;
-import io.bioimage.modelrunner.model.Model;
+import ai.nets.samj.communication.model.SAMModel;
 
 public class ModelSelection extends ComboBoxButtonComp<String> implements PopupMenuListener {
 	
-	private Model selected;
+	private SAMModel selected;
 	
-	private final List<Model> models;
+	private final List<SAMModel> models;
     private final ModelSelectionListener listener;
 
 
 	private static final long serialVersionUID = 2478618937640492286L;
 
-	private ModelSelection(List<Model> models, ModelSelectionListener listener) {
+	private ModelSelection(List<SAMModel> models, ModelSelectionListener listener) {
 		super(new JComboBox<String>());
 		this.listener = listener;
 		this.models = models;
-		for (Model model : models) {
-			this.cmbBox.addItem(model.getModelName());
+		for (SAMModel model : models) {
+			this.cmbBox.addItem(model.getName());
 		}
 		cmbBox.addPopupMenuListener(this);
 		selected = models.get(cmbBox.getSelectedIndex());
 	}
 	
-	protected static ModelSelection create(List<Model> models, ModelSelectionListener listener) {
+	protected static ModelSelection create(List<SAMModel> models, ModelSelectionListener listener) {
 		return new ModelSelection(models, listener);
 	}
 	
@@ -51,7 +51,7 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	 * Check if the image selected has been changed once the combobox pop up is closed
 	 */
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-		Model nSelectedModel = models.get(cmbBox.getSelectedIndex());
+		SAMModel nSelectedModel = models.get(cmbBox.getSelectedIndex());
 		if (nSelectedModel != selected) {
 			listener.modelChanged(nSelectedModel);
 			selected = nSelectedModel;
@@ -66,6 +66,6 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	}
 	
 	public interface ModelSelectionListener {
-	    void modelChanged(Model model);
+	    void modelChanged(SAMModel model);
 	}
 }

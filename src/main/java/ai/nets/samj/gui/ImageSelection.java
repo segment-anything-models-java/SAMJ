@@ -25,6 +25,8 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 		super(new JComboBox<ComboBoxItem>());
 		this.consumerUtils = consumerUtils;
 		this.listener = listener;
+		if (consumerUtils == null)
+			return;
 		List<ComboBoxItem> listImages = this.consumerUtils.getListOfOpenImages();
 		for(ComboBoxItem item : listImages)
 			this.cmbBox.addItem(item);

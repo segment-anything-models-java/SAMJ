@@ -8,8 +8,6 @@ import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
-import ai.nets.samj.gui.components.ComboBoxButtonComp;
-import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.utils.Constants;
 
 import javax.swing.*;
@@ -133,17 +131,17 @@ public class MainGUI extends JFrame {
 
         // First component: Rectangular area with line border
         gbc.gridy = 0;
-        gbc.weighty = 0.45;
+        gbc.weighty = 0.25;
         centerPanel.add(createFirstComponent(), gbc);
 
         // Second component: Radio button with changing panel
         gbc.gridy = 1;
-        gbc.weighty = 0.45;
+        gbc.weighty = 0.5;
         centerPanel.add(createSecondComponent(), gbc);
 
         // Third component: Two checkboxes and a button
         gbc.gridy = 2;
-        gbc.weighty = 0.1;
+        gbc.weighty = 0.25;
         centerPanel.add(createThirdComponent(), gbc);
 
         return centerPanel;
@@ -177,26 +175,27 @@ public class MainGUI extends JFrame {
          JPanel firstComponent = new JPanel();
         firstComponent.setLayout(new GridBagLayout());
         firstComponent.setBorder(new LineBorder(Color.BLACK));
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(2, 2, 2, 2); // Insets around components
+        gbc.insets = new Insets(2, 2, 5, 2); // Adjust insets as needed
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
 
         // Add the first component
         gbc.gridy = 0;
+        gbc.weighty = 0.33; // Adjust weighty if necessary
         firstComponent.add(this.cmbModels, gbc);
+
         // Add the second component
         gbc.gridy = 1;
         firstComponent.add(this.cmbImages, gbc);
 
         // Add the button
         gbc.gridy = 2;
+        gbc.insets = new Insets(2, 2, 2, 2); // Adjust insets as needed
         firstComponent.add(go, gbc);
-
-        //cmbModels.setPreferredSize(new Dimension(MAIN_HORIZONTAL_SIZE, (int) (MAIN_VERTICAL_SIZE * 0.05)));
-        //cmbImages.setPreferredSize(new Dimension(MAIN_HORIZONTAL_SIZE, (int) (MAIN_VERTICAL_SIZE * 0.05)));
+        firstComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.2)));
 
         return firstComponent;
     }
@@ -260,6 +259,7 @@ public class MainGUI extends JFrame {
         gbc.gridy = 1;
         gbc.weighty = 0.9;
         secondComponent.add(cardPanel, gbc);
+        secondComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.30)));
 
         return secondComponent;
     }
@@ -293,7 +293,7 @@ public class MainGUI extends JFrame {
         //gbc.weighty = 1.0; // Allows the button to move with resizing
         //gbc.anchor = GridBagConstraints.NORTH;
         thirdComponent.add(processButton, gbc);
-        thirdComponent.setPreferredSize(new Dimension(0, 0));
+        thirdComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.15)));
 
         return thirdComponent;
     }

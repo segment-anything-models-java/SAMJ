@@ -2,6 +2,8 @@ package ai.nets.samj.gui.components;
 
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -19,16 +21,27 @@ public class ComboBoxButtonComp<T> extends JPanel {
     private static final double RATIO_CBX_BTN = 10.0;
 
     public ComboBoxButtonComp(JComboBox<T> modelCombobox) {
-        // Populate the JComboBox with models
         this.cmbBox = modelCombobox;
         btn.setMargin(new Insets(2, 3, 2, 2));
 
-        // Set layout manager to null for absolute positioning
-        setLayout(null);
+        // Use GridBagLayout instead of null layout
+        setLayout(new GridBagLayout());
 
-        // Add components to the panel
-        add(modelCombobox);
-        add(btn);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 0, 0, 0); // Adjust insets as needed
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridy = 0;
+
+        // Add the JComboBox with weightx corresponding to RATIO_CBX_BTN
+        gbc.gridx = 0;
+        gbc.weightx = RATIO_CBX_BTN;
+        gbc.weighty = 1;
+        add(cmbBox, gbc);
+
+        // Add the JButton with weightx of 1
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        add(btn, gbc);
 
         // Add a ComponentListener to the button to adjust font size
         btn.addComponentListener(new ComponentAdapter() {
@@ -41,7 +54,7 @@ public class ComboBoxButtonComp<T> extends JPanel {
 
     @Override
     public void doLayout() {
-        int inset = 5; // Separation between components and edges
+        int inset = 2; // Separation between components and edges
         int totalInsets = inset * 3; // Left, middle, and right insets
 
         int width = getWidth();
@@ -55,8 +68,8 @@ public class ComboBoxButtonComp<T> extends JPanel {
         int btnWidth = availableWidth - comboWidth;
 
         int x = inset;
-        int y = inset;
-        int componentHeight = height - (2 * inset); // Account for top and bottom insets
+        int y = 0;
+        int componentHeight = height; // Account for top and bottom insets
 
         // Set bounds for the JComboBox
         cmbBox.setBounds(x, y, comboWidth, componentHeight);

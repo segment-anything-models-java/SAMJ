@@ -18,9 +18,15 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 
+import ai.nets.samj.ui.UtilityMethods;
+import ai.nets.samj.utils.Constants;
+import io.bioimage.modelrunner.model.Model;
+import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
 
-public class Dialog extends JDialog implements ActionListener {
 
+public class Dialog extends JFrame implements ActionListener {
+
+	private static final long serialVersionUID = -797293687195076077L;
 	private int count = 1;
 	private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
 	private JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
@@ -33,23 +39,24 @@ public class Dialog extends JDialog implements ActionListener {
 	private JButton close = new JButton("Close");
 	private JButton help = new JButton("Help");
 	private JButton export = new JButton("Export...");
-	private JComboBox<String> cmbModels = new JComboBox<String>();
-	private JComboBox<String> cmbImages = new JComboBox<String>();
+	private final ModelSelection cmbModels;
+	private final ImageSelection cmbImages;
 	private JComboBox<String> cmbObjects = new JComboBox<String>();
 	private JTabbedPane tab = new JTabbedPane();
-	private JButton bnModel = new JButton("▶");
 	private JLabel drawerTitle = new JLabel();
 
-	public Dialog() {
-		super(new JFrame(), "SAMJ v0.0.1");
-		cmbModels.setPreferredSize(new Dimension(200, 24));
-		cmbModels.addItem("SAM2 Tiny");
-		cmbModels.addItem("Model SAM2 Small");
+	public Dialog(UtilityMethods consumerUtils) {
+		super(Constants.JAR_NAME + "-" + Constants.SAMJ_VERSION);
+		
+		ModelSelectionListener modelListener = new ModelSelectionListener() {
+		    @Override
+		    public void modelChanged(Model selectedModel) {
+		        // Perform the action needed when a new model is selected
+		    }
+		};
 
-		cmbImages.setPreferredSize(new Dimension(200, 20));
-		cmbImages.addItem("Title Image — Long title");
-		cmbImages.addItem("Image1.tif");
-		cmbImages.addItem("Image2.tif");
+		cmbImages = ImageSelection.create(consumerUtils, null);
+		cmbModels = ModelSelection.create(null, modelListener);
 
 		cmbObjects.addItem("Only Largest Object");
 		cmbObjects.addItem("All Objects");
@@ -62,13 +69,9 @@ public class Dialog extends JDialog implements ActionListener {
 		pna.place(0, 0, new JLabel("Selection from ROIManager"));
 		pna.place(1, 0, new JButton("Batch SAMize"));
 
-		JButton bnImages = new JButton("▶");
-		bnImages.setPreferredSize(new Dimension(20, 20));
 		GridPanel pn1 = new GridPanel(true, 2);
 		pn1.place(0, 0, cmbModels);
-		pn1.place(0, 1, bnModel);
 		pn1.place(1, 0, cmbImages);
-		pn1.place(1, 1, bnImages);
 		pn1.place(2, 0, go);
 
 		pn2 = new GridPanel(true, 2);
@@ -128,12 +131,11 @@ public class Dialog extends JDialog implements ActionListener {
         html.append("i", "References");
         drawerPanel.add(html, BorderLayout.CENTER);
         drawerPanel.setVisible(false);
-        bnModel.setPreferredSize(new Dimension(20, 20));
 		add(main, BorderLayout.CENTER);
 		pack();
 		setVisible(true);
 
-		bnModel.addActionListener(this);
+		this.cmbModels.getButton().addActionListener(this);
 		go.addActionListener(this);
 		help.addActionListener(this);
 		close.addActionListener(this);
@@ -152,7 +154,7 @@ public class Dialog extends JDialog implements ActionListener {
 		if (ev.getSource() == close) {
 			dispose();
 		}
-		if (ev.getSource() == bnModel) {
+		if (ev.getSource() == this.cmbModels.getButton()) {
 			toggleDrawer();
 		}
 		if (ev.getSource() == go) {
@@ -171,15 +173,20 @@ public class Dialog extends JDialog implements ActionListener {
 			drawerPanel.setVisible(false);
 			remove(drawerPanel);
 			setSize(getWidth() - 200, getHeight());
-			bnModel.setText("▶"); 
+			this.cmbModels.getButton().setText("▶"); 
 		} else {
 			add(drawerPanel, BorderLayout.EAST);
 			drawerPanel.setVisible(true);
 			setSize(getWidth() + 200, getHeight());
-			bnModel.setText("◀");
+			this.cmbModels.getButton().setText("◀");
 		}
 		isDrawerOpen = !isDrawerOpen;
 		revalidate(); 
 		repaint(); 
+	}
+	
+	public static void main(String[] args) {
+		Dialog dialog = new Dialog();
+		dialog.setVisible(true);
 	}
 }

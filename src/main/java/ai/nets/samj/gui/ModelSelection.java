@@ -31,7 +31,7 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 		selected = models.get(cmbBox.getSelectedIndex());
 	}
 	
-	protected ModelSelection create(List<Model> models, ModelSelectionListener listener) {
+	protected static ModelSelection create(List<Model> models, ModelSelectionListener listener) {
 		return new ModelSelection(models, listener);
 	}
 	

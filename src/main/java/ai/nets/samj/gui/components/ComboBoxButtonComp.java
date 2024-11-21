@@ -15,7 +15,7 @@ public class ComboBoxButtonComp<T> extends JPanel {
     private static final long serialVersionUID = 2478618937640492286L;
 
     protected final JComboBox<T> cmbBox;
-    private JButton btn = new JButton("▶");
+    protected JButton btn = new JButton("▶");
     private static final double RATIO_CBX_BTN = 10.0;
 
     public ComboBoxButtonComp(JComboBox<T> modelCombobox) {

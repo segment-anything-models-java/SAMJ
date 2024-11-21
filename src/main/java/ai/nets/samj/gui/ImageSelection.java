@@ -30,7 +30,7 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 			this.cmbBox.addItem(item);
 	}
 	
-	protected ImageSelection create(UtilityMethods consumerUtils, ImageSelectionListener listener) {
+	protected static ImageSelection create(UtilityMethods consumerUtils, ImageSelectionListener listener) {
 		return new ImageSelection(consumerUtils, listener);
 	}
 	

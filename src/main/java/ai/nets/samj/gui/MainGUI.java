@@ -26,15 +26,14 @@ public class MainGUI extends JFrame {
     private boolean isDrawerOpen = false;
 
 	private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
-	private JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
+	private JCheckBox chkReturnLargest = new JCheckBox("Only return largest ROI", true);
+	private JSwitchButtonNew chkInstant = new JSwitchButtonNew("LIVE", "OFF");
 	private JButton go = new JButton("Go");
 	private JButton close = new JButton("Close");
 	private JButton help = new JButton("Help");
 	private JButton export = new JButton("Export...");
 	private final ModelSelection cmbModels;
 	private final ImageSelection cmbImages;
-	private JComboBox<String> cmbObjects = new JComboBox<String>();
-	private JTabbedPane tab = new JTabbedPane();
 	private JLabel drawerTitle = new JLabel();
 	
 	
@@ -49,7 +48,7 @@ public class MainGUI extends JFrame {
 	
 	private static double HEADER_VERTIACAL_RATIO = 0.1;
 
-	private static int MAIN_VERTICAL_SIZE = 500;
+	private static int MAIN_VERTICAL_SIZE = 400;
 	private static int MAIN_HORIZONTAL_SIZE = 250;
 
     public MainGUI() {
@@ -66,8 +65,6 @@ public class MainGUI extends JFrame {
 		
 		cmbModels = ModelSelection.create(DEFAULT_MODEL_LIST, modelListener);
 
-		cmbObjects.addItem("Only Largest Object");
-		cmbObjects.addItem("All Objects");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Use BorderLayout for the main frame
@@ -108,8 +105,9 @@ public class MainGUI extends JFrame {
         titlePanel.setBackground(Color.LIGHT_GRAY);
         int height = (int) (HEADER_VERTIACAL_RATIO * MAIN_VERTICAL_SIZE);
         titlePanel.setPreferredSize(new Dimension(0, height)); // Fixed height
-
-        JLabel titleLabel = new JLabel("Application Title", SwingConstants.CENTER);
+        String text = "<html><div style='text-align: center; font-size: 15px;'>"
+				+ "<span style='color: black;'>SAM</span>" + "<span style='color: red;'>J</span>";
+        JLabel titleLabel = new JLabel(text, SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
 
         titlePanel.setLayout(new BorderLayout());
@@ -124,7 +122,7 @@ public class MainGUI extends JFrame {
         centerPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 2, 5, 2); // Insets around components
+        gbc.insets = new Insets(5, 5, 5, 5); // Insets around components
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
@@ -136,12 +134,12 @@ public class MainGUI extends JFrame {
 
         // Second component: Radio button with changing panel
         gbc.gridy = 1;
-        gbc.weighty = 0.5;
+        gbc.weighty = 0.4;
         centerPanel.add(createSecondComponent(), gbc);
 
         // Third component: Two checkboxes and a button
         gbc.gridy = 2;
-        gbc.weighty = 0.25;
+        gbc.weighty = 0.35;
         centerPanel.add(createThirdComponent(), gbc);
 
         return centerPanel;
@@ -151,7 +149,7 @@ public class MainGUI extends JFrame {
     private JPanel createBottomPanel() {
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new GridBagLayout());
-        bottomPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
+        bottomPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
         
         GridBagConstraints gbcb = new GridBagConstraints();
         gbcb.gridy = 0;
@@ -159,13 +157,11 @@ public class MainGUI extends JFrame {
         gbcb.weighty = 1;
         gbcb.fill = GridBagConstraints.BOTH;
         
-        JButton button1 = new JButton("OK");
-        JButton button2 = new JButton("Cancel");
 
         gbcb.gridx = 0;
-        bottomPanel.add(button1, gbcb);
+        bottomPanel.add(help, gbcb);
         gbcb.gridx = 1;
-        bottomPanel.add(button2, gbcb);
+        bottomPanel.add(close, gbcb);
 
         return bottomPanel;
     }
@@ -208,8 +204,8 @@ public class MainGUI extends JFrame {
 
         // Radio buttons
         JPanel radioPanel = new JPanel();
-        JRadioButton radioButton1 = new JRadioButton("Option 1", true);
-        JRadioButton radioButton2 = new JRadioButton("Option 2");
+        JRadioButton radioButton1 = new JRadioButton("Manual", true);
+        JRadioButton radioButton2 = new JRadioButton("Preset prompts");
 
         ButtonGroup radioGroup = new ButtonGroup();
         radioGroup.add(radioButton1);
@@ -223,12 +219,37 @@ public class MainGUI extends JFrame {
         cardPanel.setBorder(new LineBorder(Color.BLACK));
 
         // First card
-        JPanel card1 = new JPanel();
-        card1.add(new JLabel("Content for Option 1"));
+        JPanel card1 = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc0 = new GridBagConstraints();
+        gbc0.gridx = 0;
+        gbc0.gridy = 0;
+        gbc0.weighty = 0.2;
+        gbc0.anchor = GridBagConstraints.NORTH;
+        card1.add(new JLabel("Instant Annotation"), gbc0);
 
-        // Second card
-        JPanel card2 = new JPanel();
-        card2.add(new JLabel("Content for Option 2"));
+        gbc0.gridy = 1;
+        gbc0.anchor = GridBagConstraints.CENTER;
+        gbc0.fill = GridBagConstraints.BOTH;
+        gbc0.weighty = 0.8;
+        gbc0.insets = new Insets(0, 0, 10, 0);
+        card1.add(chkInstant, gbc0);
+        //chkInstant.setSize(new Dimension(0, (int) (0.1 * MAIN_VERTICAL_SIZE)));
+
+        JPanel card2 = new JPanel(new GridBagLayout());
+        gbc0.gridy = 0;
+        gbc0.anchor = GridBagConstraints.NORTH;
+        gbc0.fill = GridBagConstraints.NONE;
+        gbc0.weighty = 0.2;
+        gbc0.insets = new Insets(0, 0, 0, 0);
+        card2.add(new JLabel("Selection from ROIManager"), gbc0);
+
+        gbc0.gridy = 1;
+        gbc0.anchor = GridBagConstraints.CENTER;
+        gbc0.fill = GridBagConstraints.BOTH;
+        gbc0.insets = new Insets(0, 0, 10, 0);
+        gbc0.weighty = 0.8;
+        JButton btnBatchSAMize = new JButton("Batch SAMize");
+        card2.add(btnBatchSAMize, gbc0);
 
         cardPanel.add(card1, "Option 1");
         cardPanel.add(card2, "Option 2");
@@ -278,22 +299,17 @@ public class MainGUI extends JFrame {
         gbc.weightx = 1.0;
 
         // First checkbox
-        JCheckBox checkBox1 = new JCheckBox("Option A");
         gbc.gridy = 0;
-        thirdComponent.add(checkBox1, gbc);
+        thirdComponent.add(chkRoiManager, gbc);
 
         // Second checkbox
-        JCheckBox checkBox2 = new JCheckBox("Option B");
         gbc.gridy = 1;
-        thirdComponent.add(checkBox2, gbc);
+        thirdComponent.add(this.chkReturnLargest, gbc);
 
         // Button
-        JButton processButton = new JButton("Process");
         gbc.gridy = 2;
-        //gbc.weighty = 1.0; // Allows the button to move with resizing
-        //gbc.anchor = GridBagConstraints.NORTH;
-        thirdComponent.add(processButton, gbc);
-        thirdComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.15)));
+        thirdComponent.add(this.export, gbc);
+        thirdComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.2)));
 
         return thirdComponent;
     }

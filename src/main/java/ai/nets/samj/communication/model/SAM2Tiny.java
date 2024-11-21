@@ -122,7 +122,7 @@ public class SAM2Tiny implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) 
+	public <T extends RealType<T> & NativeType<T>> void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
 		Objects.requireNonNull(image, "The image cannot be null.");
 		if (useThisLoggerForIt != null) 

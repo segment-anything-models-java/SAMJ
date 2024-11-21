@@ -89,7 +89,7 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	void setImage(final RandomAccessibleInterval<?> image, final SAMJLogger useThisLoggerForIt) throws IOException, RuntimeException, InterruptedException;
+	<T extends RealType<T> & NativeType<T>> void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using two lists of points as the prompts. 

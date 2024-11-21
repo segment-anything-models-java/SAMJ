@@ -145,11 +145,8 @@ public class EfficientViTSAMXL0 implements SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
-	 * @throws IOException if any of the files to run a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
-	 * @throws InterruptedException if the process is interrupted
 	 */
-	public EfficientViTSAMXL0() throws IOException, RuntimeException, InterruptedException {
+	public EfficientViTSAMXL0() {
 		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "xl0");
 	}
 

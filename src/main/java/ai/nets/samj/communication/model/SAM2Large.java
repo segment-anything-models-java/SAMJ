@@ -90,11 +90,8 @@ public class SAM2Large implements SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
-	 * @throws IOException if any of the files to run a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
-	 * @throws InterruptedException if the process is interrupted
 	 */
-	public SAM2Large() throws IOException, RuntimeException, InterruptedException {
+	public SAM2Large() {
 		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "large");
 	}
 

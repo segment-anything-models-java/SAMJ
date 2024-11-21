@@ -19,7 +19,6 @@
  */
 package ai.nets.samj.communication.model;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -31,11 +30,8 @@ public class SAMModels extends ArrayList<SAMModel> {
 
 	/**
 	 * A list where each of the components is a {@link SAMModel}
-	 * @throws InterruptedException if the thread where the models run is abruptly interrupted
-	 * @throws RuntimeException if there is any error running the models
-	 * @throws IOException if any of the files needed to run or load the models is missing
 	 */
-	public  SAMModels() throws IOException, RuntimeException, InterruptedException {
+	public  SAMModels() {
 		super();
 		add(new SAM2Tiny());
 		add(new SAM2Small());

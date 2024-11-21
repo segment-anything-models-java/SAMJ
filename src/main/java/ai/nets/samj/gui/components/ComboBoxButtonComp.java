@@ -1,4 +1,4 @@
-package ai.nets.samj.gui;
+package ai.nets.samj.gui.components;
 
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -14,13 +14,13 @@ public class ComboBoxButtonComp<T> extends JPanel {
 
     private static final long serialVersionUID = 2478618937640492286L;
 
-    private final JComboBox<T> modelCombobox;
+    protected final JComboBox<T> cmbBox;
     private JButton btn = new JButton("▶");
     private static final double RATIO_CBX_BTN = 10.0;
 
     public ComboBoxButtonComp(JComboBox<T> modelCombobox) {
         // Populate the JComboBox with models
-        this.modelCombobox = modelCombobox;
+        this.cmbBox = modelCombobox;
         btn.setMargin(new Insets(2, 3, 2, 2));
 
         // Set layout manager to null for absolute positioning
@@ -59,7 +59,7 @@ public class ComboBoxButtonComp<T> extends JPanel {
         int componentHeight = height - (2 * inset); // Account for top and bottom insets
 
         // Set bounds for the JComboBox
-        modelCombobox.setBounds(x, y, comboWidth, componentHeight);
+        cmbBox.setBounds(x, y, comboWidth, componentHeight);
 
         x += comboWidth + inset; // Move x position for the JButton
 

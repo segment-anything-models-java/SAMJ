@@ -2,6 +2,7 @@ package ai.nets.samj.gui;
 
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -32,6 +33,10 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	
 	protected ModelSelection create(List<Model> models, ModelSelectionListener listener) {
 		return new ModelSelection(models, listener);
+	}
+	
+	protected JButton getButton() {
+		return this.btn;
 	}
 
 	@Override

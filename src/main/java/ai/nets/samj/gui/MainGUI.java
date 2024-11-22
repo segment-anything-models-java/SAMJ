@@ -142,10 +142,11 @@ public class MainGUI extends JFrame {
         drawerPanel.setVisible(false);
 
         this.setTwoThirdsEnabled(false);
-        if (this.cmbModels.getSelectedModel().isInstalled() && cmbImages.getSelectedObject() != null)
-        	go.setEnabled(true);
-        else
-        	go.setEnabled(false);
+    	go.setEnabled(false);
+        new Thread(() -> {
+            if (this.cmbModels.getSelectedModel().isInstalled() && cmbImages.getSelectedObject() != null)
+            	SwingUtilities.invokeLater(() -> go.setEnabled(true));
+        }).start();
         // Make the frame visible
         setVisible(true);
     }
@@ -454,9 +455,12 @@ public class MainGUI extends JFrame {
 				cmbModels.setEnabled(enabled);
 				cmbImages.setEnabled(enabled);
 				if (!enabled) {
-					MainGUI.this.setTwoThirdsEnabled(enabled);
-				} else if (cmbModels.getSelectedModel().isInstalled() && cmbImages.getSelectedObject() != null) {
-					go.setEnabled(enabled);
+					setTwoThirdsEnabled(enabled);
+				} else if (enabled && cmbImages.getSelectedObject() != null) {
+			        new Thread(() -> {
+			            if (cmbModels.getSelectedModel().isInstalled())
+			            	SwingUtilities.invokeLater(() -> go.setEnabled(true));
+			        }).start();
 				}
 			}
         };

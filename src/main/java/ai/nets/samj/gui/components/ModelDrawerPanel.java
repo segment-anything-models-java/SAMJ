@@ -110,7 +110,10 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     
     private void setInfo() {
 		html.clear();
-		html.append("p", model.getDescription());
+		new Thread(() -> {
+			String description = model.getDescription();
+			SwingUtilities.invokeLater(() -> html.append("p", description));
+		}).start();
     }
     
     @Override

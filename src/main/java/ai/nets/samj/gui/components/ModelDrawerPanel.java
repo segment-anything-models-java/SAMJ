@@ -11,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -18,13 +20,26 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.HTMLPane;
+import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
 
+/**
+ * TODO improve the way the installation is logged
+ * TODO improve the way the installation is logged
+ * TODO improve the way the installation is logged
+ * TODO improve the way the installation is logged
+ * TODO improve the way the installation is logged
+ * 
+ * @author Carlos Javier Garcia Lopez de Haro
+ */
 public class ModelDrawerPanel extends JPanel implements ActionListener {
 
     private static final long serialVersionUID = 6708853280844731445L;
@@ -42,8 +57,14 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     private Thread installedThread;
     private Thread loadingAnimationThread;
     private volatile boolean isLoading = false;
+	/**
+	 * Parameter used in the HTML panel during installation to know when to update
+	 */
+    private int waitingIter = 0;
     
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
+
+	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 	
 	
 	private ModelDrawerPanel(int hSize, ModelDrawerPanelListener listener) {
@@ -162,20 +183,112 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
 		modelInstallThread = new Thread(() ->{
 			try {
+				this.html.clear();
+				this.model.getInstallationManger().setConsumer(str -> addHtml(str));
 				this.model.getInstallationManger().installEverything();
 				SwingUtilities.invokeLater(() -> {
+					this.setInfo();
+			    	setButtons();
 					listener.setGUIEnabled(true);
 				});
 			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException
 					| MambaInstallException e) {
 				e.printStackTrace();
 				SwingUtilities.invokeLater(() -> {
+					this.setInfo();
+			    	setButtons();
 					listener.setGUIEnabled(true);
 				});
 			}
 		});
-		
+		modelInstallThread.start();
 	}
+
+    /**
+     * Add a String to the html pane in the correct format
+     * @param html
+     * 	the String to be converted into HTML and added to the HTML panel
+     */
+    public void addHtml(String html) {
+        if (html == null) return;
+        if (html.trim().isEmpty()) {
+        	html = manageEmptyMessage(html);
+        } else {
+        	waitingIter = 0;
+        }
+        String nContent = formatHTML(html);
+        
+        SwingUtilities.invokeLater(() -> {
+            try {
+                HTMLDocument doc = (HTMLDocument) this.html.getDocument();
+                HTMLEditorKit editorKit = (HTMLEditorKit) this.html.getEditorKit();
+            	editorKit.insertHTML(doc, doc.getLength(), nContent, 0, 0, null);
+            	this.html.setCaretPosition(doc.getLength());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    /**
+     * Check if a message is empty, thus no information is comming. If the message is not empty, nothing is done.
+     * If it is, the html panel is updated so a changing installation in progress message appears
+     * @param html
+     * 	the message sent by the installation thread
+     * @return the message to be print in the html panel
+     */
+    private String manageEmptyMessage(String html) {
+    	String working = "Working, this might take several minutes";
+    	if (html.trim().isEmpty() && waitingIter == 0) {
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " .";
+        	waitingIter += 1;
+        } else if (html.trim().isEmpty() && waitingIter % 3 == 1) {
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " . .";
+        	int len = html.length() - (" .").length() + System.lineSeparator().length();
+        	SwingUtilities.invokeLater(() -> {
+        		HTMLDocument doc = (HTMLDocument) this.html.getDocument();
+        		try {doc.remove(doc.getLength() - len, len);} catch (BadLocationException e) {}
+        	});
+        	waitingIter += 1;
+        } else if (html.trim().isEmpty() && waitingIter % 3 == 2) {
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " . . .";
+        	int len = html.length() - (" .").length() + System.lineSeparator().length();
+        	SwingUtilities.invokeLater(() -> {
+        		HTMLDocument doc = (HTMLDocument) this.html.getDocument();
+        		try {doc.remove(doc.getLength() - len, len);} catch (BadLocationException e) {}
+        	});
+        	waitingIter += 1;
+        } else if (html.trim().isEmpty() && waitingIter % 3 == 0) {
+        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " .";
+        	int len = html.length() + (" . .").length() + System.lineSeparator().length();
+        	SwingUtilities.invokeLater(() -> {
+        		HTMLDocument doc = (HTMLDocument) this.html.getDocument();
+        		try {doc.remove(doc.getLength() - len, len);} catch (BadLocationException e) {}
+        	});
+        	waitingIter += 1;
+        }
+    	return html;
+    }
+    
+    /**
+     * Convert the input String into the correct HTML string for the HTML panel
+     * @param html
+     * 	the input Stirng to be formatted
+     * @return the String formatted into the correct HTML string
+     */
+    private static String formatHTML(String html) {
+	    html = html.replace(System.lineSeparator(), "<br>")
+	            .replace("    ", "&emsp;")
+	            .replace("  ", "&ensp;")
+	            .replace(" ", "&nbsp;");
+	
+	    if (html.startsWith(Mamba.ERR_STREAM_UUUID)) {
+	    	html = "<span style=\"color: red;\">" + html.replace(Mamba.ERR_STREAM_UUUID, "") + "</span>";
+	    } else {
+	    	html = "<span style=\"color: black;\">" + html + "</span>";
+	    }
+	    return html;
+    }
 	
 	private void uninstallModel() {
 		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));

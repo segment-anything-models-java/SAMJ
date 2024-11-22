@@ -44,7 +44,7 @@ import ai.nets.samj.ui.SAMJLogger;
  * @author Carlos Garcia Lopez de Haro
  * @author Vladimir Ulman
  */
-public class EfficientSAM implements SAMModel {
+public class EfficientSAM extends SAMModel {
 
 	private EfficientSamJ efficientSamJ;
 	private final SamEnvManagerAbstract manager;
@@ -115,14 +115,6 @@ public class EfficientSAM implements SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean isInstalled() {
-		return installed;
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
 	public <T extends RealType<T> & NativeType<T>> void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
 		Objects.requireNonNull(image, "The image cannot be null.");
@@ -142,14 +134,6 @@ public class EfficientSAM implements SAMModel {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public void setInstalled(boolean installed) {
-		this.installed = installed;		
 	}
 
 	@Override

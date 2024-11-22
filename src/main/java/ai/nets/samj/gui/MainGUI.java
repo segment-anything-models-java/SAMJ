@@ -37,12 +37,14 @@ public class MainGUI extends JFrame {
 
     private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
     private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
-    private JSwitchButtonNew chkInstant = new JSwitchButtonNew("LIVE", "OFF");
+    private JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
     private JButton go = new JButton("Go");
     private JButton btnBatchSAMize = new JButton("Batch SAMize");
     private JButton close = new JButton("Close");
     private JButton help = new JButton("Help");
     private JButton export = new JButton("Export...");
+    JRadioButton radioButton1;
+    JRadioButton radioButton2;
     private final ModelSelection cmbModels;
     private final ImageSelection cmbImages;
     private ModelDrawerPanel drawerPanel;
@@ -139,6 +141,11 @@ public class MainGUI extends JFrame {
         // Initially hide the drawerPanel
         drawerPanel.setVisible(false);
 
+        this.setTwoThirdsEnabled(false);
+        if (this.cmbModels.getSelectedModel().isInstalled() && cmbImages.getSelectedObject() != null)
+        	go.setEnabled(true);
+        else
+        	go.setEnabled(false);
         // Make the frame visible
         setVisible(true);
     }
@@ -156,6 +163,8 @@ public class MainGUI extends JFrame {
         this.chkRoiManager.setEnabled(enabled);
         this.btnBatchSAMize.setEnabled(enabled);
         this.export.setEnabled(enabled);
+        this.radioButton1.setEnabled(enabled);
+        this.radioButton2.setEnabled(enabled);
     }
 
     private void loadModel() {
@@ -285,8 +294,8 @@ public class MainGUI extends JFrame {
 
         // Radio buttons
         JPanel radioPanel = new JPanel();
-        JRadioButton radioButton1 = new JRadioButton(MANUAL_STR, true);
-        JRadioButton radioButton2 = new JRadioButton(PRESET_STR);
+        radioButton1 = new JRadioButton(MANUAL_STR, true);
+        radioButton2 = new JRadioButton(PRESET_STR);
 
         ButtonGroup radioGroup = new ButtonGroup();
         radioGroup.add(radioButton1);
@@ -419,6 +428,8 @@ public class MainGUI extends JFrame {
             public void imageActionsOnImageChanged() {
                 consumer.deactivateListeners();
                 consumer.deselectImage();
+                setTwoThirdsEnabled(false);
+                go.setEnabled(cmbImages.getSelectedObject() != null);
             }
         };
         modelListener = new ModelSelctionListener() {
@@ -429,6 +440,12 @@ public class MainGUI extends JFrame {
 					drawerPanel.setSelectedModel(cmbModels.getSelectedModel());
 				
 			}
+			
+			@Override
+			public void changeGUI() {
+                setTwoThirdsEnabled(false);
+                go.setEnabled(cmbImages.getSelectedObject() != null);
+			}
         };
         modelDrawerListener = new ModelDrawerPanelListener() {
 
@@ -436,17 +453,11 @@ public class MainGUI extends JFrame {
 			public void setGUIEnabled(boolean enabled) {
 				cmbModels.setEnabled(enabled);
 				cmbImages.setEnabled(enabled);
-				go.setEnabled(enabled);
-				chkInstant.setEnabled(enabled);
-				export.setEnabled(enabled);
-				retunLargest.setEnabled(enabled);
-				chkRoiManager.setEnabled(enabled);
-			}
-
-			@Override
-			public void setGoButtonEnabled(boolean installed) {
-				go.setEnabled(installed);
-				
+				if (!enabled) {
+					MainGUI.this.setTwoThirdsEnabled(enabled);
+				} else if (cmbModels.getSelectedModel().isInstalled() && cmbImages.getSelectedObject() != null) {
+					go.setEnabled(enabled);
+				}
 			}
         };
     }

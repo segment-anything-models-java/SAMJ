@@ -42,7 +42,7 @@ import net.imglib2.type.numeric.RealType;
  * @author Vladimir Ulman
  * @author Carlos Javier Garcia Lopez de Haro
  */
-public interface SAMModel {
+public abstract class SAMModel {
 	
 	public static String HTML_NOT_INSTALLED = "<br><p style=\"color: red;\">This model is not installed yet.</p>";
 	
@@ -50,34 +50,22 @@ public interface SAMModel {
 	 * 
 	 * @return the name of the model architecture
 	 */
-	String getName();
+	public abstract String getName();
 	/**
 	 * 
 	 * @return the axes order required for the input image to the model
 	 */
-	String getInputImageAxes();
+	public abstract String getInputImageAxes();
 	/**
 	 * 
 	 * @return a text describing the model.
 	 */
-	String getDescription();
+	public abstract String getDescription();
 	/**
 	 * 
 	 * @return the {@link SamEnvManagerAbstract} used to install this model
 	 */
-	SamEnvManagerAbstract getInstallationManger();
-	/**
-	 * 
-	 * @return true or false whether all the things needed to run the model are already installed or not.
-	 * 	This includes the Python environment and requirements, the model weights or micrommaba
-	 */
-	boolean isInstalled();
-	/**
-	 * Set whether the model is installed or
-	 * @param installed
-	 * 	whether the model has been installed or not
-	 */
-	void setInstalled(boolean installed);
+	public abstract SamEnvManagerAbstract getInstallationManger();
 
 	/**
 	 * Instantiate a SAM based model. Provide also an image that will be encoded by the model encoder
@@ -89,7 +77,9 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	<T extends RealType<T> & NativeType<T>> void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) throws IOException, RuntimeException, InterruptedException;
+	public abstract <T extends RealType<T> & NativeType<T>> 
+	void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) 
+			throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using two lists of points as the prompts. 
@@ -103,7 +93,7 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) throws IOException, RuntimeException, InterruptedException;
+	public abstract List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using two lists of points as the prompts. 
@@ -119,7 +109,7 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D, Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException;
+	public abstract List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D, Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * Get a 2D segmentation/annotation using a bounding box as the prompt. 
@@ -130,14 +120,14 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	List<Mask> fetch2dSegmentation(Interval boundingBox2D) throws IOException, RuntimeException, InterruptedException;
+	public abstract List<Mask> fetch2dSegmentation(Interval boundingBox2D) throws IOException, RuntimeException, InterruptedException;
 	
 	/**
 	 * Set whether SAMJ will only return the biggest ROI or all of them when several are obtained from the model
 	 * @param onlyBiggest
 	 * 	whether the ouput of SAMJ will only be the biggest ROI obtained or all of them.
 	 */
-	void setReturnOnlyBiggest(boolean onlyBiggest);
+	public abstract void setReturnOnlyBiggest(boolean onlyBiggest);
 
 	/**
 	 * Get a 2D segmentation/annotation using an existing mask as the prompt. 
@@ -150,22 +140,30 @@ public interface SAMModel {
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	public <T extends RealType<T> & NativeType<T>> List<Mask> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException;
+	public abstract <T extends RealType<T> & NativeType<T>> List<Mask> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException;
 
 	
-	public String persistEncoding() throws IOException, InterruptedException;
+	public abstract String persistEncoding() throws IOException, InterruptedException;
 	
-	public void selectEncoding(String encodingName) throws IOException, InterruptedException;
+	public abstract void selectEncoding(String encodingName) throws IOException, InterruptedException;
 	
-	public void deleteEncoding(String encodingName) throws IOException, InterruptedException;
+	public abstract void deleteEncoding(String encodingName) throws IOException, InterruptedException;
 	
 	/**
 	 * Close the Python process where the model is being executed
 	 */
-	void closeProcess();
+	public abstract void closeProcess();
 
 	/**
 	 * Notify the User Interface that the model has been closed
 	 */
-	void notifyUiHasBeenClosed();
+	public abstract void notifyUiHasBeenClosed();
+	/**
+	 * 
+	 * @return true or false whether all the things needed to run the model are already installed or not.
+	 * 	This includes the Python environment and requirements, the model weights or micrommaba
+	 */
+	public boolean isInstalled() {
+		return this.getInstallationManger().checkEverythingInstalled();
+	}
 }

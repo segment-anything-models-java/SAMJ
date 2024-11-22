@@ -44,7 +44,7 @@ import ai.nets.samj.ui.SAMJLogger;
  * @author Carlos Garcia Lopez de Haro
  * @author Vladimir Ulman
  */
-public class EfficientViTSAMXL1 implements SAMModel {
+public class EfficientViTSAMXL1 extends SAMModel {
 
 	private EfficientViTSamJ efficientSamJ;
 	private final SamEnvManagerAbstract manager;
@@ -66,7 +66,6 @@ public class EfficientViTSAMXL1 implements SAMModel {
 		}
 		
 	};
-	private Boolean installed = false;
 	private boolean onlyBiggest = false;
 	
 	/**
@@ -101,15 +100,7 @@ public class EfficientViTSAMXL1 implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.installed ? SAMModel.HTML_NOT_INSTALLED : "");
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public boolean isInstalled() {
-		return installed;
+		return HTML_DESCRIPTION + (!this.isInstalled() ? SAMModel.HTML_NOT_INSTALLED : "");
 	}
 
 	@Override
@@ -135,14 +126,6 @@ public class EfficientViTSAMXL1 implements SAMModel {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public void setInstalled(boolean installed) {
-		this.installed = installed;		
 	}
 
 	/**

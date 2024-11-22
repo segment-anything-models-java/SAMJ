@@ -73,6 +73,7 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 			SAMModel nSelectedModel = models.get(cmbBox.getSelectedIndex());
 			if (nSelectedModel != selected) {
 				unLoadModel();
+				listener.changeGUI();
 				selected = nSelectedModel;
 			}
 		} catch (Exception ex) {
@@ -89,7 +90,9 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	}
 	
 	public interface ModelSelctionListener {
-		
+
 	    void changeDrawerPanel();
+	    
+	    void changeGUI();
 	}
 }

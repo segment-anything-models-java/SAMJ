@@ -44,7 +44,7 @@ import ai.nets.samj.ui.SAMJLogger;
  * @author Carlos Garcia Lopez de Haro
  * @author Vladimir Ulman
  */
-public class EfficientViTSAML0 implements SAMModel {
+public class EfficientViTSAML0 extends SAMModel {
 
 	private EfficientViTSamJ efficientSamJ;
 	private final SamEnvManagerAbstract manager;
@@ -134,14 +134,6 @@ public class EfficientViTSAML0 implements SAMModel {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public void setInstalled(boolean installed) {
-		this.installed = installed;		
 	}
 
 	/**

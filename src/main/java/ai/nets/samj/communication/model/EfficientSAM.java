@@ -87,7 +87,7 @@ public class EfficientSAM extends SAMModel {
 		this.fullName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything";
 		this.githubLink = "https://github.com/yformer/EfficientSAM";
 		this.paperLink = "https://arxiv.org/pdf/2312.00863.pdf";
-		this.githubName = "https://github.com/yformer/EfficientSAM";
+		this.githubName = "yformer/EfficientSAM";
 		this.paperName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment";
 		this.speedRank = 3;
 		this.performanceRank = 3;

@@ -43,7 +43,7 @@ public class MainGUI extends JFrame {
     private JButton export = new JButton("Export...");
     private final ModelSelection cmbModels;
     private final ImageSelection cmbImages;
-    private ModelDrawerPanel drawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE);
+    private ModelDrawerPanel drawerPanel;
 
     private static double HEADER_VERTICAL_RATIO = 0.1;
 
@@ -78,6 +78,9 @@ public class MainGUI extends JFrame {
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
         else this.modelList = modelList;
         cmbModels = ModelSelection.create(this.modelList);
+        
+
+        drawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -419,6 +422,12 @@ public class MainGUI extends JFrame {
 
 			@Override
 			public void setGUIEnabled(boolean enabled) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void setGUIModelInstalled(boolean installed) {
 				// TODO Auto-generated method stub
 				
 			}

@@ -139,7 +139,7 @@ public class MainGUI extends JFrame {
     		consumer.deactivateListeners();
     }
     
-    private void setTwoThridsEnabled(boolean enabled) {
+    private void setTwoThirdsEnabled(boolean enabled) {
     	this.chkInstant.setEnabled(enabled);
     	this.retunLargest.setEnabled(enabled);
     	this.chkRoiManager.setEnabled(enabled);
@@ -150,14 +150,16 @@ public class MainGUI extends JFrame {
     private void loadModel() {
     	SwingUtilities.invokeLater(() -> {
     		go.setEnabled(false);
-    		setTwoThridsEnabled(false);
+    		setTwoThirdsEnabled(false);
     	});
     	new Thread(() -> {
     		try {
     			// TODO try removing Cast
     			cmbModels.loadModel(Cast.unchecked(cmbImages.getSelectedRai()));
     			consumer.setFocusedImage(cmbImages.getSelectedObject());
-        		setTwoThridsEnabled(true);
+    			consumer.setModel(cmbModels.getSelectedModel());
+    			setInstantPromptsEnabled(this.chkInstant.isSelected());
+        		setTwoThirdsEnabled(true);
     		} catch (IOException | RuntimeException | InterruptedException ex) {
     			ex.printStackTrace();
     		}

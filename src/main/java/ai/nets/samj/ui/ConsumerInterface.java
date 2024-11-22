@@ -32,7 +32,7 @@ import ai.nets.samj.gui.components.ComboBoxItem;
  */
 public abstract class ConsumerInterface {
 	
-	private SAMModel selectedModel;
+	protected SAMModel selectedModel;
 
 	/**
 	 * Method to be implemented in the softwar that wants to use the SAMJ default GUI.

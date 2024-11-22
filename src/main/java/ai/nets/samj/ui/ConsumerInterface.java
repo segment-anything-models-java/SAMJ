@@ -71,6 +71,8 @@ public abstract class ConsumerInterface {
 
 	public abstract void setFocusedImage(Object image);
 	
+	public abstract void deselectImage();
+	
 	public void setModel(SAMModel model) {
 		this.selectedModel = model;
 	}

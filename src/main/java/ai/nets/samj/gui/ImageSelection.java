@@ -39,6 +39,8 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 	}
 	
 	protected Object getSelectedObject() {
+		if (this.cmbBox.getSelectedItem() == null)
+			return null;
 		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getValue();
 	}
 	

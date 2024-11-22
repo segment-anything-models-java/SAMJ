@@ -124,14 +124,12 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 				this.model.getInstallationManger().installEverything();
 				SwingUtilities.invokeLater(() -> {
 					listener.setGUIEnabled(true);
-					listener.setGoButtonEnabled(true);
 				});
 			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException
 					| MambaInstallException e) {
 				e.printStackTrace();
 				SwingUtilities.invokeLater(() -> {
 					listener.setGUIEnabled(true);
-					listener.setGoButtonEnabled(false);
 				});
 			}
 		});
@@ -144,7 +142,6 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 			this.model.getInstallationManger().uninstall();
 			SwingUtilities.invokeLater(() -> {
 				listener.setGUIEnabled(true);
-				listener.setGoButtonEnabled(false);
 			});
 		});
 	}
@@ -152,8 +149,6 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	public interface ModelDrawerPanelListener {
 		
 	    void setGUIEnabled(boolean enabled);
-		
-	    void setGoButtonEnabled(boolean installed);
 	}
 
 }

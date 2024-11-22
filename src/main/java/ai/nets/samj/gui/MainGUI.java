@@ -1,6 +1,5 @@
 package ai.nets.samj.gui;
 
-
 import ai.nets.samj.communication.model.EfficientSAM;
 import ai.nets.samj.communication.model.EfficientViTSAML2;
 import ai.nets.samj.communication.model.SAM2Large;
@@ -24,68 +23,63 @@ import java.util.List;
 
 public class MainGUI extends JFrame {
 
-	private static final long serialVersionUID = -797293687195076077L;
-	
+    private static final long serialVersionUID = -797293687195076077L;
 
     private boolean isDrawerOpen = false;
     private final List<SAMModel> modelList;
     private ImageSelectionListener imageListener;
     private ConsumerInterface consumer;
 
-	private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
-	private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
-	private JSwitchButtonNew chkInstant = new JSwitchButtonNew("LIVE", "OFF");
-	private JButton go = new JButton("Go");
+    private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
+    private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
+    private JSwitchButtonNew chkInstant = new JSwitchButtonNew("LIVE", "OFF");
+    private JButton go = new JButton("Go");
     private JButton btnBatchSAMize = new JButton("Batch SAMize");
-	private JButton close = new JButton("Close");
-	private JButton help = new JButton("Help");
-	private JButton export = new JButton("Export...");
-	private JButton install = new JButton("Install");
-	private JButton uninstall = new JButton("Uninstall");
-	private final ModelSelection cmbModels;
-	private final ImageSelection cmbImages;
-	private JLabel drawerTitle = new JLabel();
-	private JPanel drawerPanel;
-	
+    private JButton close = new JButton("Close");
+    private JButton help = new JButton("Help");
+    private JButton export = new JButton("Export...");
+    private JButton install = new JButton("Install");
+    private JButton uninstall = new JButton("Uninstall");
+    private final ModelSelection cmbModels;
+    private final ImageSelection cmbImages;
+    private JLabel drawerTitle = new JLabel();
+    private JPanel drawerPanel;
 
-	
-	private static double HEADER_VERTIACAL_RATIO = 0.1;
+    private static double HEADER_VERTICAL_RATIO = 0.1;
 
-	private static int MAIN_VERTICAL_SIZE = 400;
-	private static int MAIN_HORIZONTAL_SIZE = 250;
-	
-	private static String MANUAL_STR = "Manual";
-	
-	private static String PRESET_STR = "Preset prompts";
-	
-	private static String ROIM_STR = "Selection from ROIManager";
-	
-	private static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
-	static {
-		DEFAULT_MODEL_LIST.add(new SAM2Tiny());
-		DEFAULT_MODEL_LIST.add(new SAM2Small());
-		DEFAULT_MODEL_LIST.add(new SAM2Large());
-		DEFAULT_MODEL_LIST.add(new EfficientSAM());
-		DEFAULT_MODEL_LIST.add(new EfficientViTSAML2());
-	}
+    private static int MAIN_VERTICAL_SIZE = 400;
+    private static int MAIN_HORIZONTAL_SIZE = 250;
+
+    private static String MANUAL_STR = "Manual";
+    private static String PRESET_STR = "Preset prompts";
+    private static String ROIM_STR = "Selection from ROIManager";
+
+    private static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
+    static {
+        DEFAULT_MODEL_LIST.add(new SAM2Tiny());
+        DEFAULT_MODEL_LIST.add(new SAM2Small());
+        DEFAULT_MODEL_LIST.add(new SAM2Large());
+        DEFAULT_MODEL_LIST.add(new EfficientSAM());
+        DEFAULT_MODEL_LIST.add(new EfficientViTSAML2());
+    }
 
     public MainGUI(ConsumerInterface consumer) {
-    	this(null, consumer);
+        this(null, consumer);
     }
 
     public MainGUI(List<SAMModel> modelList, ConsumerInterface consumer) {
-		super(Constants.JAR_NAME + "-" + Constants.SAMJ_VERSION);
-		
-		createListeners();
-		this.consumer = consumer;
-		cmbImages = ImageSelection.create(this.consumer, imageListener);
-		
-		if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
-		else this.modelList = modelList;
-		cmbModels = ModelSelection.create(this.modelList);
+        super(Constants.JAR_NAME + "-" + Constants.SAMJ_VERSION);
+
+        createListeners();
+        this.consumer = consumer;
+        cmbImages = ImageSelection.create(this.consumer, imageListener);
+
+        if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
+        else this.modelList = modelList;
+        cmbModels = ModelSelection.create(this.modelList);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+
         cmbModels.getButton().addActionListener(e -> toggleDrawer());
         go.addActionListener(e -> loadModel());
         export.addActionListener(e -> consumer.exportImageLabeling());
@@ -97,8 +91,9 @@ public class MainGUI extends JFrame {
         help.addActionListener(e -> consumer.exportImageLabeling());
 
         // Use BorderLayout for the main frame
-        //setLayout(new BorderLayout());
-        setLayout(new GridBagLayout());
+        setLayout(new BorderLayout());
+
+        JPanel mainPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -109,19 +104,23 @@ public class MainGUI extends JFrame {
         // Add the title panel at the top
         gbc.gridy = 0;
         gbc.weighty = 0.1;
-        add(createTitlePanel(), gbc);
+        mainPanel.add(createTitlePanel(), gbc);
 
         // Add the main center panel
         gbc.gridy = 2;
         gbc.weighty = 0.87;
-        add(createCenterPanel(), gbc);
+        mainPanel.add(createCenterPanel(), gbc);
 
         // Add the bottom panel with buttons
         gbc.gridy = 3;
         gbc.weighty = 0.03;
-        add(createBottomPanel(), gbc);
-        
+        mainPanel.add(createBottomPanel(), gbc);
+
         createDrawerPanel();
+
+        // Add the mainPanel and drawerPanel using BorderLayout
+        add(mainPanel, BorderLayout.CENTER);
+        add(drawerPanel, BorderLayout.EAST);
 
         // Set the initial size of the frame
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE); // Width x Height
@@ -132,56 +131,60 @@ public class MainGUI extends JFrame {
                 close();
             }
         });
+
+        // Initially hide the drawerPanel
+        drawerPanel.setVisible(false);
+
         // Make the frame visible
         setVisible(true);
     }
-    
+
     private void setInstantPromptsEnabled(boolean enabled) {
-    	if (enabled)
-    		consumer.activateListeners();
-    	else
-    		consumer.deactivateListeners();
+        if (enabled)
+            consumer.activateListeners();
+        else
+            consumer.deactivateListeners();
     }
-    
+
     private void setTwoThirdsEnabled(boolean enabled) {
-    	this.chkInstant.setEnabled(enabled);
-    	this.retunLargest.setEnabled(enabled);
-    	this.chkRoiManager.setEnabled(enabled);
-    	this.btnBatchSAMize.setEnabled(enabled);
-    	this.export.setEnabled(enabled);
+        this.chkInstant.setEnabled(enabled);
+        this.retunLargest.setEnabled(enabled);
+        this.chkRoiManager.setEnabled(enabled);
+        this.btnBatchSAMize.setEnabled(enabled);
+        this.export.setEnabled(enabled);
     }
-    
+
     private void loadModel() {
-    	SwingUtilities.invokeLater(() -> {
-    		go.setEnabled(false);
-    		setTwoThirdsEnabled(false);
-    	});
-    	new Thread(() -> {
-    		try {
-    			// TODO try removing Cast
-    			cmbModels.loadModel(Cast.unchecked(cmbImages.getSelectedRai()));
-    			consumer.setFocusedImage(cmbImages.getSelectedObject());
-    			consumer.setModel(cmbModels.getSelectedModel());
-    			setInstantPromptsEnabled(this.chkInstant.isSelected());
-        		setTwoThirdsEnabled(true);
-    		} catch (IOException | RuntimeException | InterruptedException ex) {
-    			ex.printStackTrace();
-    		}
-    	}).start();;
+        SwingUtilities.invokeLater(() -> {
+            go.setEnabled(false);
+            setTwoThirdsEnabled(false);
+        });
+        new Thread(() -> {
+            try {
+                // TODO try removing Cast
+                cmbModels.loadModel(Cast.unchecked(cmbImages.getSelectedRai()));
+                consumer.setFocusedImage(cmbImages.getSelectedObject());
+                consumer.setModel(cmbModels.getSelectedModel());
+                setInstantPromptsEnabled(this.chkInstant.isSelected());
+                setTwoThirdsEnabled(true);
+            } catch (IOException | RuntimeException | InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }).start();
     }
-    
+
     private void close() {
-    	cmbModels.unLoadModel();
+        cmbModels.unLoadModel();
     }
 
     // Method to create the title panel
     private JPanel createTitlePanel() {
         JPanel titlePanel = new JPanel();
         titlePanel.setBackground(Color.LIGHT_GRAY);
-        int height = (int) (HEADER_VERTIACAL_RATIO * MAIN_VERTICAL_SIZE);
+        int height = (int) (HEADER_VERTICAL_RATIO * MAIN_VERTICAL_SIZE);
         titlePanel.setPreferredSize(new Dimension(0, height)); // Fixed height
         String text = "<html><div style='text-align: center; font-size: 15px;'>"
-				+ "<span style='color: black;'>SAM</span>" + "<span style='color: red;'>J</span>";
+                + "<span style='color: black;'>SAM</span>" + "<span style='color: red;'>J</span>";
         JLabel titleLabel = new JLabel(text, SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
 
@@ -225,13 +228,12 @@ public class MainGUI extends JFrame {
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new GridBagLayout());
         bottomPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-        
+
         GridBagConstraints gbcb = new GridBagConstraints();
         gbcb.gridy = 0;
         gbcb.weightx = 1;
         gbcb.weighty = 1;
         gbcb.fill = GridBagConstraints.BOTH;
-        
 
         gbcb.gridx = 0;
         bottomPanel.add(help, gbcb);
@@ -243,7 +245,7 @@ public class MainGUI extends JFrame {
 
     // Method to create the first component
     private JPanel createFirstComponent() {
-         JPanel firstComponent = new JPanel();
+        JPanel firstComponent = new JPanel();
         firstComponent.setLayout(new GridBagLayout());
         firstComponent.setBorder(new LineBorder(Color.BLACK));
 
@@ -308,7 +310,6 @@ public class MainGUI extends JFrame {
         gbc0.weighty = 0.8;
         gbc0.insets = new Insets(0, 0, 10, 0);
         card1.add(chkInstant, gbc0);
-        //chkInstant.setSize(new Dimension(0, (int) (0.1 * MAIN_VERTICAL_SIZE)));
 
         JPanel card2 = new JPanel(new GridBagLayout());
         gbc0.gridy = 0;
@@ -338,7 +339,6 @@ public class MainGUI extends JFrame {
             CardLayout cl = (CardLayout) (cardPanel.getLayout());
             cl.show(cardPanel, PRESET_STR);
         });
-
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -387,16 +387,15 @@ public class MainGUI extends JFrame {
 
         return thirdComponent;
     }
-    
+
     private void createDrawerPanel() {
         drawerPanel = new JPanel();
         drawerPanel.setLayout(new BorderLayout());
-        drawerPanel.setBorder(BorderFactory.createEtchedBorder());
+        drawerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         drawerTitle.setText("<html><div style='text-align: center; font-size: 15px;'>&nbsp;</html>");
         drawerPanel.add(drawerTitle, BorderLayout.NORTH);
         drawerPanel.add(createInstallModelComponent(), BorderLayout.SOUTH);
         HTMLPane html = new HTMLPane("Arial", "#000", "#CCCCCC", 200, 200);
-        //html.append("<span style='text-align: center; font-size: 20px;>SAM2 Tiny</span");
         html.append("Model description");
         html.append("Model description");
         html.append("Model description");
@@ -404,11 +403,10 @@ public class MainGUI extends JFrame {
         html.append("i", "Other information");
         html.append("i", "References");
         drawerPanel.add(html, BorderLayout.CENTER);
-        drawerPanel.setVisible(true);
-		add(drawerPanel, BorderLayout.EAST);
+        drawerPanel.setPreferredSize(new Dimension(200, 0)); // Set preferred width
     }
 
-    // Method to create the third component
+    // Method to create the install model component
     private JPanel createInstallModelComponent() {
         JPanel thirdComponent = new JPanel();
         thirdComponent.setLayout(new GridBagLayout());
@@ -421,15 +419,15 @@ public class MainGUI extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
 
-        // First checkbox
+        // Install button
         gbc.gridy = 0;
         thirdComponent.add(this.install, gbc);
 
-        // Second checkbox
+        // Uninstall button
         gbc.gridy = 1;
         thirdComponent.add(this.uninstall, gbc);
 
-        // Button
+        // Export button (if needed)
         gbc.gridy = 2;
         thirdComponent.add(this.export, gbc);
         thirdComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.2)));
@@ -437,42 +435,36 @@ public class MainGUI extends JFrame {
         return thirdComponent;
     }
 
-	private void toggleDrawer() {
-		if (isDrawerOpen) {
-			drawerPanel.setVisible(false);
-			remove(drawerPanel);
-			setSize(getWidth() - 200, getHeight());
-			this.cmbModels.getButton().setText("▶"); 
-		} else {
-			add(drawerPanel, BorderLayout.EAST);
-			drawerPanel.setVisible(true);
-			setSize(getWidth() + 200, getHeight());
-			this.cmbModels.getButton().setText("◀");
-		}
-		isDrawerOpen = !isDrawerOpen;
-		revalidate(); 
-		repaint(); 
-	}
-    
+    private void toggleDrawer() {
+        if (isDrawerOpen) {
+            drawerPanel.setVisible(false);
+            this.cmbModels.getButton().setText("▶");
+            setSize(getWidth() - drawerPanel.getPreferredSize().width, getHeight());
+        } else {
+            drawerPanel.setVisible(true);
+            this.cmbModels.getButton().setText("◀");
+            setSize(getWidth() + drawerPanel.getPreferredSize().width, getHeight());
+        }
+        isDrawerOpen = !isDrawerOpen;
+        revalidate();
+        repaint();
+    }
+
     private void createListeners() {
-		
-		imageListener = new ImageSelectionListener() {
+        imageListener = new ImageSelectionListener() {
+            @Override
+            public void modelActionsOnImageChanged() {
+                // TODO Auto-generated method stub
+            }
 
-			@Override
-			public void modelActionsOnImageChanged() {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void imageActionsOnImageChanged() {
-				// TODO Auto-generated method stub
-				
-			}
-		};
+            @Override
+            public void imageActionsOnImageChanged() {
+                // TODO Auto-generated method stub
+            }
+        };
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MainGUI(null));
+        SwingUtilities.invokeLater(() -> new MainGUI(null, null));
     }
 }

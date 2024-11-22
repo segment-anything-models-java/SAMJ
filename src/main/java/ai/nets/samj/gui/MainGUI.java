@@ -7,6 +7,7 @@ import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
+import ai.nets.samj.gui.ModelSelection.ModelSelctionListener;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.ui.ConsumerInterface;
@@ -30,6 +31,7 @@ public class MainGUI extends JFrame {
     private boolean isDrawerOpen = false;
     private final List<SAMModel> modelList;
     private ImageSelectionListener imageListener;
+    private ModelSelctionListener modelListener;
     private ModelDrawerPanelListener modelDrawerListener;
     private ConsumerInterface consumer;
 
@@ -77,7 +79,7 @@ public class MainGUI extends JFrame {
 
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
         else this.modelList = modelList;
-        cmbModels = ModelSelection.create(this.modelList);
+        cmbModels = ModelSelection.create(this.modelList, modelListener);
         
 
         drawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
@@ -410,25 +412,40 @@ public class MainGUI extends JFrame {
         imageListener = new ImageSelectionListener() {
             @Override
             public void modelActionsOnImageChanged() {
-                // TODO Auto-generated method stub
+                cmbModels.getSelectedModel().closeProcess();
             }
 
             @Override
             public void imageActionsOnImageChanged() {
-                // TODO Auto-generated method stub
+                consumer.deactivateListeners();
+                consumer.deselectImage();
             }
+        };
+        modelListener = new ModelSelctionListener() {
+
+			@Override
+			public void changeDrawerPanel() {
+				if (drawerPanel.isVisible())
+					drawerPanel.setSelectedModel(cmbModels.getSelectedModel());
+				
+			}
         };
         modelDrawerListener = new ModelDrawerPanelListener() {
 
 			@Override
 			public void setGUIEnabled(boolean enabled) {
-				// TODO Auto-generated method stub
-				
+				cmbModels.setEnabled(enabled);
+				cmbImages.setEnabled(enabled);
+				go.setEnabled(enabled);
+				chkInstant.setEnabled(enabled);
+				export.setEnabled(enabled);
+				retunLargest.setEnabled(enabled);
+				chkRoiManager.setEnabled(enabled);
 			}
 
 			@Override
-			public void setGUIModelInstalled(boolean installed) {
-				// TODO Auto-generated method stub
+			public void setGoButtonEnabled(boolean installed) {
+				go.setEnabled(installed);
 				
 			}
         };

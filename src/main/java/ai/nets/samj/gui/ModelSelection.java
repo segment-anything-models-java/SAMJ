@@ -19,13 +19,16 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	
 	private SAMModel selected;
 	
+	private final ModelSelctionListener listener;
+	
 	private final List<SAMModel> models;
 
 
 	private static final long serialVersionUID = 2478618937640492286L;
 
-	private ModelSelection(List<SAMModel> models) {
+	private ModelSelection(List<SAMModel> models, ModelSelctionListener listener) {
 		super(new JComboBox<String>());
+		this.listener = listener;
 		this.models = models;
 		for (SAMModel model : models) {
 			this.cmbBox.addItem(model.getName());
@@ -34,8 +37,8 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 		selected = models.get(cmbBox.getSelectedIndex());
 	}
 	
-	protected static ModelSelection create(List<SAMModel> models) {
-		return new ModelSelection(models);
+	protected static ModelSelection create(List<SAMModel> models, ModelSelctionListener listener) {
+		return new ModelSelection(models, listener);
 	}
 	
 	protected SAMModel getSelectedModel() {
@@ -75,6 +78,7 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+		listener.changeDrawerPanel();
 	}
 
 	@Override
@@ -82,5 +86,10 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	 * Nothing
 	 */
 	public void popupMenuCanceled(PopupMenuEvent e) {
+	}
+	
+	public interface ModelSelctionListener {
+		
+	    void changeDrawerPanel();
 	}
 }

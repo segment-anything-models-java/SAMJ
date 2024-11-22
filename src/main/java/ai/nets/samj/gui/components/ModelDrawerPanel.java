@@ -92,10 +92,15 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     public void setSelectedModel(SAMModel model) {
     	this.model = model;
     	setTitle(model.getName());
+    	setInfo();
     }
     
-    public void setTitle(String title) {
+    private void setTitle(String title) {
         drawerTitle.setText(String.format(MODEL_TITLE, title));
+    }
+    
+    private void setInfo() {
+    	// TODO
     }
     
     @Override
@@ -119,14 +124,14 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 				this.model.getInstallationManger().installEverything();
 				SwingUtilities.invokeLater(() -> {
 					listener.setGUIEnabled(true);
-					listener.setGUIModelInstalled(true);
+					listener.setGoButtonEnabled(true);
 				});
 			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException
 					| MambaInstallException e) {
 				e.printStackTrace();
 				SwingUtilities.invokeLater(() -> {
 					listener.setGUIEnabled(true);
-					listener.setGUIModelInstalled(false);
+					listener.setGoButtonEnabled(false);
 				});
 			}
 		});
@@ -139,7 +144,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 			this.model.getInstallationManger().uninstall();
 			SwingUtilities.invokeLater(() -> {
 				listener.setGUIEnabled(true);
-				listener.setGUIModelInstalled(false);
+				listener.setGoButtonEnabled(false);
 			});
 		});
 	}
@@ -148,7 +153,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		
 	    void setGUIEnabled(boolean enabled);
 		
-	    void setGUIModelInstalled(boolean installed);
+	    void setGoButtonEnabled(boolean installed);
 	}
 
 }

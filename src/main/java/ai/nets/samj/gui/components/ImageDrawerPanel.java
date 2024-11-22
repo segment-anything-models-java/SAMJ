@@ -17,7 +17,8 @@ import ai.nets.samj.gui.HTMLPane;
 
 public class ImageDrawerPanel extends JPanel {
 
-    private JLabel drawerTitle = new JLabel();
+    private static final long serialVersionUID = -8070874774405110221L;
+	private JLabel drawerTitle = new JLabel();
     private JButton install = new JButton("Install");
     private JButton uninstall = new JButton("Uninstall");
     
@@ -82,7 +83,6 @@ public class ImageDrawerPanel extends JPanel {
     
     @Override
     public void setVisible(boolean visible) {
-    	this.isOpen = visible;
     	super.setVisible(visible);
     }
 

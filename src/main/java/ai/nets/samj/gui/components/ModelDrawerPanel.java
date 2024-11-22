@@ -6,34 +6,46 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
-import ai.nets.samj.gui.HTMLPane;
+import org.apache.commons.compress.archivers.ArchiveException;
 
-public class ModelDrawerPanel extends JPanel {
+import ai.nets.samj.communication.model.SAMModel;
+import ai.nets.samj.gui.HTMLPane;
+import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
+
+public class ModelDrawerPanel extends JPanel implements ActionListener {
 
     private JLabel drawerTitle = new JLabel();
     private JButton install = new JButton("Install");
     private JButton uninstall = new JButton("Uninstall");
     
-    
+    private SAMModel model;
+    private ModelDrawerPanelListener listener;
     private int hSize;
+    private Thread modelInstallThread;
     
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
 	
 	
-	private ModelDrawerPanel(int hSize) {
+	private ModelDrawerPanel(int hSize, ModelDrawerPanelListener listener) {
 		this.hSize = hSize;
+		this.listener = listener;
 		createDrawerPanel();
 	}
 	
-	public static ModelDrawerPanel create(int hSize) {
-		return new ModelDrawerPanel(hSize);
+	public static ModelDrawerPanel create(int hSize, ModelDrawerPanelListener listener) {
+		return new ModelDrawerPanel(hSize, listener);
 	}
 
     private void createDrawerPanel() {
@@ -77,14 +89,66 @@ public class ModelDrawerPanel extends JPanel {
         return thirdComponent;
     }
     
+    public void setSelectedModel(SAMModel model) {
+    	this.model = model;
+    	setTitle(model.getName());
+    }
+    
     public void setTitle(String title) {
         drawerTitle.setText(String.format(MODEL_TITLE, title));
     }
     
     @Override
     public void setVisible(boolean visible) {
-    	this.isOpen = visible;
     	super.setVisible(visible);
     }
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == this.install) {
+			installModel();
+		} else if (e.getSource() == this.uninstall) {
+			uninstallModel();
+		}
+	}
+	
+	private void installModel() {
+		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
+		modelInstallThread = new Thread(() ->{
+			try {
+				this.model.getInstallationManger().installEverything();
+				SwingUtilities.invokeLater(() -> {
+					listener.setGUIEnabled(true);
+					listener.setGUIModelInstalled(true);
+				});
+			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException
+					| MambaInstallException e) {
+				e.printStackTrace();
+				SwingUtilities.invokeLater(() -> {
+					listener.setGUIEnabled(true);
+					listener.setGUIModelInstalled(false);
+				});
+			}
+		});
+		
+	}
+	
+	private void uninstallModel() {
+		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
+		modelInstallThread = new Thread(() ->{
+			this.model.getInstallationManger().uninstall();
+			SwingUtilities.invokeLater(() -> {
+				listener.setGUIEnabled(true);
+				listener.setGUIModelInstalled(false);
+			});
+		});
+	}
+	
+	public interface ModelDrawerPanelListener {
+		
+	    void setGUIEnabled(boolean enabled);
+		
+	    void setGUIModelInstalled(boolean installed);
+	}
 
 }

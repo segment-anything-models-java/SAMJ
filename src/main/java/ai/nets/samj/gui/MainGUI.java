@@ -8,6 +8,7 @@ import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
+import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.util.Cast;
@@ -29,6 +30,7 @@ public class MainGUI extends JFrame {
     private boolean isDrawerOpen = false;
     private final List<SAMModel> modelList;
     private ImageSelectionListener imageListener;
+    private ModelDrawerPanelListener modelDrawerListener;
     private ConsumerInterface consumer;
 
     private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
@@ -392,7 +394,7 @@ public class MainGUI extends JFrame {
             setSize(getWidth() - drawerPanel.getPreferredSize().width, getHeight());
         } else {
             drawerPanel.setVisible(true);
-            drawerPanel.setTitle(cmbModels.getSelectedModel().getName());
+            drawerPanel.setSelectedModel(this.cmbModels.getSelectedModel());
             this.cmbModels.getButton().setText("◀");
             setSize(getWidth() + drawerPanel.getPreferredSize().width, getHeight());
         }
@@ -412,6 +414,14 @@ public class MainGUI extends JFrame {
             public void imageActionsOnImageChanged() {
                 // TODO Auto-generated method stub
             }
+        };
+        modelDrawerListener = new ModelDrawerPanelListener() {
+
+			@Override
+			public void setGUIEnabled(boolean enabled) {
+				// TODO Auto-generated method stub
+				
+			}
         };
     }
 

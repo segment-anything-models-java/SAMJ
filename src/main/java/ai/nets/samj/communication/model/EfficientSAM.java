@@ -76,14 +76,6 @@ public class EfficientSAM extends SAMModel {
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
 	
-	private static final String HTML_DESCRIPTION = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything <br>"
-	        + "<strong>Weights size:</strong> 105.7 MB <br>"
-	        + "<strong>Speed:</strong> 6th out of 6 <br>"
-	        + "<strong>Performance:</strong> 1st out of 6 <br>"
-	        + "<strong>GitHub Repository:</strong> <a href=\"https://github.com/yformer/EfficientSAM\">https://github.com/yformer/EfficientSAM</a> <br>"
-	        + "<strong>Paper:</strong> <a href=\"https://arxiv.org/pdf/2312.00863.pdf\">EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment\n"
-	        + "Anything</a>";
-	
 	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is computationally heavy. It is not recommended to use it on lower-end computers.</p>";
 	
 
@@ -91,6 +83,15 @@ public class EfficientSAM extends SAMModel {
 	 * Create an instance of the model that loads the model and encodes an image
 	 */
 	public EfficientSAM() {
+		this.isHeavy = true;
+		this.fullName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything";
+		this.githubLink = "https://github.com/yformer/EfficientSAM";
+		this.paperLink = "https://arxiv.org/pdf/2312.00863.pdf";
+		this.githubName = "https://github.com/yformer/EfficientSAM";
+		this.paperName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment";
+		this.speedRank = 3;
+		this.performanceRank = 3;
+		this.size = 105.7;
 		this.manager = EfficientSamEnvManager.create();
 	}
 
@@ -100,14 +101,6 @@ public class EfficientSAM extends SAMModel {
 	 */
 	public String getName() {
 		return FULL_NAME;
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.isInstalled() ? SAMModel.HTML_NOT_INSTALLED : CAUTION_STRING);
 	}
 
 	@Override

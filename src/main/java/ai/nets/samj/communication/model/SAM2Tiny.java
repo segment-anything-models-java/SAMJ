@@ -74,22 +74,22 @@ public class SAM2Tiny extends SAMModel {
 	/**
 	 * Axes order required for the input image by the model
 	 */
-	public static final String INPUT_IMAGE_AXES = "xyc";
-	
-	private static final String HTML_DESCRIPTION = "SAM-2: Segment Anything Model 2 <br>"
-	        + "<strong>Weights size:</strong> 155.9 MB <br>"
-	        + "<strong>Speed:</strong> 6th out of 6 <br>"
-	        + "<strong>Performance:</strong> 1st out of 6 <br>"
-	        + "<strong>GitHub Repository:</strong> <a href=\"https://github.com/facebookresearch/segment-anything-2\">https://github.com/facebookresearch/segment-anything-2</a> <br>"
-	        + "<strong>Paper:</strong> <a href=\"https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/\">SAM 2: Segment Anything in Images and Videos\n"
-	        + "Anything</a>";
-	
+	public static final String INPUT_IMAGE_AXES = "xyc";	
 	
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
 	 */
 	public SAM2Tiny() {
+		this.isHeavy = false;
+		this.fullName = "SAM-2: Segment Anything Model 2 (Tiny)";
+		this.githubLink = "https://github.com/facebookresearch/segment-anything-2";
+		this.paperLink = "https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/";
+		this.githubName = "https://github.com/facebookresearch/segment-anything-2";
+		this.paperName = "SAM 2: Segment Anything in Images and Videos";
+		this.speedRank = 3;
+		this.performanceRank = 3;
+		this.size = 155.9;
 		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "tiny");
 	}
 
@@ -99,14 +99,6 @@ public class SAM2Tiny extends SAMModel {
 	 */
 	public String getName() {
 		return FULL_NAME;
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.isInstalled() ? SAMModel.HTML_NOT_INSTALLED : "");
 	}
 
 	@Override

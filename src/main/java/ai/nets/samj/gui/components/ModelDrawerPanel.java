@@ -3,6 +3,7 @@ package ai.nets.samj.gui.components;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -31,7 +32,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	private JLabel drawerTitle = new JLabel();
     private JButton install = new JButton("Install");
     private JButton uninstall = new JButton("Uninstall");
-    HTMLPane html = new HTMLPane("Arial", "#000", "#CCCCCC", 200, 200);
+    HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF", 200, 200);
     
     private SAMModel model;
     private ModelDrawerPanelListener listener;
@@ -39,6 +40,8 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     private Thread modelInstallThread;
     private Thread infoThread;
     private Thread installedThread;
+    private Thread loadingAnimationThread;
+    private volatile boolean isLoading = false;
     
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
 	
@@ -55,8 +58,13 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 
     private void createDrawerPanel() {
         this.setLayout(new BorderLayout());
-        this.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        this.setBorder(BorderFactory.createEtchedBorder());
+        drawerTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        drawerTitle.setForeground(new Color(50, 50, 50)); 
         drawerTitle.setText(String.format(MODEL_TITLE, "&nbsp;"));
+        drawerTitle.setHorizontalAlignment(JLabel.CENTER); // Center the title
+        //drawerTitle.setFont(new Font("Arial", Font.BOLD, 18)); // Set a modern font and size
+        drawerTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // Add padding
         this.add(drawerTitle, BorderLayout.NORTH);
         this.add(createInstallModelComponent(), BorderLayout.SOUTH);
         html.append("Model description");
@@ -68,6 +76,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
         this.add(html, BorderLayout.CENTER);
         this.setPreferredSize(new Dimension(hSize, 0)); // Set preferred width
     }
+
 
     // Method to create the install model component
     private JPanel createInstallModelComponent() {
@@ -115,9 +124,14 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     
     private void setInfo() {
 		html.clear();
+	    startLoadingAnimation("Loading info");
 		infoThread =new Thread(() -> {
 			String description = model.getDescription();
-			SwingUtilities.invokeLater(() -> html.append("p", description));
+			stopLoadingAnimation();
+			SwingUtilities.invokeLater(() -> {
+				html.clear();
+				html.append("p", description);
+			});
 		});
 		infoThread.start();
     }
@@ -167,10 +181,39 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		});
 	}
 	
-	public interface ModelDrawerPanelListener {
-		
-	    void setGUIEnabled(boolean enabled);
+	private void startLoadingAnimation(String message) {
+	    stopLoadingAnimation(); // Ensure any previous animation is stopped
+	    isLoading = true;
+	    loadingAnimationThread = new Thread(() -> {
+	        int dotCount = 0;
+	        String[] dots = {".", "..", "...", ""};
+	        while (isLoading) {
+	            String currentTime = java.time.LocalTime.now()
+	                    .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+	            String displayMessage = String.format("%s -- %s%s", currentTime, message, dots[dotCount % dots.length]);
+	            dotCount++;
+	            SwingUtilities.invokeLater(() -> {
+	                html.clear();
+	                html.append("p", displayMessage);
+	            });
+	            try {
+	                Thread.sleep(300); // Update every half second
+	            } catch (InterruptedException e) {
+	                // Thread was interrupted
+	                break;
+	            }
+	        }
+	    });
+	    loadingAnimationThread.start();
 	}
+
+	private void stopLoadingAnimation() {
+	    isLoading = false;
+	    if (loadingAnimationThread != null && loadingAnimationThread.isAlive()) {
+	        loadingAnimationThread.interrupt();
+	    }
+	}
+
 	
 	private void interruptThreads() {
 		if (infoThread != null)
@@ -179,6 +222,11 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 			this.installedThread.interrupt();
 		if (modelInstallThread != null)
 			this.modelInstallThread.interrupt();
+	}
+	
+	public interface ModelDrawerPanelListener {
+		
+	    void setGUIEnabled(boolean enabled);
 	}
 
 }

@@ -43,6 +43,45 @@ import net.imglib2.type.numeric.RealType;
  * @author Carlos Javier Garcia Lopez de Haro
  */
 public abstract class SAMModel {
+
+	protected String fullName;
+	protected double size;
+	protected int performanceRank;
+	protected int speedRank;
+	protected String githubName;
+	protected String paperName;
+	protected String githubLink;
+	protected String paperLink;
+	protected boolean isHeavy;
+	
+	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is"
+			+ " computationally heavy. It is not recommended to use it on lower-end computers.</p>";
+	
+	protected static String HTML_MODEL_FORMAT = ""
+			+ "<h2>%s</h2>" + System.lineSeparator()
+			+ "<table>" + System.lineSeparator()
+			+ "  <tr>" + System.lineSeparator()
+			+ "    <th>Weights size:</th>" + System.lineSeparator()
+			+ "    <td>%s MB</td>" + System.lineSeparator()
+			+ "  </tr>" + System.lineSeparator()
+			+ "  <tr>" + System.lineSeparator()
+			+ "    <th>Speed:</th>" + System.lineSeparator()
+			+ "    <td>%sth out of 6</td>" + System.lineSeparator()
+			+ "  </tr>" + System.lineSeparator()
+			+ "  <tr>" + System.lineSeparator()
+			+ "    <th>Performance:</th>" + System.lineSeparator()
+			+ "    <td>%sst out of 6</td>" + System.lineSeparator()
+			+ "  </tr>" + System.lineSeparator()
+			+ "  <tr>" + System.lineSeparator()
+			+ "    <th>GitHub Repository:</th>" + System.lineSeparator()
+			+ "    <td><a href=\"%s\">%s</a></td>" + System.lineSeparator()
+			+ "  </tr>" + System.lineSeparator()
+			+ "  <tr>" + System.lineSeparator()
+			+ "    <th>Paper:</th>" + System.lineSeparator()
+			+ "    <td><a href=\"%s\">%s</a></td>" + System.lineSeparator()
+			+ "  </tr>" + System.lineSeparator()
+			+ "</table>" + System.lineSeparator()
+			+ "";
 	
 	public static String HTML_NOT_INSTALLED = "<br><p style=\"color: red;\">This model is not installed yet.</p>";
 	
@@ -56,11 +95,6 @@ public abstract class SAMModel {
 	 * @return the axes order required for the input image to the model
 	 */
 	public abstract String getInputImageAxes();
-	/**
-	 * 
-	 * @return a text describing the model.
-	 */
-	public abstract String getDescription();
 	/**
 	 * 
 	 * @return the {@link SamEnvManagerAbstract} used to install this model
@@ -158,6 +192,20 @@ public abstract class SAMModel {
 	 * Notify the User Interface that the model has been closed
 	 */
 	public abstract void notifyUiHasBeenClosed();
+
+	/**
+	 * 
+	 * @return a text describing the model.
+	 */
+	public String getDescription() {
+		String description = String.format(HTML_MODEL_FORMAT, fullName, "" + size, 
+				"" + speedRank, "" + performanceRank, githubLink, githubName, paperLink, paperName);
+		boolean installed = this.isInstalled();
+		description += this.isHeavy & installed ? CAUTION_STRING : "";
+		description += installed ? "" : HTML_NOT_INSTALLED;
+		return description;
+	}
+	
 	/**
 	 * 
 	 * @return true or false whether all the things needed to run the model are already installed or not.

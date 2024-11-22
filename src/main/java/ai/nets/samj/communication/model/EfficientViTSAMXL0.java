@@ -75,30 +75,29 @@ public class EfficientViTSAMXL0 extends SAMModel {
 	 * Axes order required for the input image by the model
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
-	
-	private static final String HTML_DESCRIPTION = "EfficientViT-SAM, second biggest version (XL0) <br>"
-	        + "<strong>Weights size:</strong> 468.2 MB <br>"
-	        + "<strong>Speed:</strong> 4th out of 6 <br>"
-	        + "<strong>Performance:</strong> 3rd out of 6 <br>"
-	        + "<strong>GitHub Repository:</strong> <a href=\"https://github.com/mit-han-lab/efficientvit\">"
-	        + "https://github.com/mit-han-lab/efficientvit</a> <br>"
-	        + "<strong>Paper:</strong> <a href=\"https://arxiv.org/pdf/2402.05008.pdf\">EfficientViT-SAM: Accelerated "
-	        + "Segment Anything Model Without Performance Loss</a>";
 
+	/**
+	 * Create an instance of the model that loads the model and encodes an image
+	 */
+	public EfficientViTSAMXL0() {
+		this.isHeavy = false;
+		this.fullName = "EfficientViT-SAM smallest version (XL0)";
+		this.githubLink = "https://github.com/mit-han-lab/efficientvit";
+		this.githubName = "https://github.com/mit-han-lab/efficientvit";
+		this.paperName = "EfficientViT-SAM: Accelerated Segment Anything Model Without Performance Loss";
+		this.paperLink = "https://arxiv.org/pdf/2402.05008.pdf";
+		this.speedRank = 3;
+		this.performanceRank = 3;
+		this.size = 468.2;
+		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "xl0");
+	}
+	
 	@Override
 	/**
 	 * {@inheritDoc}
 	 */
 	public String getName() {
 		return FULL_NAME;
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.isInstalled() ? SAMModel.HTML_NOT_INSTALLED : "");
 	}
 
 	@Override
@@ -124,13 +123,6 @@ public class EfficientViTSAMXL0 extends SAMModel {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
-	}
-
-	/**
-	 * Create an instance of the model that loads the model and encodes an image
-	 */
-	public EfficientViTSAMXL0() {
-		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "xl0");
 	}
 
 	@Override

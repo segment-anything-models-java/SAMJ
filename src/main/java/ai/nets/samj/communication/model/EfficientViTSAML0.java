@@ -76,16 +76,24 @@ public class EfficientViTSAML0 extends SAMModel {
 	 * Axes order required for the input image by the model
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
-	
-	private static final String HTML_DESCRIPTION = "EfficientViT-SAM smallest version (L0) <br>"
-	        + "<strong>Weights size:</strong> 139.4 MB <br>"
-	        + "<strong>Speed:</strong> 1st out of 6 <br>"
-	        + "<strong>Performance:</strong> 6th out of 6 <br>"
-	        + "<strong>GitHub Repository:</strong> <a href=\"https://github.com/mit-han-lab/efficientvit\">"
-	        + "https://github.com/mit-han-lab/efficientvit</a> <br>"
-	        + "<strong>Paper:</strong> <a href=\"https://arxiv.org/pdf/2402.05008.pdf\">EfficientViT-SAM: Accelerated "
-	        + "Segment Anything Model Without Performance Loss</a>";
 
+
+
+	/**
+	 * Create an instance of the model that loads the model and encodes an image
+	 */
+	public EfficientViTSAML0() {
+		this.isHeavy = false;
+		this.fullName = "EfficientViT-SAM smallest version (L0)";
+		this.githubLink = "https://github.com/mit-han-lab/efficientvit";
+		this.githubName = "https://github.com/mit-han-lab/efficientvit";
+		this.paperName = "EfficientViT-SAM: Accelerated Segment Anything Model Without Performance Loss";
+		this.paperLink = "https://arxiv.org/pdf/2402.05008.pdf";
+		this.speedRank = 3;
+		this.performanceRank = 3;
+		this.size = 139.4;
+		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "l0");
+	}
 	
 	@Override
 	/**
@@ -93,14 +101,6 @@ public class EfficientViTSAML0 extends SAMModel {
 	 */
 	public String getName() {
 		return FULL_NAME;
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.installed ? SAMModel.HTML_NOT_INSTALLED : "");
 	}
 
 	@Override
@@ -134,13 +134,6 @@ public class EfficientViTSAML0 extends SAMModel {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
-	}
-
-	/**
-	 * Create an instance of the model that loads the model and encodes an image
-	 */
-	public EfficientViTSAML0() {
-		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "l0");
 	}
 
 	@Override

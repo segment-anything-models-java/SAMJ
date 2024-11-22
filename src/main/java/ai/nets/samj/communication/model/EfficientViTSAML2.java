@@ -75,30 +75,30 @@ public class EfficientViTSAML2 extends SAMModel {
 	 * Axes order required for the input image by the model
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
-	
-	private static final String HTML_DESCRIPTION = "EfficientViT-SAM, third biggest version (L2) <br>"
-	        + "<strong>Weights size:</strong> 245.7 MB <br>"
-	        + "<strong>Speed:</strong> 3rd out of 6 <br>"
-	        + "<strong>Performance:</strong> 4th out of 6 <br>"
-	        + "<strong>GitHub Repository:</strong> <a href=\"https://github.com/mit-han-lab/efficientvit\">"
-	        + "https://github.com/mit-han-lab/efficientvit</a> <br>"
-	        + "<strong>Paper:</strong> <a href=\"https://arxiv.org/pdf/2402.05008.pdf\">EfficientViT-SAM: Accelerated "
-	        + "Segment Anything Model Without Performance Loss</a>";
 
+
+	/**
+	 * Create an instance of the model that loads the model and encodes an image
+	 */
+	public EfficientViTSAML2() {
+		this.isHeavy = false;
+		this.fullName = "EfficientViT-SAM smallest version (L2)";
+		this.githubLink = "https://github.com/mit-han-lab/efficientvit";
+		this.githubName = "https://github.com/mit-han-lab/efficientvit";
+		this.paperName = "EfficientViT-SAM: Accelerated Segment Anything Model Without Performance Loss";
+		this.paperLink = "https://arxiv.org/pdf/2402.05008.pdf";
+		this.speedRank = 3;
+		this.performanceRank = 3;
+		this.size = 245.7;
+		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "l2");
+	}
+	
 	@Override
 	/**
 	 * {@inheritDoc}
 	 */
 	public String getName() {
 		return FULL_NAME;
-	}
-
-	@Override
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.isInstalled() ? SAMModel.HTML_NOT_INSTALLED : "");
 	}
 
 	@Override
@@ -124,13 +124,6 @@ public class EfficientViTSAML2 extends SAMModel {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
 			throw e;
 		}
-	}
-
-	/**
-	 * Create an instance of the model that loads the model and encodes an image
-	 */
-	public EfficientViTSAML2() {
-		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "l2");
 	}
 
 	@Override

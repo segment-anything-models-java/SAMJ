@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package ai.nets.samj.gui.icons;
+package ai.nets.samj.gui;
 
 import java.awt.Image;
 import java.io.File;

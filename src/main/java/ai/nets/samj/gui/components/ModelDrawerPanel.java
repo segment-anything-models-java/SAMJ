@@ -29,6 +29,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     private JLabel drawerTitle = new JLabel();
     private JButton install = new JButton("Install");
     private JButton uninstall = new JButton("Uninstall");
+    HTMLPane html = new HTMLPane("Arial", "#000", "#CCCCCC", 200, 200);
     
     private SAMModel model;
     private ModelDrawerPanelListener listener;
@@ -54,7 +55,6 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
         drawerTitle.setText(String.format(MODEL_TITLE, "&nbsp;"));
         this.add(drawerTitle, BorderLayout.NORTH);
         this.add(createInstallModelComponent(), BorderLayout.SOUTH);
-        HTMLPane html = new HTMLPane("Arial", "#000", "#CCCCCC", 200, 200);
         html.append("Model description");
         html.append("Model description");
         html.append("Model description");
@@ -93,6 +93,15 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     	this.model = model;
     	setTitle(model.getName());
     	setInfo();
+        install.setEnabled(false);
+        uninstall.setEnabled(false);
+        new Thread(() -> {
+        	boolean installed = model.isInstalled();
+        	SwingUtilities.invokeLater(() -> {
+        		if (installed) this.uninstall.setEnabled(true);
+        		else this.install.setEnabled(true);
+        	});
+        }).start();;
     }
     
     private void setTitle(String title) {
@@ -100,7 +109,8 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     }
     
     private void setInfo() {
-    	// TODO
+		html.clear();
+		html.append("p", model.getDescription());
     }
     
     @Override

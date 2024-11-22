@@ -66,7 +66,6 @@ public class EfficientSAM extends SAMModel {
 		}
 		
 	};
-	private Boolean installed = false;
 	private boolean onlyBiggest = false;
 	/**
 	 * Name of the model
@@ -108,7 +107,7 @@ public class EfficientSAM extends SAMModel {
 	 * {@inheritDoc}
 	 */
 	public String getDescription() {
-		return HTML_DESCRIPTION + (!this.installed ? SAMModel.HTML_NOT_INSTALLED : CAUTION_STRING);
+		return HTML_DESCRIPTION + (!this.isInstalled() ? SAMModel.HTML_NOT_INSTALLED : CAUTION_STRING);
 	}
 
 	@Override

@@ -9,7 +9,6 @@ import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.ui.ConsumerInterface;
-import ai.nets.samj.ui.UtilityMethods;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.util.Cast;
 
@@ -41,6 +40,8 @@ public class MainGUI extends JFrame {
 	private JButton close = new JButton("Close");
 	private JButton help = new JButton("Help");
 	private JButton export = new JButton("Export...");
+	private JButton install = new JButton("Install");
+	private JButton uninstall = new JButton("Uninstall");
 	private final ModelSelection cmbModels;
 	private final ImageSelection cmbImages;
 	private JLabel drawerTitle = new JLabel();
@@ -85,6 +86,7 @@ public class MainGUI extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
+        cmbModels.getButton().addActionListener(e -> toggleDrawer());
         go.addActionListener(e -> loadModel());
         export.addActionListener(e -> consumer.exportImageLabeling());
         chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected()));
@@ -95,7 +97,7 @@ public class MainGUI extends JFrame {
         help.addActionListener(e -> consumer.exportImageLabeling());
 
         // Use BorderLayout for the main frame
-        setLayout(new BorderLayout());
+        //setLayout(new BorderLayout());
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -118,6 +120,8 @@ public class MainGUI extends JFrame {
         gbc.gridy = 3;
         gbc.weighty = 0.03;
         add(createBottomPanel(), gbc);
+        
+        createDrawerPanel();
 
         // Set the initial size of the frame
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE); // Width x Height
@@ -383,6 +387,72 @@ public class MainGUI extends JFrame {
 
         return thirdComponent;
     }
+    
+    private void createDrawerPanel() {
+        drawerPanel = new JPanel();
+        drawerPanel.setLayout(new BorderLayout());
+        drawerPanel.setBorder(BorderFactory.createEtchedBorder());
+        drawerTitle.setText("<html><div style='text-align: center; font-size: 15px;'>&nbsp;</html>");
+        drawerPanel.add(drawerTitle, BorderLayout.NORTH);
+        drawerPanel.add(createInstallModelComponent(), BorderLayout.SOUTH);
+        HTMLPane html = new HTMLPane("Arial", "#000", "#CCCCCC", 200, 200);
+        //html.append("<span style='text-align: center; font-size: 20px;>SAM2 Tiny</span");
+        html.append("Model description");
+        html.append("Model description");
+        html.append("Model description");
+        html.append("");
+        html.append("i", "Other information");
+        html.append("i", "References");
+        drawerPanel.add(html, BorderLayout.CENTER);
+        drawerPanel.setVisible(true);
+		add(drawerPanel, BorderLayout.EAST);
+    }
+
+    // Method to create the third component
+    private JPanel createInstallModelComponent() {
+        JPanel thirdComponent = new JPanel();
+        thirdComponent.setLayout(new GridBagLayout());
+        thirdComponent.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
+        thirdComponent.setBorder(new LineBorder(Color.BLACK));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+
+        // First checkbox
+        gbc.gridy = 0;
+        thirdComponent.add(this.install, gbc);
+
+        // Second checkbox
+        gbc.gridy = 1;
+        thirdComponent.add(this.uninstall, gbc);
+
+        // Button
+        gbc.gridy = 2;
+        thirdComponent.add(this.export, gbc);
+        thirdComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.2)));
+
+        return thirdComponent;
+    }
+
+	private void toggleDrawer() {
+		if (isDrawerOpen) {
+			drawerPanel.setVisible(false);
+			remove(drawerPanel);
+			setSize(getWidth() - 200, getHeight());
+			this.cmbModels.getButton().setText("▶"); 
+		} else {
+			add(drawerPanel, BorderLayout.EAST);
+			drawerPanel.setVisible(true);
+			setSize(getWidth() + 200, getHeight());
+			this.cmbModels.getButton().setText("◀");
+		}
+		isDrawerOpen = !isDrawerOpen;
+		revalidate(); 
+		repaint(); 
+	}
     
     private void createListeners() {
 		

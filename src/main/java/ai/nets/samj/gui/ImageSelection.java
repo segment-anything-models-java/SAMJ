@@ -51,16 +51,13 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 	@Override
 	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 		try {
-			Object item = this.cmbBox.getSelectedItem();
 	        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
 	        ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
 	        for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
 	        DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
+	        if (selected != null && objects.length != 0)
+	        	comboBoxModel.setSelectedItem(selected);
 	        this.cmbBox.setModel(comboBoxModel);
-	        if (item != null && objects.length != 0) 
-	        	this.cmbBox.setSelectedIndex(
-	        			IntStream.range(0, objects.length).filter(i -> objects[i].getId() == ((ComboBoxItem) item).getId()).findFirst().orElse(0)
-	        			);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -70,11 +67,11 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 		try {
 			ComboBoxItem item = (ComboBoxItem) this.cmbBox.getSelectedItem();
-			if (selected == null || selected.getId().equals(item.getId())) {
+			if (selected == null || item == null || !selected.getId().equals(item.getId())) {
 				listener.modelActionsOnImageChanged();
 				listener.imageActionsOnImageChanged();
-				selected = item;
 			}
+			selected = item;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}

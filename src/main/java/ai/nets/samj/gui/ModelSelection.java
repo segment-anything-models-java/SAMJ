@@ -66,10 +66,14 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	 * Check if the image selected has been changed once the combobox pop up is closed
 	 */
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-		SAMModel nSelectedModel = models.get(cmbBox.getSelectedIndex());
-		if (nSelectedModel != selected) {
-			unLoadModel();
-			selected = nSelectedModel;
+		try {
+			SAMModel nSelectedModel = models.get(cmbBox.getSelectedIndex());
+			if (nSelectedModel != selected) {
+				unLoadModel();
+				selected = nSelectedModel;
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
 	}
 

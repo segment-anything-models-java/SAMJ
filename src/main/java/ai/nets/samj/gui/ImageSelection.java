@@ -31,6 +31,7 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 		List<ComboBoxItem> listImages = this.consumer.getListOfOpenImages();
 		for(ComboBoxItem item : listImages)
 			this.cmbBox.addItem(item);
+		cmbBox.addPopupMenuListener(this);
 	}
 	
 	protected static ImageSelection create(ConsumerInterface consumer, ImageSelectionListener listener) {
@@ -47,24 +48,32 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 
 	@Override
 	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-		Object item = this.cmbBox.getSelectedItem();
-        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
-        ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
-        for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
-        DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
-        this.cmbBox.setModel(comboBoxModel);
-        if (item != null && objects.length != 0) 
-        	this.cmbBox.setSelectedIndex(
-        			IntStream.range(0, objects.length).filter(i -> objects[i].getId() == ((ComboBoxItem) item).getId()).findFirst().orElse(0)
-        			);
+		try {
+			Object item = this.cmbBox.getSelectedItem();
+	        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
+	        ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
+	        for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
+	        DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
+	        this.cmbBox.setModel(comboBoxModel);
+	        if (item != null && objects.length != 0) 
+	        	this.cmbBox.setSelectedIndex(
+	        			IntStream.range(0, objects.length).filter(i -> objects[i].getId() == ((ComboBoxItem) item).getId()).findFirst().orElse(0)
+	        			);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 	}
 
 	@Override
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-		ComboBoxItem item = (ComboBoxItem) this.cmbBox.getSelectedItem();
-		if (selected != item) {
-			listener.modelActionsOnImageChanged();
-			listener.imageActionsOnImageChanged();
+		try {
+			ComboBoxItem item = (ComboBoxItem) this.cmbBox.getSelectedItem();
+			if (selected != item) {
+				listener.modelActionsOnImageChanged();
+				listener.imageActionsOnImageChanged();
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
 	}
 

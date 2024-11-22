@@ -1,7 +1,8 @@
 package ai.nets.samj.gui;
 
 import java.awt.Dimension;
-
+import java.awt.Insets;
+import javax.swing.BorderFactory;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
 import javax.swing.text.BadLocationException;
@@ -70,50 +71,43 @@ public class HTMLPane extends JEditorPane {
         header += "<!DOCTYPE HTML>\n";
         header += "<html><head>\n";
         header += "<style>\n";
+        // CSS Reset
+        header += "* {\n";
+        header += "    margin: 0;\n";
+        header += "    padding: 0;\n";
+        header += "    box-sizing: border-box;\n";
+        header += "}\n";
         header += "body {\n";
         header += "    background-color: " + background + ";\n";
         header += "    color: " + color + ";\n";
         header += "    font-family: '" + font + "', sans-serif;\n";
-        header += "    margin: 5px;\n";
         header += "    font-size: 9px;\n"; // Base font size reduced
         header += "}\n";
         header += "h2 {\n";
         header += "    color: #333333;\n";
-        header += "    font-size: 1.2em;\n"; // Reduced font size
-        header += "    margin-bottom: 5px;\n";
-        header += "    border-bottom: 1px solid #e0e0e0;\n";
-        header += "    padding-bottom: 5px;\n";
+        header += "    font-size: 1.2em;\n"; // Adjust as needed
+        // No margin or padding
         header += "}\n";
         header += "table {\n";
         header += "    width: 100%;\n";
         header += "    border-collapse: collapse;\n";
-        header += "    margin-bottom: 5px;\n";
+        // No margin or padding
         header += "}\n";
         header += "th, td {\n";
         header += "    text-align: left;\n";
-        header += "    padding: 4px;\n"; // Reduced padding
-        header += "    font-size: 1.0em;\n"; // Reduced font size
+        header += "    padding: 4px;\n"; // Adjust as needed
+        header += "    font-size: 1.0em;\n";
         header += "}\n";
-        header += "th {\n";
-        header += "    background-color: #f2f2f2;\n";
-        header += "    width: 40%;\n"; // Adjusted width
-        header += "}\n";
-        header += "tr:nth-child(even) td {\n";
-        header += "    background-color: #fafafa;\n";
-        header += "}\n";
-        header += "a {\n";
-        header += "    color: #1a0dab;\n";
-        header += "    text-decoration: none;\n";
-        header += "}\n";
-        header += "a:hover {\n";
-        header += "    text-decoration: underline;\n";
-        header += "}\n";
+        // Additional styles...
         header += "</style>\n";
         header += "</head>\n";
         header += "<body>\n";
         footer += "</body></html>\n";
         setEditable(false);
         setContentType("text/html; charset=UTF-8");
+        // Remove margins and borders from JEditorPane
+        this.setMargin(new Insets(0, 0, 0, 0));
+        this.setBorder(BorderFactory.createEmptyBorder());
     }
 
     public void append(String content) {
@@ -138,6 +132,9 @@ public class HTMLPane extends JEditorPane {
         JScrollPane scroll = new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scroll.setPreferredSize(dim);
+        // Remove borders from JScrollPane
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.setViewportBorder(BorderFactory.createEmptyBorder());
         return scroll;
     }
 }

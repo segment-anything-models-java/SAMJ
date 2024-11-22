@@ -85,8 +85,8 @@ public class SAM2Tiny extends SAMModel {
 		this.fullName = "SAM-2: Segment Anything Model 2 (Tiny)";
 		this.githubLink = "https://github.com/facebookresearch/segment-anything-2";
 		this.paperLink = "https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/";
-		this.githubName = "https://github.com/facebookresearch/segment-anything-2";
 		this.githubName = "facebookresearch/segment-anything-2";
+		this.paperName = "SAM 2: Segment Anything in Images and Videos";
 		this.speedRank = 3;
 		this.performanceRank = 3;
 		this.size = 155.9;

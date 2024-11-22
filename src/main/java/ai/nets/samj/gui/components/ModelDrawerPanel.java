@@ -50,6 +50,8 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		this.hSize = hSize;
 		this.listener = listener;
 		createDrawerPanel();
+		this.install.addActionListener(this);
+		this.uninstall.addActionListener(this);
 	}
 	
 	public static ModelDrawerPanel create(int hSize, ModelDrawerPanelListener listener) {
@@ -73,7 +75,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
         html.append("");
         html.append("i", "Other information");
         html.append("i", "References");
-        this.add(html, BorderLayout.CENTER);
+        this.add(html.getPane(), BorderLayout.CENTER);
         this.setPreferredSize(new Dimension(hSize, 0)); // Set preferred width
     }
 
@@ -106,6 +108,10 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     	this.model = model;
     	setTitle(model.getName());
     	setInfo();
+    	setButtons();
+    }
+    
+    private void setButtons() {
         install.setEnabled(false);
         uninstall.setEnabled(false);
         installedThread = new Thread(() -> {
@@ -173,12 +179,17 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	
 	private void uninstallModel() {
 		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
+	    startLoadingAnimation("Uninstalling model");
 		modelInstallThread = new Thread(() ->{
 			this.model.getInstallationManger().uninstall();
+			stopLoadingAnimation();
 			SwingUtilities.invokeLater(() -> {
+				this.setInfo();
+		    	setButtons();
 				listener.setGUIEnabled(true);
 			});
 		});
+		modelInstallThread.start();
 	}
 	
 	private void startLoadingAnimation(String message) {

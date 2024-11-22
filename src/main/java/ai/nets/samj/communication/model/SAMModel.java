@@ -201,8 +201,8 @@ public abstract class SAMModel {
 		String description = String.format(HTML_MODEL_FORMAT, fullName, "" + size, 
 				"" + speedRank, "" + performanceRank, githubLink, githubName, paperLink, paperName);
 		boolean installed = this.isInstalled();
-		description += this.isHeavy & installed ? CAUTION_STRING : "";
-		description += installed ? "" : HTML_NOT_INSTALLED;
+		description = this.isHeavy & installed ? CAUTION_STRING + description: description;
+		description = installed ? description : HTML_NOT_INSTALLED + description;
 		return description;
 	}
 	

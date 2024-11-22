@@ -26,7 +26,9 @@ import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
 
 public class ModelDrawerPanel extends JPanel implements ActionListener {
 
-    private JLabel drawerTitle = new JLabel();
+    private static final long serialVersionUID = 6708853280844731445L;
+    
+	private JLabel drawerTitle = new JLabel();
     private JButton install = new JButton("Install");
     private JButton uninstall = new JButton("Uninstall");
     HTMLPane html = new HTMLPane("Arial", "#000", "#CCCCCC", 200, 200);
@@ -35,6 +37,8 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     private ModelDrawerPanelListener listener;
     private int hSize;
     private Thread modelInstallThread;
+    private Thread infoThread;
+    private Thread installedThread;
     
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
 	
@@ -95,13 +99,14 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     	setInfo();
         install.setEnabled(false);
         uninstall.setEnabled(false);
-        new Thread(() -> {
+        installedThread = new Thread(() -> {
         	boolean installed = model.isInstalled();
         	SwingUtilities.invokeLater(() -> {
         		if (installed) this.uninstall.setEnabled(true);
         		else this.install.setEnabled(true);
         	});
-        }).start();;
+        });
+        installedThread.start();
     }
     
     private void setTitle(String title) {
@@ -110,14 +115,17 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     
     private void setInfo() {
 		html.clear();
-		new Thread(() -> {
+		infoThread =new Thread(() -> {
 			String description = model.getDescription();
 			SwingUtilities.invokeLater(() -> html.append("p", description));
-		}).start();
+		});
+		infoThread.start();
     }
     
     @Override
     public void setVisible(boolean visible) {
+    	if (!visible)
+    		interruptThreads();
     	super.setVisible(visible);
     }
 
@@ -162,6 +170,15 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	public interface ModelDrawerPanelListener {
 		
 	    void setGUIEnabled(boolean enabled);
+	}
+	
+	private void interruptThreads() {
+		if (infoThread != null)
+			this.infoThread.interrupt();
+		if (installedThread != null)
+			this.installedThread.interrupt();
+		if (modelInstallThread != null)
+			this.modelInstallThread.interrupt();
 	}
 
 }

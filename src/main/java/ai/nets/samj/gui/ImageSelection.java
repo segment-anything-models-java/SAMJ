@@ -70,9 +70,10 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 		try {
 			ComboBoxItem item = (ComboBoxItem) this.cmbBox.getSelectedItem();
-			if (selected != item) {
+			if (selected == null || selected.getId().equals(item.getId())) {
 				listener.modelActionsOnImageChanged();
 				listener.imageActionsOnImageChanged();
+				selected = item;
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();

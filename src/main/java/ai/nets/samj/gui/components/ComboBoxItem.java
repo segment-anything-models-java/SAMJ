@@ -20,6 +20,8 @@
 package ai.nets.samj.gui.components;
 
 
+import java.util.UUID;
+
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -31,7 +33,7 @@ import net.imglib2.type.numeric.RealType;
  * @author CArlos Garcia
  */
 public abstract class ComboBoxItem {
-    final private int id;
+    final private String id;
     final private Object value;
     private static final String SELECT_IMAGE_STR = "Select image";
 
@@ -43,9 +45,8 @@ public abstract class ComboBoxItem {
      * @param seq
      * 	the object
      */
-    public ComboBoxItem(int uniqueID, Object seq) {
-    	if (uniqueID == -1) throw new IllegalArgumentException("The unique identifier cannot be -1.");
-        this.id = uniqueID;
+    public ComboBoxItem(Object seq) {
+        this.id = UUID.randomUUID().toString();
         this.value = seq;
     }
 
@@ -54,7 +55,7 @@ public abstract class ComboBoxItem {
      * In this case it is empty, the unique identifier will by -1.
      */
     public ComboBoxItem() {
-        this.id = -1;
+        this.id = "-1";
         this.value = null;
     }
 
@@ -62,7 +63,7 @@ public abstract class ComboBoxItem {
      * 
      * @return the unique identifier of the instance
      */
-    public int getId() {
+    public String getId() {
         return id;
     }
 

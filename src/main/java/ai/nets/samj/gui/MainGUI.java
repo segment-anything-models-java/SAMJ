@@ -189,6 +189,7 @@ public class MainGUI extends JFrame {
 
     private void close() {
         cmbModels.unLoadModel();
+        this.drawerPanel.interruptThreads();
     }
 
     // Method to create the title panel

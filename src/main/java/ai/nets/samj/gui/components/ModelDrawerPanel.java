@@ -181,6 +181,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	
 	private void installModel() {
 		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
+		SwingUtilities.invokeLater(() -> install.setEnabled(false));
 		modelInstallThread = new Thread(() ->{
 			try {
 				this.html.clear();
@@ -292,6 +293,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	
 	private void uninstallModel() {
 		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
+		SwingUtilities.invokeLater(() -> uninstall.setEnabled(false));
 	    startLoadingAnimation("Uninstalling model");
 		modelInstallThread = new Thread(() ->{
 			this.model.getInstallationManger().uninstall();
@@ -339,7 +341,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	}
 
 	
-	private void interruptThreads() {
+	public void interruptThreads() {
 		if (infoThread != null)
 			this.infoThread.interrupt();
 		if (installedThread != null)

@@ -240,7 +240,8 @@ public class SAM2Small implements SAMModel {
 	 * {@inheritDoc}
 	 */
 	public void closeProcess() {
-		efficientSamJ.close();
+		if (efficientSamJ != null)
+			efficientSamJ.close();
 		efficientSamJ = null;
 	}
 

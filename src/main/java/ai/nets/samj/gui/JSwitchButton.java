@@ -1,6 +1,7 @@
 package ai.nets.samj.gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.AbstractButton;
@@ -35,6 +36,10 @@ public class JSwitchButton extends AbstractButton {
             public void mouseReleased(MouseEvent e) {
             	if (isEnabled()) {
                     setSelected(!isSelected());
+                    fireActionPerformed(
+                    		new ActionEvent(JSwitchButton.this, 
+                    				ActionEvent.ACTION_PERFORMED, 
+                    				getActionCommand()));
                 }
             }
         });

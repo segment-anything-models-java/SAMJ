@@ -152,10 +152,12 @@ public class MainGUI extends JFrame {
     }
 
     private void setInstantPromptsEnabled(boolean enabled) {
-        if (enabled)
+        if (enabled) {
+        	consumer.enableAddingToRoiManager(this.chkRoiManager.isSelected());
             consumer.activateListeners();
-        else
+        } else {
             consumer.deactivateListeners();
+        }
     }
 
     private void setTwoThirdsEnabled(boolean enabled) {
@@ -177,6 +179,7 @@ public class MainGUI extends JFrame {
             try {
                 // TODO try removing Cast
                 cmbModels.loadModel(Cast.unchecked(cmbImages.getSelectedRai()));
+            	consumer.enableAddingToRoiManager(this.chkRoiManager.isSelected());
                 consumer.setFocusedImage(cmbImages.getSelectedObject());
                 consumer.setModel(cmbModels.getSelectedModel());
                 setInstantPromptsEnabled(this.chkInstant.isSelected());

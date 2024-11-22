@@ -7,6 +7,7 @@ import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
+import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.util.Cast;
@@ -38,17 +39,15 @@ public class MainGUI extends JFrame {
     private JButton close = new JButton("Close");
     private JButton help = new JButton("Help");
     private JButton export = new JButton("Export...");
-    private JButton install = new JButton("Install");
-    private JButton uninstall = new JButton("Uninstall");
     private final ModelSelection cmbModels;
     private final ImageSelection cmbImages;
-    private JLabel drawerTitle = new JLabel();
-    private JPanel drawerPanel;
+    private ModelDrawerPanel drawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE);
 
     private static double HEADER_VERTICAL_RATIO = 0.1;
 
     private static int MAIN_VERTICAL_SIZE = 400;
     private static int MAIN_HORIZONTAL_SIZE = 250;
+    private static int DRAWER_HORIZONTAL_SIZE = 450;
 
     private static String MANUAL_STR = "Manual";
     private static String PRESET_STR = "Preset prompts";
@@ -115,8 +114,6 @@ public class MainGUI extends JFrame {
         gbc.gridy = 3;
         gbc.weighty = 0.03;
         mainPanel.add(createBottomPanel(), gbc);
-
-        createDrawerPanel();
 
         // Add the mainPanel and drawerPanel using BorderLayout
         add(mainPanel, BorderLayout.CENTER);
@@ -388,60 +385,14 @@ public class MainGUI extends JFrame {
         return thirdComponent;
     }
 
-    private void createDrawerPanel() {
-        drawerPanel = new JPanel();
-        drawerPanel.setLayout(new BorderLayout());
-        drawerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        drawerTitle.setText("<html><div style='text-align: center; font-size: 15px;'>&nbsp;</html>");
-        drawerPanel.add(drawerTitle, BorderLayout.NORTH);
-        drawerPanel.add(createInstallModelComponent(), BorderLayout.SOUTH);
-        HTMLPane html = new HTMLPane("Arial", "#000", "#CCCCCC", 200, 200);
-        html.append("Model description");
-        html.append("Model description");
-        html.append("Model description");
-        html.append("");
-        html.append("i", "Other information");
-        html.append("i", "References");
-        drawerPanel.add(html, BorderLayout.CENTER);
-        drawerPanel.setPreferredSize(new Dimension(200, 0)); // Set preferred width
-    }
-
-    // Method to create the install model component
-    private JPanel createInstallModelComponent() {
-        JPanel thirdComponent = new JPanel();
-        thirdComponent.setLayout(new GridBagLayout());
-        thirdComponent.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
-        thirdComponent.setBorder(new LineBorder(Color.BLACK));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
-
-        // Install button
-        gbc.gridy = 0;
-        thirdComponent.add(this.install, gbc);
-
-        // Uninstall button
-        gbc.gridy = 1;
-        thirdComponent.add(this.uninstall, gbc);
-
-        // Export button (if needed)
-        gbc.gridy = 2;
-        thirdComponent.add(this.export, gbc);
-        thirdComponent.setPreferredSize(new Dimension(0, (int) (MAIN_VERTICAL_SIZE * 0.2)));
-
-        return thirdComponent;
-    }
-
     private void toggleDrawer() {
-        if (isDrawerOpen) {
+        if (drawerPanel.isVisible()) {
             drawerPanel.setVisible(false);
             this.cmbModels.getButton().setText("▶");
             setSize(getWidth() - drawerPanel.getPreferredSize().width, getHeight());
         } else {
             drawerPanel.setVisible(true);
+            drawerPanel.setTitle(cmbModels.getSelectedModel().getName());
             this.cmbModels.getButton().setText("◀");
             setSize(getWidth() + drawerPanel.getPreferredSize().width, getHeight());
         }

@@ -11,7 +11,6 @@ import javax.swing.event.PopupMenuListener;
 import ai.nets.samj.gui.components.ComboBoxButtonComp;
 import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.ui.ConsumerInterface;
-import ai.nets.samj.ui.UtilityMethods;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -43,8 +42,7 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 	}
 	
 	protected <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> getSelectedRai() {
-		//return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getValue();
-		return null;
+		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getImageAsImgLib2();
 	}
 
 	@Override

@@ -22,6 +22,7 @@ package ai.nets.samj.ui;
 import java.awt.Polygon;
 import java.util.List;
 
+import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.components.ComboBoxItem;
 
@@ -64,6 +65,8 @@ public abstract class ConsumerInterface {
 	 * numbered from 1.
 	 */
 	public abstract void exportImageLabeling();
+	
+	public abstract void addPolygonsFromGUI(List<Mask> masks);
 	
 	public abstract void activateListeners();
 	

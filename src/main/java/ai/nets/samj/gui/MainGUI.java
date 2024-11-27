@@ -13,6 +13,9 @@ import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.utils.Constants;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
 import javax.swing.*;
@@ -97,7 +100,13 @@ public class MainGUI extends JFrame {
         chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected()));
         chkRoiManager.addActionListener(e -> consumer.enableAddingToRoiManager(chkRoiManager.isSelected()));
         retunLargest.addActionListener(e -> cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected()));
-        btnBatchSAMize.addActionListener(e -> consumer.exportImageLabeling());
+        btnBatchSAMize.addActionListener(e -> {
+			try {
+				batchSAMize();
+			} catch (IOException | RuntimeException | InterruptedException e1) {
+				e1.printStackTrace();
+			}
+		});
         close.addActionListener(e -> dispose());
         help.addActionListener(e -> consumer.exportImageLabeling());
 
@@ -428,6 +437,11 @@ public class MainGUI extends JFrame {
         isDrawerOpen = !isDrawerOpen;
         revalidate();
         repaint();
+    }
+    
+    private < T extends RealType< T > & NativeType< T > > void batchSAMize() throws IOException, RuntimeException, InterruptedException {
+    	RandomAccessibleInterval<T> rai = Cast.unchecked(((ComboBoxItem) cmbPresets.getSelectedItem()).getImageAsImgLib2());
+    	this.consumer.addPolygonsFromGUI(this.cmbModels.getSelectedModel().fetch2dSegmentationFromMask(rai));
     }
     
     private void updatePresetsCard() {

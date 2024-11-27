@@ -8,6 +8,7 @@ import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.ModelSelection.ModelSelctionListener;
+import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.ui.ConsumerInterface;
@@ -39,6 +40,7 @@ public class MainGUI extends JFrame {
     private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
     private JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
     private JButton go = new JButton("Go");
+    private JComboBox<ComboBoxItem> cmbPresets = new JComboBox<ComboBoxItem>();
     private JButton btnBatchSAMize = new JButton("Batch SAMize");
     private JButton close = new JButton("Close");
     private JButton help = new JButton("Help");
@@ -48,6 +50,7 @@ public class MainGUI extends JFrame {
     private final ModelSelection cmbModels;
     private final ImageSelection cmbImages;
     private ModelDrawerPanel drawerPanel;
+    private JPanel cardPanel;
 
     private static double HEADER_VERTICAL_RATIO = 0.1;
 
@@ -310,7 +313,7 @@ public class MainGUI extends JFrame {
         radioPanel.add(radioButton2);
 
         // Panel below radio buttons with CardLayout
-        JPanel cardPanel = new JPanel(new CardLayout());
+        cardPanel = new JPanel(new CardLayout());
         cardPanel.setBorder(new LineBorder(Color.BLACK));
 
         // First card
@@ -334,14 +337,20 @@ public class MainGUI extends JFrame {
         gbc0.anchor = GridBagConstraints.NORTH;
         gbc0.fill = GridBagConstraints.NONE;
         gbc0.weighty = 0.2;
-        gbc0.insets = new Insets(0, 0, 0, 0);
+        gbc0.insets = new Insets(0, 2, 5, 2);
+        gbc0.weightx = 1;
         card2.add(new JLabel(ROIM_STR), gbc0);
 
         gbc0.gridy = 1;
         gbc0.anchor = GridBagConstraints.CENTER;
         gbc0.fill = GridBagConstraints.BOTH;
-        gbc0.insets = new Insets(0, 0, 10, 0);
-        gbc0.weighty = 0.8;
+        gbc0.weighty = 0.4;
+        card2.add(cmbPresets, gbc0);
+
+        gbc0.gridy = 2;
+        gbc0.anchor = GridBagConstraints.CENTER;
+        gbc0.fill = GridBagConstraints.BOTH;
+        gbc0.weighty = 0.4;
         card2.add(btnBatchSAMize, gbc0);
 
         cardPanel.add(card1, MANUAL_STR);
@@ -354,8 +363,7 @@ public class MainGUI extends JFrame {
         });
 
         radioButton2.addActionListener(e -> {
-            CardLayout cl = (CardLayout) (cardPanel.getLayout());
-            cl.show(cardPanel, PRESET_STR);
+            updatePresetsCard();
         });
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -420,6 +428,19 @@ public class MainGUI extends JFrame {
         isDrawerOpen = !isDrawerOpen;
         revalidate();
         repaint();
+    }
+    
+    private void updatePresetsCard() {
+    	CardLayout cl = (CardLayout) (cardPanel.getLayout());
+        cl.show(cardPanel, PRESET_STR);
+
+        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
+        ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
+        for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
+        DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
+        this.cmbPresets.setModel(comboBoxModel);
+        
+        btnBatchSAMize.setEnabled(openSeqs.size() != 0);
     }
 
     private void createListeners() {

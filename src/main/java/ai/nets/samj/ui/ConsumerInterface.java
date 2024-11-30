@@ -20,11 +20,15 @@
 package ai.nets.samj.ui;
 
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.util.List;
 
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.components.ComboBoxItem;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 /**
  * Interface to be implemented by the imaging software that wants to use the default SAMJ UI.
@@ -65,6 +69,14 @@ public abstract class ConsumerInterface {
 	 * numbered from 1.
 	 */
 	public abstract void exportImageLabeling();
+
+	public abstract Object getFocusedImage();
+
+	public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getFocusedImageAsRai();
+	
+	public abstract List<long[]> getPointRoisOnFocusImage();
+	
+	public abstract List<Rectangle> getRectRoisOnFocusImage();
 	
 	public abstract void addPolygonsFromGUI(List<Mask> masks);
 	

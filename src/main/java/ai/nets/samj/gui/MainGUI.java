@@ -7,7 +7,7 @@ import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
-import ai.nets.samj.gui.ModelSelection.ModelSelctionListener;
+import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
@@ -15,7 +15,9 @@ import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Cast;
 
 import javax.swing.*;
@@ -35,7 +37,7 @@ public class MainGUI extends JFrame {
     private boolean isDrawerOpen = false;
     private final List<SAMModel> modelList;
     private ImageSelectionListener imageListener;
-    private ModelSelctionListener modelListener;
+    private ModelSelectionListener modelListener;
     private ModelDrawerPanelListener modelDrawerListener;
     private ConsumerInterface consumer;
 
@@ -43,7 +45,6 @@ public class MainGUI extends JFrame {
     private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
     private JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
     private JButton go = new JButton("Go");
-    private JComboBox<ComboBoxItem> cmbPresets = new JComboBox<ComboBoxItem>();
     private JButton btnBatchSAMize = new JButton("Batch SAMize");
     private JButton close = new JButton("Close");
     private JButton help = new JButton("Help");
@@ -353,13 +354,7 @@ public class MainGUI extends JFrame {
         gbc0.gridy = 1;
         gbc0.anchor = GridBagConstraints.CENTER;
         gbc0.fill = GridBagConstraints.BOTH;
-        gbc0.weighty = 0.4;
-        card2.add(cmbPresets, gbc0);
-
-        gbc0.gridy = 2;
-        gbc0.anchor = GridBagConstraints.CENTER;
-        gbc0.fill = GridBagConstraints.BOTH;
-        gbc0.weighty = 0.4;
+        gbc0.weighty = 0.8;
         card2.add(btnBatchSAMize, gbc0);
 
         cardPanel.add(card1, MANUAL_STR);
@@ -372,7 +367,8 @@ public class MainGUI extends JFrame {
         });
 
         radioButton2.addActionListener(e -> {
-            updatePresetsCard();
+        	CardLayout cl = (CardLayout) (cardPanel.getLayout());
+        	cl.show(cardPanel, PRESET_STR);
         });
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -440,21 +436,13 @@ public class MainGUI extends JFrame {
     }
     
     private < T extends RealType< T > & NativeType< T > > void batchSAMize() throws IOException, RuntimeException, InterruptedException {
-    	RandomAccessibleInterval<T> rai = Cast.unchecked(((ComboBoxItem) cmbPresets.getSelectedItem()).getImageAsImgLib2());
+    	RandomAccessibleInterval<T> rai = this.consumer.getFocusedImageAsRai();
+    	List<Object> prompts = new ArrayList<Object>();
+    	if (prompts.size() == 0 && !(rai.getType() instanceof IntegerType)){
+    		// TODO add label that is displayed when there are no prompts selected
+    		return;
+    	}
     	this.consumer.addPolygonsFromGUI(this.cmbModels.getSelectedModel().fetch2dSegmentationFromMask(rai));
-    }
-    
-    private void updatePresetsCard() {
-    	CardLayout cl = (CardLayout) (cardPanel.getLayout());
-        cl.show(cardPanel, PRESET_STR);
-
-        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
-        ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
-        for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
-        DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
-        this.cmbPresets.setModel(comboBoxModel);
-        
-        btnBatchSAMize.setEnabled(openSeqs.size() != 0);
     }
 
     private void createListeners() {
@@ -472,7 +460,7 @@ public class MainGUI extends JFrame {
                 go.setEnabled(cmbImages.getSelectedObject() != null);
             }
         };
-        modelListener = new ModelSelctionListener() {
+        modelListener = new ModelSelectionListener() {
 
 			@Override
 			public void changeDrawerPanel() {

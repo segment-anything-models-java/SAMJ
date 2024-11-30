@@ -683,9 +683,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	List<Mask> processMask(RandomAccessibleInterval<T> img, boolean returnAll) 
 				throws IOException, RuntimeException, InterruptedException {
 		long[] dims = img.dimensionsAsLongArray();
-		if (dims.length == 2 && dims[1] == this.shma.getOriginalShape()[1] && dims[0] == this.shma.getOriginalShape()[0]) {
+		if ((dims.length == 2 || (dims.length == 3 && dims[2] == 1)) 
+				&& dims[1] == this.shma.getOriginalShape()[0] && dims[0] == this.shma.getOriginalShape()[1]) {
 			img = Views.permute(img, 0, 1);
-		} else if (dims.length != 2 && dims[0] != this.shma.getOriginalShape()[1] && dims[1] != this.shma.getOriginalShape()[0]) {
+		} else if (dims[0] != this.shma.getOriginalShape()[0] && dims[1] != this.shma.getOriginalShape()[1]
+				|| (dims.length == 3 && dims[2] != 1) || dims.length > 3) {
 			throw new IllegalArgumentException("The provided mask should be a 2d image with just one channel of width "
 					+ this.shma.getOriginalShape()[1] + " and height " + this.shma.getOriginalShape()[0]);
 		}

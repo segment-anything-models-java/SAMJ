@@ -405,6 +405,31 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return masks;
 	}
 	
+	public List<Mask> processBatchOfPoints(List<long[]> points) {
+		return processBatchOfPoints(points, true);
+	}
+	
+	public List<Mask> processBatchOfPoints(List<long[]> pointsList, boolean returnAll)
+			throws IOException, RuntimeException, InterruptedException {
+		if (pointsList == null || pointsList.size() == 0)
+			return new ArrayList<Mask>();
+		// TODO add logic to reeencode
+		// TODO the idea is that the 
+		
+		pointsList = adaptPointPrompts(pointsList);
+		pointsNegList = adaptPointPrompts(pointsNegList);
+		this.script = "";
+		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
+		HashMap<String, Object> inputs = new HashMap<String, Object>();
+		inputs.put("input_points", pointsList);
+		inputs.put("input_neg_points", pointsNegList);
+		printScript(script, "Points and negative points inference");
+		List<Mask> polys = processAndRetrieveContours(inputs);
+		recalculatePolys(polys, encodeCoords);
+		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
+		return polys;
+	}
+	
 	/**
 	 * Method used that runs EfficientSAM using a list of points as the prompt. This method runs
 	 * the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
@@ -723,27 +748,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	public Rectangle getCurrentlyEncodedArea() {
-		// TODO remove int xMargin = (int) (targetDims[0] * 0.1);
-		// TODO remove int yMargin = (int) (targetDims[1] * 0.1);
 		Rectangle alreadyEncoded;
 		alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 
 				(int) targetDims[0], (int) targetDims[1]);
 		return alreadyEncoded;
-		/** 
-		 * TODO
-		 * TODO
-		 * TODO
-		 * TODO
-		if (encodeCoords[0] != 0 || encodeCoords[1] != 0 || targetDims[1] != this.img.dimensionsAsLongArray()[1]
-				 || targetDims[0] != this.img.dimensionsAsLongArray()[0]) {
-			alreadyEncoded = new Rectangle((int) encodeCoords[0] + xMargin / 2, (int) encodeCoords[1] + yMargin / 2, 
-					(int) targetDims[0] - xMargin, (int) targetDims[1] - yMargin);
-		} else {
-			alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 
-					(int) targetDims[0], (int) targetDims[1]);
-		}
-		return alreadyEncoded;
-		*/
 	}
 	
 	/**

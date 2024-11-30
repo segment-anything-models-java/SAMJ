@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import ai.nets.samj.install.EfficientViTSamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 
@@ -403,11 +404,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 				+ "    box=None,)" + System.lineSeparator()
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
-				// TODO remove + "import matplotlib.pyplot as plt" + System.lineSeparator()
-				// TODO remove + "plt.imsave('/tmp/aa.jpg', mask[0], cmap='gray')" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
-				//+ (this.isIJROIManager ? "mask[0, :, 1:] += mask[0, :, :-1]" : "") + System.lineSeparator()
-				//+ "np.save('/home/carlos/git/aa.npy', mask)" + System.lineSeparator()
 				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
@@ -510,5 +507,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	@Override
 	public String deleteEncodingScript(String encodingName) {
 		return "del encodings_map['" + encodingName + "']";
+	}
+
+	@Override
+	protected <T extends RealType<T> & NativeType<T>> void processPromptsBatchWithSAM(List<int[]> points,
+			List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) {
+		// TODO Auto-generated method stub
+		
 	}
 }

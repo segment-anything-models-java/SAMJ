@@ -25,6 +25,7 @@ import java.util.List;
 import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
+import java.awt.Rectangle;
 import java.io.IOException;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
@@ -327,6 +328,12 @@ public class Sam2 extends AbstractSamJ {
 				+ "point_prompts = []" + System.lineSeparator()
 				+ "point_labels = []" + System.lineSeparator()
 				+ "labeled_array, num_features = label(mask)" + System.lineSeparator()
+				+ "contours_x = []" + System.lineSeparator()
+				+ "contours_y = []" + System.lineSeparator()
+				+ "rle_masks = []" + System.lineSeparator()
+				// TODO right now is geetting the mask after each prompt
+				// TODO test processing first every prompt and then getting the masks
+				+ "" + System.lineSeparator()
 				+ "for n_feat in range(num_features):" + System.lineSeparator()
 				+ "  inds = np.where(labeled_array == n_feat)" + System.lineSeparator()
 				+ "  n_points = np.min([3, inds[0].shape[0]])" + System.lineSeparator()
@@ -335,21 +342,18 @@ public class Sam2 extends AbstractSamJ {
 				+ "    point_prompts += [[inds[0][random_positions[pp]], inds[1][random_positions[pp]]]]" + System.lineSeparator()
 				+ "    point_labels += [n_feat]" + System.lineSeparator()
 				+ "" + System.lineSeparator()
-				+ "mask, _, _ = predictor.predict(" + System.lineSeparator()
+				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
 				+ "    point_coords=point_prompts," + System.lineSeparator()
 				+ "    point_labels=point_labels," + System.lineSeparator()
 				+ "    multimask_output=False," + System.lineSeparator()
 				+ "    box=None,)" + System.lineSeparator()
-				+ "contours_x = []" + System.lineSeparator()
-				+ "contours_y = []" + System.lineSeparator()
-				+ "rle_masks = []" + System.lineSeparator()
 				+ "" + System.lineSeparator()
 				+ "" + System.lineSeparator()
 				+ "" + System.lineSeparator()
-				+ "for b in range(num_features):" + System.lineSeparator()
-				+ "  mm = mask[b]" + System.lineSeparator()
-				+ (this.isIJROIManager ? "  mm += mm[:-1, :-1]" : "") + System.lineSeparator()
-				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mm, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				// TODO + "for b in range(num_features):" + System.lineSeparator()
+				// TODO + "  mm = mask[b]" + System.lineSeparator()
+				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "  contours_x += c_x" + System.lineSeparator()
 				+ "  contours_y += c_Y" + System.lineSeparator()
 				+ "  rle_masks += r_m" + System.lineSeparator()
@@ -393,11 +397,7 @@ public class Sam2 extends AbstractSamJ {
 				+ "    box=None,)" + System.lineSeparator()
 				+ "task.update('end predict')" + System.lineSeparator()
 				+ "task.update(str(mask.shape))" + System.lineSeparator()
-				// TODO remove + "import matplotlib.pyplot as plt" + System.lineSeparator()
-				// TODO remove + "plt.imsave('/tmp/aa.jpg', mask[0], cmap='gray')" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
-				//+ (this.isIJROIManager ? "mask[0, :, 1:] += mask[0, :, :-1]" : "") + System.lineSeparator()
-				//+ "np.save('/home/carlos/git/aa.npy', mask)" + System.lineSeparator()
 				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
@@ -501,5 +501,12 @@ public class Sam2 extends AbstractSamJ {
 	@Override
 	public String deleteEncodingScript(String encodingName) {
 		return "del encodings_map['" + encodingName + "']";
+	}
+
+	@Override
+	protected <T extends RealType<T> & NativeType<T>> void processPromptsBatchWithSAM(List<int[]> points,
+			List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) {
+		// TODO Auto-generated method stub
+		
 	}
 }

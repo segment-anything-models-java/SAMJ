@@ -44,6 +44,7 @@ import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 import net.imglib2.view.Views;
@@ -165,6 +166,9 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	protected abstract String deleteEncodingScript(String encodingName);
 	
 	protected abstract void cellSAM(List<int[]> grid, boolean returnAll);
+	
+	protected abstract <T extends RealType<T> & NativeType<T>>  void
+	processPromptsBatchWithSAM(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll);
 	
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
@@ -405,28 +409,49 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return masks;
 	}
 	
-	public List<Mask> processBatchOfPoints(List<long[]> points) {
+	public <T extends RealType<T> & NativeType<T>>
+	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai) 
+			throws IOException, RuntimeException, InterruptedException {
+		return processBatchOfPrompts(points, rects, rai, true);
+	}
+	
+	public <T extends RealType<T> & NativeType<T>>
+	List<Mask> processBatchOfPrompts(List<int[]> pointsList, List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) 
+			throws IOException, RuntimeException, InterruptedException {
+		checkPrompts(pointsList, rects, rai);
+		if ((pointsList == null || pointsList.size() == 0) && (rects == null || rects.size() == 0) && (rai == null))
+			return new ArrayList<Mask>();
+
+		pointsList = adaptPointPrompts(pointsList);
+		this.script = "";
+		processPromptsBatchWithSAM(pointsList, null, null, returnAll);
+		printScript(script, "Points and negative points inference");
+		List<Mask> polys = processAndRetrieveContours(null);
+		recalculatePolys(polys, encodeCoords);
+		return polys;
+	}
+	
+	private <T extends RealType<T> & NativeType<T>>
+	void checkPrompts(List<int[]> pointsList, List<Rectangle> rects, RandomAccessibleInterval<T> rai) {
+		if ((pointsList == null || pointsList.size() == 0)
+				&& (rects == null || rects.size() == 0)
+				&& !(rai.getType() instanceof IntegerType)) 
+			throw new IllegalArgumentException("The mask provided should be of any integer type.");
+		else if ((pointsList == null || pointsList.size() == 0)
+				&& (rects == null || rects.size() == 0)
+				&& !(rai.getType() instanceof IntegerType)) {
+			throw new IllegalArgumentException("The mask provided should be of the same size as the image of interest.");
+		}
+	}
+	
+	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, RuntimeException, InterruptedException {
 		return processBatchOfPoints(points, true);
 	}
 	
-	public List<Mask> processBatchOfPoints(List<long[]> pointsList, boolean returnAll)
+	public List<Mask> processBatchOfPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
-		if (pointsList == null || pointsList.size() == 0)
-			return new ArrayList<Mask>();
-		// TODO add logic to reeencode
-		// TODO the idea is that the 
-		
-		pointsList = adaptPointPrompts(pointsList);
-		pointsNegList = adaptPointPrompts(pointsNegList);
-		this.script = "";
-		processPointsWithSAM(pointsList.size(), pointsNegList.size(), returnAll);
-		HashMap<String, Object> inputs = new HashMap<String, Object>();
-		inputs.put("input_points", pointsList);
-		inputs.put("input_neg_points", pointsNegList);
-		printScript(script, "Points and negative points inference");
-		List<Mask> polys = processAndRetrieveContours(inputs);
-		recalculatePolys(polys, encodeCoords);
-		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
+		List<Mask> polys = processBatchOfPrompts(pointsList, null, null, returnAll);
+		debugPrinter.printText("processBatchOfPoints() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	

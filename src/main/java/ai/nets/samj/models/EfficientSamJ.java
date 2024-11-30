@@ -19,6 +19,7 @@
  */
 package ai.nets.samj.models;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -441,5 +442,12 @@ public class EfficientSamJ extends AbstractSamJ {
 	@Override
 	public String deleteEncodingScript(String encodingName) {
 		return "del encodings_map['" + encodingName + "']";
+	}
+
+	@Override
+	protected <T extends RealType<T> & NativeType<T>> void processPromptsBatchWithSAM(List<int[]> points,
+			List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) {
+		// TODO Auto-generated method stub
+		
 	}
 }

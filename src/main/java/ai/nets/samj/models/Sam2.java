@@ -446,8 +446,7 @@ public class Sam2 extends AbstractSamJ {
 	}
 
 	@Override
-	protected void processPromptsBatchWithSAM(List<int[]> points,
-			List<Rectangle> rects, SharedMemoryArray shmArr, boolean returnAll) {
+	protected void processPromptsBatchWithSAM(int npoints, int nrects, SharedMemoryArray shmArr, boolean returnAll) {
 		String code = "";
 		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();
 		code += "mask = np.frombuffer(buffer=shm_mask.buf, dtype='" + shmArr.getOriginalDataType() + "').reshape([";
@@ -484,7 +483,7 @@ public class Sam2 extends AbstractSamJ {
 				+ "  contours_y += c_Y" + System.lineSeparator()
 				+ "  rle_masks += r_m" + System.lineSeparator()
 				+ "" + System.lineSeparator()
-				+ "for p_prompt in range(len(point_prompts)):" + System.lineSeparator()
+				+ "for p_prompt in range(" + npoints + "):" + System.lineSeparator()
 				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
 				+ "    point_coords=np.array(p_prompt).reshape(1, 2)," + System.lineSeparator()
 				+ "    point_labels=np.array([1])," + System.lineSeparator()
@@ -497,7 +496,7 @@ public class Sam2 extends AbstractSamJ {
 				+ "  rle_masks += r_m" + System.lineSeparator()
 				+ "" + System.lineSeparator()
 				+ "" + System.lineSeparator()
-				+ "for rect_prompt in range(len(rect_prompts)):" + System.lineSeparator()
+				+ "for rect_prompt in range(" + nrects + "):" + System.lineSeparator()
 				+ "  input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
 				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
 				+ "    point_coords=None," + System.lineSeparator()

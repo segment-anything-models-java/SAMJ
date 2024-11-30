@@ -462,7 +462,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	}
 
 	@Override
-	protected void processPromptsBatchWithSAM(List<int[]> points, List<Rectangle> rects, SharedMemoryArray shmArr,
+	protected void processPromptsBatchWithSAM(int npoints, int nrects, SharedMemoryArray shmArr,
 			boolean returnAll) {
 		String code = "";
 		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();

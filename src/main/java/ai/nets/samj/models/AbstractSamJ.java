@@ -168,7 +168,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	protected abstract void cellSAM(List<int[]> grid, boolean returnAll);
 	
 	protected abstract void
-	processPromptsBatchWithSAM(List<int[]> points, List<Rectangle> rects, SharedMemoryArray shmArr, boolean returnAll);
+	processPromptsBatchWithSAM(int npoints, int nrects, SharedMemoryArray shmArr, boolean returnAll);
 	
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
@@ -429,7 +429,14 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			maskShma = SharedMemoryArray.createSHMAFromRAI(rai, false, false);
 
 		try {
-			processPromptsBatchWithSAM(pointsList, rects, maskShma, returnAll);
+			HashMap<String, Object> inputs = new HashMap<String, Object>();
+			inputs.put("point_prompts", pointsList == null ? new ArrayList<int[]>() : pointsList);
+			List<int[]> rectPrompts = new ArrayList<int[]>();
+			if (rects != null && rects.size() > 0)
+				rectPrompts = rects.stream().map(rr -> new int[] {rr.x, rr.y, rr.x + rr.width, rr.y + rr.height})
+											.collect(Collectors.toList());
+			inputs.put("rect_prompts", rectPrompts);
+			processPromptsBatchWithSAM(pointsList.size(), rects.size(), maskShma, returnAll);
 			printScript(script, "Batch of prompts inference");
 			List<Mask> polys = processAndRetrieveContours(null);
 			recalculatePolys(polys, encodeCoords);

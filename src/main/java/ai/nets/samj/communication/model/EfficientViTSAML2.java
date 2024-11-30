@@ -30,7 +30,6 @@ import java.util.Objects;
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.EfficientViTSamJ;
 import ai.nets.samj.install.EfficientViTSamEnvManager;
-import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.ui.SAMJLogger;
 
 /**

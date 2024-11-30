@@ -76,7 +76,6 @@ public class EfficientSAM extends SAMModel {
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
 	
-	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is computationally heavy. It is not recommended to use it on lower-end computers.</p>";
 	
 
 	/**

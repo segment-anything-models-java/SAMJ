@@ -19,7 +19,6 @@
  */
 package ai.nets.samj.models;
 
-import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -387,7 +386,7 @@ public class EfficientSamJ extends AbstractSamJ {
 	}
 
 	@Override
-	protected void processPromptsBatchWithSAM(int npoints, int nrects, SharedMemoryArray shmArr,
+	protected void processPromptsBatchWithSAM(SharedMemoryArray shmArr,
 			boolean returnAll) {
 		String code = "";
 		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();

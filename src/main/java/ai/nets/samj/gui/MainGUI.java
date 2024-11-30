@@ -436,7 +436,9 @@ public class MainGUI extends JFrame {
     }
     
     private < T extends RealType< T > & NativeType< T > > void batchSAMize() throws IOException, RuntimeException, InterruptedException {
-    	RandomAccessibleInterval<T> rai = this.consumer.getFocusedImageAsRai();
+    	RandomAccessibleInterval<T> rai = null;
+    	if (this.consumer.getFocusedImage() != this.cmbImages.getSelectedObject())
+    		rai = this.consumer.getFocusedImageAsRai();
     	List<int[]> pointPrompts = this.consumer.getPointRoisOnFocusImage();
     	List<Rectangle> rectPrompts = this.consumer.getRectRoisOnFocusImage();
     	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(rai.getType() instanceof IntegerType)){

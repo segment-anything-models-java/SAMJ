@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import ai.nets.samj.install.EfficientViTSamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
-import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 
@@ -462,7 +461,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	}
 
 	@Override
-	protected void processPromptsBatchWithSAM(int npoints, int nrects, SharedMemoryArray shmArr,
+	protected void processPromptsBatchWithSAM(SharedMemoryArray shmArr,
 			boolean returnAll) {
 		String code = "";
 		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();

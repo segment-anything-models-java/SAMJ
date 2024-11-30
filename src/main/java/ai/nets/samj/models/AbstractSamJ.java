@@ -167,8 +167,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected abstract void cellSAM(List<int[]> grid, boolean returnAll);
 	
-	protected abstract void
-	processPromptsBatchWithSAM(int npoints, int nrects, SharedMemoryArray shmArr, boolean returnAll);
+	protected abstract void processPromptsBatchWithSAM(SharedMemoryArray shmArr, boolean returnAll);
 	
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
@@ -436,13 +435,14 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				rectPrompts = rects.stream().map(rr -> new int[] {rr.x, rr.y, rr.x + rr.width, rr.y + rr.height})
 											.collect(Collectors.toList());
 			inputs.put("rect_prompts", rectPrompts);
-			processPromptsBatchWithSAM(pointsList.size(), rects.size(), maskShma, returnAll);
+			processPromptsBatchWithSAM(maskShma, returnAll);
 			printScript(script, "Batch of prompts inference");
-			List<Mask> polys = processAndRetrieveContours(null);
+			List<Mask> polys = processAndRetrieveContours(inputs);
 			recalculatePolys(polys, encodeCoords);
 			return polys;
 		} catch (IOException | RuntimeException | InterruptedException ex) {
-			maskShma.close();
+			if (maskShma != null)
+				maskShma.close();
 			throw ex;
 		}
 	}

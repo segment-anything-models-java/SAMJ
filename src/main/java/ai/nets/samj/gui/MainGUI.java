@@ -437,12 +437,13 @@ public class MainGUI extends JFrame {
     
     private < T extends RealType< T > & NativeType< T > > void batchSAMize() throws IOException, RuntimeException, InterruptedException {
     	RandomAccessibleInterval<T> rai = this.consumer.getFocusedImageAsRai();
-    	List<Object> prompts = new ArrayList<Object>();
-    	if (prompts.size() == 0 && !(rai.getType() instanceof IntegerType)){
+    	List<int[]> pointPrompts = this.consumer.getPointRoisOnFocusImage();
+    	List<Rectangle> rectPrompts = this.consumer.getRectRoisOnFocusImage();
+    	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(rai.getType() instanceof IntegerType)){
     		// TODO add label that is displayed when there are no prompts selected
     		return;
     	}
-    	this.consumer.addPolygonsFromGUI(this.cmbModels.getSelectedModel().fetch2dSegmentationFromMask(rai));
+    	this.consumer.addPolygonsFromGUI(this.cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai));
     }
 
     private void createListeners() {

@@ -74,7 +74,7 @@ public abstract class ConsumerInterface {
 
 	public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getFocusedImageAsRai();
 	
-	public abstract List<long[]> getPointRoisOnFocusImage();
+	public abstract List<int[]> getPointRoisOnFocusImage();
 	
 	public abstract List<Rectangle> getRectRoisOnFocusImage();
 	

@@ -25,7 +25,6 @@ import java.util.List;
 import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
-import java.awt.Rectangle;
 import java.io.IOException;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
@@ -459,10 +458,6 @@ public class Sam2 extends AbstractSamJ {
 			code += "labeled_array, num_features = label(mask_batch)" + System.lineSeparator();
 		}
 		code += ""
-				+ "point_prompts = []" + System.lineSeparator()
-				+ "point_labels = []" + System.lineSeparator()
-				+ "mask_prompts = []" + System.lineSeparator()
-				+ "mask_labels = []" + System.lineSeparator()
 				+ "contours_x = []" + System.lineSeparator()
 				+ "contours_y = []" + System.lineSeparator()
 				+ "rle_masks = []" + System.lineSeparator()
@@ -470,21 +465,23 @@ public class Sam2 extends AbstractSamJ {
 				// TODO test processing first every prompt and then getting the masks
 				+ "" + System.lineSeparator()
 				+ "for n_feat in range(num_features):" + System.lineSeparator()
+				+ "  extracted_point_prompts = []" + System.lineSeparator()
+				+ "  extracted_point_labels = []" + System.lineSeparator()
 				+ "  inds = np.where(labeled_array == n_feat)" + System.lineSeparator()
 				+ "  n_points = np.min([3, inds[0].shape[0]])" + System.lineSeparator()
 				+ "  random_positions = np.random.choice(inds[0].shape[0], n_points, replace=False)" + System.lineSeparator()
 				+ "  for pp in range(n_points):" + System.lineSeparator()
-				+ "    point_prompts += [[inds[0][random_positions[pp]], inds[1][random_positions[pp]]]]" + System.lineSeparator()
-				+ "    point_labels += [n_feat]" + System.lineSeparator()
+				+ "    extracted_point_prompts += [[inds[0][random_positions[pp]], inds[1][random_positions[pp]]]]" + System.lineSeparator()
+				+ "    extracted_point_labels += [n_feat]" + System.lineSeparator()
 				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
 				+ "    point_coords=point_prompts," + System.lineSeparator()
 				+ "    point_labels=point_labels," + System.lineSeparator()
 				+ "    multimask_output=False," + System.lineSeparator()
 				+ "    box=None,)" + System.lineSeparator()
-				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ (this.isIJROIManager ? "  mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "  contours_x += c_x" + System.lineSeparator()
-				+ "  contours_y += c_Y" + System.lineSeparator()
+				+ "  contours_y += c_y" + System.lineSeparator()
 				+ "  rle_masks += r_m" + System.lineSeparator()
 				+ "" + System.lineSeparator()
 				+ "for p_prompt in point_prompts:" + System.lineSeparator()
@@ -493,10 +490,10 @@ public class Sam2 extends AbstractSamJ {
 				+ "    point_labels=np.array([1])," + System.lineSeparator()
 				+ "    multimask_output=False," + System.lineSeparator()
 				+ "    box=None,)" + System.lineSeparator()
-				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ (this.isIJROIManager ? "  mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "  contours_x += c_x" + System.lineSeparator()
-				+ "  contours_y += c_Y" + System.lineSeparator()
+				+ "  contours_y += c_y" + System.lineSeparator()
 				+ "  rle_masks += r_m" + System.lineSeparator()
 				+ "" + System.lineSeparator()
 				+ "" + System.lineSeparator()
@@ -507,10 +504,10 @@ public class Sam2 extends AbstractSamJ {
 				+ "    point_labels=np.array([1])," + System.lineSeparator()
 				+ "    multimask_output=False," + System.lineSeparator()
 				+ "    box=input_box,)" + System.lineSeparator()
-				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ (this.isIJROIManager ? "  mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "  contours_x += c_x" + System.lineSeparator()
-				+ "  contours_y += c_Y" + System.lineSeparator()
+				+ "  contours_y += c_y" + System.lineSeparator()
 				+ "  rle_masks += r_m" + System.lineSeparator()
 				+ "" + System.lineSeparator()
 				+ "" + System.lineSeparator()

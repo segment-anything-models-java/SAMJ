@@ -167,8 +167,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected abstract void cellSAM(List<int[]> grid, boolean returnAll);
 	
-	protected abstract <T extends RealType<T> & NativeType<T>>  void
-	processPromptsBatchWithSAM(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll);
+	protected abstract void
+	processPromptsBatchWithSAM(List<int[]> points, List<Rectangle> rects, SharedMemoryArray shmArr, boolean returnAll);
 	
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
@@ -177,8 +177,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	protected abstract <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai);
 	
 	protected abstract <T extends RealType<T> & NativeType<T>> void createEncodeImageScript();
-	
-	abstract protected void processMasksWithSam(SharedMemoryArray shmArr, boolean returnAll);
 	
 	protected abstract <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared);
 
@@ -418,29 +416,49 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> pointsList, List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) 
 			throws IOException, RuntimeException, InterruptedException {
-		checkPrompts(pointsList, rects, rai);
 		if ((pointsList == null || pointsList.size() == 0) && (rects == null || rects.size() == 0) && (rai == null))
 			return new ArrayList<Mask>();
+		checkPrompts(pointsList, rects, rai);
 
+		// TODO adapt to reencoding for big images, ideally it should process points close together together
 		pointsList = adaptPointPrompts(pointsList);
+		// TODO adapt rect prompts
 		this.script = "";
-		processPromptsBatchWithSAM(pointsList, null, null, returnAll);
-		printScript(script, "Points and negative points inference");
-		List<Mask> polys = processAndRetrieveContours(null);
-		recalculatePolys(polys, encodeCoords);
-		return polys;
+		SharedMemoryArray maskShma = null;
+		if (rai != null)
+			maskShma = SharedMemoryArray.createSHMAFromRAI(rai, false, false);
+
+		try {
+			processPromptsBatchWithSAM(pointsList, rects, maskShma, returnAll);
+			printScript(script, "Batch of prompts inference");
+			List<Mask> polys = processAndRetrieveContours(null);
+			recalculatePolys(polys, encodeCoords);
+			return polys;
+		} catch (IOException | RuntimeException | InterruptedException ex) {
+			maskShma.close();
+			throw ex;
+		}
 	}
 	
 	private <T extends RealType<T> & NativeType<T>>
 	void checkPrompts(List<int[]> pointsList, List<Rectangle> rects, RandomAccessibleInterval<T> rai) {
+		long[] dims;
 		if ((pointsList == null || pointsList.size() == 0)
 				&& (rects == null || rects.size() == 0)
-				&& !(rai.getType() instanceof IntegerType)) 
+				&& rai != null && !(rai.getType() instanceof IntegerType)) {
 			throw new IllegalArgumentException("The mask provided should be of any integer type.");
-		else if ((pointsList == null || pointsList.size() == 0)
+		} else if ((pointsList == null || pointsList.size() == 0)
 				&& (rects == null || rects.size() == 0)
-				&& !(rai.getType() instanceof IntegerType)) {
-			throw new IllegalArgumentException("The mask provided should be of the same size as the image of interest.");
+				&& rai != null) {
+			dims = rai.dimensionsAsLongArray();
+			if ((dims.length == 2 || (dims.length == 3 && dims[2] == 1)) 
+					&& dims[1] == this.shma.getOriginalShape()[0] && dims[0] == this.shma.getOriginalShape()[1]) {
+				rai = Views.permute(rai, 0, 1);
+			} else if (dims[0] != this.shma.getOriginalShape()[0] && dims[1] != this.shma.getOriginalShape()[1]
+					|| (dims.length == 3 && dims[2] != 1) || dims.length > 3) {
+				throw new IllegalArgumentException("The provided mask should be a 2d image with just one channel of width "
+						+ this.shma.getOriginalShape()[1] + " and height " + this.shma.getOriginalShape()[0]);
+			}
 		}
 	}
 	
@@ -730,32 +748,9 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public <T extends RealType<T> & NativeType<T>>
-	List<Mask> processMask(RandomAccessibleInterval<T> img, boolean returnAll) 
+	List<Mask> processMask(RandomAccessibleInterval<T> rai, boolean returnAll) 
 				throws IOException, RuntimeException, InterruptedException {
-		long[] dims = img.dimensionsAsLongArray();
-		if ((dims.length == 2 || (dims.length == 3 && dims[2] == 1)) 
-				&& dims[1] == this.shma.getOriginalShape()[0] && dims[0] == this.shma.getOriginalShape()[1]) {
-			img = Views.permute(img, 0, 1);
-		} else if (dims[0] != this.shma.getOriginalShape()[0] && dims[1] != this.shma.getOriginalShape()[1]
-				|| (dims.length == 3 && dims[2] != 1) || dims.length > 3) {
-			throw new IllegalArgumentException("The provided mask should be a 2d image with just one channel of width "
-					+ this.shma.getOriginalShape()[1] + " and height " + this.shma.getOriginalShape()[0]);
-		}
-		SharedMemoryArray maskShma = SharedMemoryArray.createSHMAFromRAI(img, false, false);
-		try {
-			return processMask(maskShma, returnAll);
-		} catch (IOException | RuntimeException | InterruptedException ex) {
-			maskShma.close();
-			throw ex;
-		}
-	}
-	
-	private List<Mask> processMask(SharedMemoryArray shmArr, boolean returnAll) 
-				throws IOException, RuntimeException, InterruptedException {
-		this.script = "";
-		processMasksWithSam(shmArr, returnAll);
-		printScript(script, "Pre-computed mask inference");
-		List<Mask> polys = processAndRetrieveContours(null);
+		List<Mask> polys = processBatchOfPrompts(null, null, rai, returnAll);
 		debugPrinter.printText("processMask() obtained " + polys.size() + " polygons");
 		return polys;
 	}

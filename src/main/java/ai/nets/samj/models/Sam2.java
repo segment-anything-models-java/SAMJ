@@ -317,64 +317,6 @@ public class Sam2 extends AbstractSamJ {
 	}
 
 	@Override
-	protected void processMasksWithSam(SharedMemoryArray shmArr, boolean returnAll) {
-		String code = "";
-		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();
-		code += "mask = np.frombuffer(buffer=shm_mask.buf, dtype='" + shmArr.getOriginalDataType() + "').reshape([";
-		for (long l : shmArr.getOriginalShape()) 
-			code += l + ",";
-		code += "])" + System.lineSeparator();
-		code += ""
-				+ "point_prompts = []" + System.lineSeparator()
-				+ "point_labels = []" + System.lineSeparator()
-				+ "labeled_array, num_features = label(mask)" + System.lineSeparator()
-				+ "contours_x = []" + System.lineSeparator()
-				+ "contours_y = []" + System.lineSeparator()
-				+ "rle_masks = []" + System.lineSeparator()
-				// TODO right now is geetting the mask after each prompt
-				// TODO test processing first every prompt and then getting the masks
-				+ "" + System.lineSeparator()
-				+ "for n_feat in range(num_features):" + System.lineSeparator()
-				+ "  inds = np.where(labeled_array == n_feat)" + System.lineSeparator()
-				+ "  n_points = np.min([3, inds[0].shape[0]])" + System.lineSeparator()
-				+ "  random_positions = np.random.choice(inds[0].shape[0], n_points, replace=False)" + System.lineSeparator()
-				+ "  for pp in range(n_points):" + System.lineSeparator()
-				+ "    point_prompts += [[inds[0][random_positions[pp]], inds[1][random_positions[pp]]]]" + System.lineSeparator()
-				+ "    point_labels += [n_feat]" + System.lineSeparator()
-				+ "" + System.lineSeparator()
-				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
-				+ "    point_coords=point_prompts," + System.lineSeparator()
-				+ "    point_labels=point_labels," + System.lineSeparator()
-				+ "    multimask_output=False," + System.lineSeparator()
-				+ "    box=None,)" + System.lineSeparator()
-				+ "" + System.lineSeparator()
-				+ "" + System.lineSeparator()
-				+ "" + System.lineSeparator()
-				// TODO + "for b in range(num_features):" + System.lineSeparator()
-				// TODO + "  mm = mask[b]" + System.lineSeparator()
-				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
-				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
-				+ "  contours_x += c_x" + System.lineSeparator()
-				+ "  contours_y += c_Y" + System.lineSeparator()
-				+ "  rle_masks += r_m" + System.lineSeparator()
-				+ "" + System.lineSeparator()
-				+ "" + System.lineSeparator()
-				// TODO remove + "import matplotlib.pyplot as plt" + System.lineSeparator()
-				// TODO remove + "plt.imsave('/tmp/aa.jpg', mask[0], cmap='gray')" + System.lineSeparator()
-				//+ (this.isIJROIManager ? "mask[0, :, 1:] += mask[0, :, :-1]" : "") + System.lineSeparator()
-				//+ "np.save('/home/carlos/git/aa.npy', mask)" + System.lineSeparator()
-				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
-				+ "task.update('all contours traced')" + System.lineSeparator()
-				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
-				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
-				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
-		code += "mask = 0" + System.lineSeparator();
-		code += "shm_mask.close()" + System.lineSeparator();
-		code += "shm_mask.unlink()" + System.lineSeparator();
-		this.script = code;
-	}
-
-	@Override
 	protected void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll) {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
@@ -504,9 +446,82 @@ public class Sam2 extends AbstractSamJ {
 	}
 
 	@Override
-	protected <T extends RealType<T> & NativeType<T>> void processPromptsBatchWithSAM(List<int[]> points,
-			List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) {
-		// TODO Auto-generated method stub
-		
+	protected void processPromptsBatchWithSAM(List<int[]> points,
+			List<Rectangle> rects, SharedMemoryArray shmArr, boolean returnAll) {
+		String code = "";
+		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();
+		code += "mask = np.frombuffer(buffer=shm_mask.buf, dtype='" + shmArr.getOriginalDataType() + "').reshape([";
+		for (long l : shmArr.getOriginalShape()) 
+			code += l + ",";
+		code += "])" + System.lineSeparator();
+		code += ""
+				+ "point_prompts = []" + System.lineSeparator()
+				+ "point_labels = []" + System.lineSeparator()
+				+ "mask_prompts = []" + System.lineSeparator()
+				+ "mask_labels = []" + System.lineSeparator()
+				+ "labeled_array, num_features = label(mask)" + System.lineSeparator()
+				+ "contours_x = []" + System.lineSeparator()
+				+ "contours_y = []" + System.lineSeparator()
+				+ "rle_masks = []" + System.lineSeparator()
+				// TODO right now is geetting the mask after each prompt
+				// TODO test processing first every prompt and then getting the masks
+				+ "" + System.lineSeparator()
+				+ "for n_feat in range(num_features):" + System.lineSeparator()
+				+ "  inds = np.where(labeled_array == n_feat)" + System.lineSeparator()
+				+ "  n_points = np.min([3, inds[0].shape[0]])" + System.lineSeparator()
+				+ "  random_positions = np.random.choice(inds[0].shape[0], n_points, replace=False)" + System.lineSeparator()
+				+ "  for pp in range(n_points):" + System.lineSeparator()
+				+ "    point_prompts += [[inds[0][random_positions[pp]], inds[1][random_positions[pp]]]]" + System.lineSeparator()
+				+ "    point_labels += [n_feat]" + System.lineSeparator()
+				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
+				+ "    point_coords=point_prompts," + System.lineSeparator()
+				+ "    point_labels=point_labels," + System.lineSeparator()
+				+ "    multimask_output=False," + System.lineSeparator()
+				+ "    box=None,)" + System.lineSeparator()
+				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				+ "  contours_x += c_x" + System.lineSeparator()
+				+ "  contours_y += c_Y" + System.lineSeparator()
+				+ "  rle_masks += r_m" + System.lineSeparator()
+				+ "" + System.lineSeparator()
+				+ "for p_prompt in range(len(point_prompts)):" + System.lineSeparator()
+				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
+				+ "    point_coords=np.array(p_prompt).reshape(1, 2)," + System.lineSeparator()
+				+ "    point_labels=np.array([1])," + System.lineSeparator()
+				+ "    multimask_output=False," + System.lineSeparator()
+				+ "    box=None,)" + System.lineSeparator()
+				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				+ "  contours_x += c_x" + System.lineSeparator()
+				+ "  contours_y += c_Y" + System.lineSeparator()
+				+ "  rle_masks += r_m" + System.lineSeparator()
+				+ "" + System.lineSeparator()
+				+ "" + System.lineSeparator()
+				+ "for rect_prompt in range(len(rect_prompts)):" + System.lineSeparator()
+				+ "  input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
+				+ "  mask, _, _ = predictor.predict(" + System.lineSeparator()
+				+ "    point_coords=None," + System.lineSeparator()
+				+ "    point_labels=np.array([1])," + System.lineSeparator()
+				+ "    multimask_output=False," + System.lineSeparator()
+				+ "    box=input_box,)" + System.lineSeparator()
+				+ (this.isIJROIManager ? "  mask += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "  c_x, c_y, r_m = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				+ "  contours_x += c_x" + System.lineSeparator()
+				+ "  contours_y += c_Y" + System.lineSeparator()
+				+ "  rle_masks += r_m" + System.lineSeparator()
+				+ "" + System.lineSeparator()
+				+ "" + System.lineSeparator()
+				// TODO remove + "import matplotlib.pyplot as plt" + System.lineSeparator()
+				// TODO remove + "plt.imsave('/tmp/aa.jpg', mask[0], cmap='gray')" + System.lineSeparator()
+				//+ (this.isIJROIManager ? "mask[0, :, 1:] += mask[0, :, :-1]" : "") + System.lineSeparator()
+				//+ "np.save('/home/carlos/git/aa.npy', mask)" + System.lineSeparator()
+				+ "task.update('all contours traced')" + System.lineSeparator()
+				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
+				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
+				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
+		code += "mask = 0" + System.lineSeparator();
+		code += "shm_mask.close()" + System.lineSeparator();
+		code += "shm_mask.unlink()" + System.lineSeparator();
+		this.script = code;
 	}
 }

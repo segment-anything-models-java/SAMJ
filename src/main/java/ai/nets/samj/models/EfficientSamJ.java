@@ -227,64 +227,6 @@ public class EfficientSamJ extends AbstractSamJ {
 	}
 
 	@Override
-	protected void processMasksWithSam(SharedMemoryArray shmArr, boolean returnAll) {
-		String code = "";
-		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();
-		code += "mask = np.frombuffer(buffer=shm_mask.buf, dtype='" + shmArr.getOriginalDataType() + "').reshape([";
-		for (long l : shmArr.getOriginalShape()) 
-			code += l + ",";
-		code += "])" + System.lineSeparator();
-		code += "different_mask_vals = np.unique(mask)" + System.lineSeparator();
-		//code += "print(different_mask_vals)" + System.lineSeparator();
-		code += "cont_x = []" + System.lineSeparator();
-		code += "cont_y = []" + System.lineSeparator();
-		code += "rle_masks = []" + System.lineSeparator();
-		code += "for val in different_mask_vals:" + System.lineSeparator()
-			  + "  if val < 1:" + System.lineSeparator()
-			  + "    continue" + System.lineSeparator()
-			  + "  locations = np.where(mask == val)" + System.lineSeparator()
-			  + "  input_points_pos = np.zeros((locations[0].shape[0], 2))" + System.lineSeparator()
-			  + "  input_labels_pos = np.ones((locations[0].shape[0]))" + System.lineSeparator()
-			  + "  locations_neg = np.where((mask != val) & (mask != 0))" + System.lineSeparator()
-			  + "  input_points_neg = np.zeros((locations_neg[0].shape[0], 2))" + System.lineSeparator()
-			  + "  input_labels_neg = np.zeros((locations_neg[0].shape[0]))" + System.lineSeparator()
-			  + "  input_points_pos[:, 0] = locations[0]" + System.lineSeparator()
-			  + "  input_points_pos[:, 1] = locations[1]" + System.lineSeparator()
-			  + "  input_points_neg[:, 0] = locations_neg[0]" + System.lineSeparator()
-			  + "  input_points_neg[:, 1] = locations_neg[1]" + System.lineSeparator()
-			  + "  input_points = np.concatenate((input_points_pos.reshape(-1, 2), input_points_neg.reshape(-1, 2)), axis=0)" + System.lineSeparator()
-			  + "  input_label = np.concatenate((input_labels_pos, input_labels_neg * 0), axis=0)" + System.lineSeparator()
-			  + "  input_points = torch.reshape(torch.tensor(input_points), [1, 1, -1, 2])" + System.lineSeparator()
-			  + "  input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
-			  + "  predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
-			  + "    input_points," + System.lineSeparator()
-			  + "    input_label," + System.lineSeparator()
-			  + "    multimask_output=True," + System.lineSeparator()
-			  + "    input_h=input_h," + System.lineSeparator()
-			  + "    input_w=input_w," + System.lineSeparator()
-			  + "    output_h=input_h," + System.lineSeparator()
-			  + "    output_w=input_w,)" + System.lineSeparator()
-			  //+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
-			  + "  sorted_ids = torch.argsort(predicted_iou, dim=-1, descending=True)" + System.lineSeparator()
-			  + "  predicted_iou = torch.take_along_dim(predicted_iou, sorted_ids, dim=2)" + System.lineSeparator()
-			  + "  predicted_logits = torch.take_along_dim(predicted_logits, sorted_ids[..., None, None], dim=2)" + System.lineSeparator()
-			  + "  mask_val = torch.ge(predicted_logits[0, 0, 0, :, :], 0).cpu().detach().numpy()" + System.lineSeparator()
-				+ (this.isIJROIManager ? "mask_val[1:, 1:] += mask_val[:-1, :-1]" : "") + System.lineSeparator()
-			  + "  cont_x_val,cont_y_val,rle_val = get_polygons_from_binary_mask(mask_val, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
-			  + "  cont_x += cont_x_val" + System.lineSeparator()
-			  + "  cont_y += cont_y_val" + System.lineSeparator()
-			  + "  rle_masks += rle_val" + System.lineSeparator()
-			  + "task.update('all contours traced')" + System.lineSeparator()
-			  + "task.outputs['contours_x'] = cont_x" + System.lineSeparator()
-			  + "task.outputs['contours_y'] = cont_y" + System.lineSeparator()
-			  + "task.outputs['rle'] = rle_masks" + System.lineSeparator();
-		code += "mask = 0" + System.lineSeparator();
-		code += "shm_mask.close()" + System.lineSeparator();
-		code += "shm_mask.unlink()" + System.lineSeparator();
-		this.script = code;
-	}
-
-	@Override
 	protected void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll) {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
@@ -445,9 +387,61 @@ public class EfficientSamJ extends AbstractSamJ {
 	}
 
 	@Override
-	protected <T extends RealType<T> & NativeType<T>> void processPromptsBatchWithSAM(List<int[]> points,
-			List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) {
-		// TODO Auto-generated method stub
-		
+	protected void processPromptsBatchWithSAM(List<int[]> points, List<Rectangle> rects, SharedMemoryArray shmArr,
+			boolean returnAll) {
+		String code = "";
+		code += "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator();
+		code += "mask = np.frombuffer(buffer=shm_mask.buf, dtype='" + shmArr.getOriginalDataType() + "').reshape([";
+		for (long l : shmArr.getOriginalShape()) 
+			code += l + ",";
+		code += "])" + System.lineSeparator();
+		code += "different_mask_vals = np.unique(mask)" + System.lineSeparator();
+		//code += "print(different_mask_vals)" + System.lineSeparator();
+		code += "cont_x = []" + System.lineSeparator();
+		code += "cont_y = []" + System.lineSeparator();
+		code += "rle_masks = []" + System.lineSeparator();
+		code += "for val in different_mask_vals:" + System.lineSeparator()
+			  + "  if val < 1:" + System.lineSeparator()
+			  + "    continue" + System.lineSeparator()
+			  + "  locations = np.where(mask == val)" + System.lineSeparator()
+			  + "  input_points_pos = np.zeros((locations[0].shape[0], 2))" + System.lineSeparator()
+			  + "  input_labels_pos = np.ones((locations[0].shape[0]))" + System.lineSeparator()
+			  + "  locations_neg = np.where((mask != val) & (mask != 0))" + System.lineSeparator()
+			  + "  input_points_neg = np.zeros((locations_neg[0].shape[0], 2))" + System.lineSeparator()
+			  + "  input_labels_neg = np.zeros((locations_neg[0].shape[0]))" + System.lineSeparator()
+			  + "  input_points_pos[:, 0] = locations[0]" + System.lineSeparator()
+			  + "  input_points_pos[:, 1] = locations[1]" + System.lineSeparator()
+			  + "  input_points_neg[:, 0] = locations_neg[0]" + System.lineSeparator()
+			  + "  input_points_neg[:, 1] = locations_neg[1]" + System.lineSeparator()
+			  + "  input_points = np.concatenate((input_points_pos.reshape(-1, 2), input_points_neg.reshape(-1, 2)), axis=0)" + System.lineSeparator()
+			  + "  input_label = np.concatenate((input_labels_pos, input_labels_neg * 0), axis=0)" + System.lineSeparator()
+			  + "  input_points = torch.reshape(torch.tensor(input_points), [1, 1, -1, 2])" + System.lineSeparator()
+			  + "  input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
+			  + "  predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
+			  + "    input_points," + System.lineSeparator()
+			  + "    input_label," + System.lineSeparator()
+			  + "    multimask_output=True," + System.lineSeparator()
+			  + "    input_h=input_h," + System.lineSeparator()
+			  + "    input_w=input_w," + System.lineSeparator()
+			  + "    output_h=input_h," + System.lineSeparator()
+			  + "    output_w=input_w,)" + System.lineSeparator()
+			  //+ "np.save('/temp/aa.npy', mask)" + System.lineSeparator()
+			  + "  sorted_ids = torch.argsort(predicted_iou, dim=-1, descending=True)" + System.lineSeparator()
+			  + "  predicted_iou = torch.take_along_dim(predicted_iou, sorted_ids, dim=2)" + System.lineSeparator()
+			  + "  predicted_logits = torch.take_along_dim(predicted_logits, sorted_ids[..., None, None], dim=2)" + System.lineSeparator()
+			  + "  mask_val = torch.ge(predicted_logits[0, 0, 0, :, :], 0).cpu().detach().numpy()" + System.lineSeparator()
+				+ (this.isIJROIManager ? "mask_val[1:, 1:] += mask_val[:-1, :-1]" : "") + System.lineSeparator()
+			  + "  cont_x_val,cont_y_val,rle_val = get_polygons_from_binary_mask(mask_val, only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+			  + "  cont_x += cont_x_val" + System.lineSeparator()
+			  + "  cont_y += cont_y_val" + System.lineSeparator()
+			  + "  rle_masks += rle_val" + System.lineSeparator()
+			  + "task.update('all contours traced')" + System.lineSeparator()
+			  + "task.outputs['contours_x'] = cont_x" + System.lineSeparator()
+			  + "task.outputs['contours_y'] = cont_y" + System.lineSeparator()
+			  + "task.outputs['rle'] = rle_masks" + System.lineSeparator();
+		code += "mask = 0" + System.lineSeparator();
+		code += "shm_mask.close()" + System.lineSeparator();
+		code += "shm_mask.unlink()" + System.lineSeparator();
+		this.script = code;
 	}
 }

@@ -175,9 +175,14 @@ public abstract class SAMModel {
 		this.onlyBiggest = onlyBiggest;
 	}
 
-	public List<Mask> processBatchOfPoints(List<long[]> points) throws IOException, RuntimeException, InterruptedException {
-		//return samj.processBathcOfPoints(points, !onlyBiggest);
-		return null;
+	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, RuntimeException, InterruptedException {
+		return samj.processBatchOfPoints(points, !onlyBiggest);
+	}
+
+	public <T extends RealType<T> & NativeType<T>>
+	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai) 
+			throws IOException, RuntimeException, InterruptedException {
+		return samj.processBatchOfPrompts(points, rects, rai, !onlyBiggest);
 	}
 
 	/**

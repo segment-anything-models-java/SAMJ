@@ -87,6 +87,10 @@ public abstract class ConsumerInterface {
 	public abstract void setFocusedImage(Object image);
 	
 	public abstract void deselectImage();
+
+	public abstract void deletePointRoi(int[] pp);
+
+	public abstract void deleteRectRoi(Rectangle rect);
 	
 	public void setModel(SAMModel model) {
 		this.selectedModel = model;

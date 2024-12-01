@@ -446,6 +446,8 @@ public class MainGUI extends JFrame {
     		return;
     	}
     	this.consumer.addPolygonsFromGUI(this.cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai));
+    	pointPrompts.stream().forEach(pp -> consumer.deletePointRoi(pp));
+    	rectPrompts.stream().forEach(pp -> consumer.deleteRectRoi(pp));
     }
 
     private void createListeners() {

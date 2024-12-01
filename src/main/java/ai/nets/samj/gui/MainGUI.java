@@ -8,16 +8,15 @@ import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
-import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
+import ai.nets.samj.gui.components.ProgressBarAndButton;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Cast;
 
 import javax.swing.*;
@@ -49,8 +48,9 @@ public class MainGUI extends JFrame {
     private JButton close = new JButton("Close");
     private JButton help = new JButton("Help");
     private JButton export = new JButton("Export...");
-    JRadioButton radioButton1;
-    JRadioButton radioButton2;
+    private JRadioButton radioButton1;
+    private JRadioButton radioButton2;
+    private ProgressBarAndButton batchProgress = new ProgressBarAndButton("Stop");
     private final ModelSelection cmbModels;
     private final ImageSelection cmbImages;
     private ModelDrawerPanel drawerPanel;
@@ -354,8 +354,13 @@ public class MainGUI extends JFrame {
         gbc0.gridy = 1;
         gbc0.anchor = GridBagConstraints.CENTER;
         gbc0.fill = GridBagConstraints.BOTH;
-        gbc0.weighty = 0.8;
+        gbc0.weighty = 0.6;
         card2.add(btnBatchSAMize, gbc0);
+
+        gbc0.gridy = 2;
+        gbc0.weighty = 0.2;
+        gbc0.fill = GridBagConstraints.HORIZONTAL;
+        card2.add(batchProgress, gbc0);
 
         cardPanel.add(card1, MANUAL_STR);
         cardPanel.add(card2, PRESET_STR);
@@ -369,6 +374,7 @@ public class MainGUI extends JFrame {
         radioButton2.addActionListener(e -> {
         	CardLayout cl = (CardLayout) (cardPanel.getLayout());
         	cl.show(cardPanel, PRESET_STR);
+        	this.chkInstant.setSelected(false);
         });
 
         GridBagConstraints gbc = new GridBagConstraints();

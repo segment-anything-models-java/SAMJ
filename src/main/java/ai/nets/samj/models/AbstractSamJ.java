@@ -86,6 +86,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		void updateProgress(int n);
 		
 		void drawRoi(List<Mask> masks);
+		
+		void deletePointPrompt(List<int[]> promptList);
+		
+		void deleteRectPrompt(List<int[]> promptList);
+		
 		}
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
@@ -377,6 +382,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs, BatchCallback callback) 
 			throws IOException, RuntimeException, InterruptedException {
 		Map<String, Object> results = null;
@@ -390,8 +396,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	                		break;
 	                	else if (task.message.equals(UPDATE_ID_CONTOUR)) {
 	                		callback.updateProgress(nRoisProcessed ++);
+	                		List<Mask> polys = defineMask((List<List<Number>>)task.outputs.get("temp_x"), 
+	                				(List<List<Number>>)task.outputs.get("temp_y"), (List<List<Number>>)task.outputs.get("temp_mask"));
+	                		callback.drawRoi(polys);
 	                	} else if (task.message.equals(UPDATE_ID_N_CONTOURS)) {
 	                		callback.setTotalNumberOfRois(Integer.parseInt((String) task.outputs.get("n")));
+	                		
 	                	}
 	                    break;
 					default:
@@ -423,18 +433,23 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			}
 			throw e;
 		}
-
-		final List<List<Number>> contours_x_container = (List<List<Number>>)results.get("contours_x");
-		final Iterator<List<Number>> contours_x = contours_x_container.iterator();
-		final Iterator<List<Number>> contours_y = ((List<List<Number>>)results.get("contours_y")).iterator();
-		final Iterator<List<Number>> rles = ((List<List<Number>>)results.get("rle")).iterator();
-		final List<Mask> masks = new ArrayList<Mask>(contours_x_container.size());
-		while (contours_x.hasNext()) {
-			int[] xArr = contours_x.next().stream().mapToInt(Number::intValue).toArray();
-			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
-			long[] rle = rles.next().stream().mapToLong(Number::longValue).toArray();
+		List<Mask> polys = defineMask((List<List<Number>>)results.get("contours_x"), 
+				(List<List<Number>>)results.get("contours_y"), (List<List<Number>>)results.get("rle"));
+		return polys;
+	}
+	
+	private List<Mask> defineMask(List<List<Number>> contoursX, List<List<Number>> contoursY, List<List<Number>> rles) {
+		final Iterator<List<Number>> contoursXIt = contoursX.iterator();
+		final Iterator<List<Number>> contoursYIt = contoursY.iterator();
+		final Iterator<List<Number>> rleIt = rles.iterator();
+		final List<Mask> masks = new ArrayList<Mask>(contoursX.size());
+		while (contoursXIt.hasNext()) {
+			int[] xArr = contoursXIt.next().stream().mapToInt(Number::intValue).toArray();
+			int[] yArr = contoursYIt.next().stream().mapToInt(Number::intValue).toArray();
+			long[] rle = rleIt.next().stream().mapToLong(Number::longValue).toArray();
 			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle));
 		}
+		recalculatePolys(masks, encodeCoords);
 		return masks;
 	}
 	

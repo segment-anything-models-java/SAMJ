@@ -551,8 +551,20 @@ public class MainGUI extends JFrame {
 
 			@Override
 			public void drawRoi(List<Mask> masks) {
-				// TODO Auto-generated method stub
+				SwingUtilities.invokeLater(() -> consumer.addPolygonsFromGUI(masks));
 				
+			}
+
+			@Override
+			public void deletePointPrompt(List<int[]> promptList) {
+				SwingUtilities.invokeLater(() -> promptList.forEach(proi -> consumer.deletePointRoi(proi)));
+			}
+
+			@Override
+			public void deleteRectPrompt(List<int[]> promptList) {
+				SwingUtilities.invokeLater(() -> promptList.stream()
+						.map(rect -> new Rectangle(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]))
+						.forEach(roi -> consumer.deleteRectRoi(roi)));
 			}
         	
         };

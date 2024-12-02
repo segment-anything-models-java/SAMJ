@@ -86,9 +86,7 @@ public class SAM2Tiny extends SAMModel {
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 			int idx = text.indexOf("\"responseType\": \"COMPLETION\"");
 			int idxProgress = text.indexOf(AbstractSamJ.getProgressString());
-			if (idx > 0) 
-				text = text.substring(0,idx) + "\"responseType\": \"COMPLETION\"}";
-			if (idxProgress != -1) {
+			if (idx > 0 || idxProgress != -1) {
 				String regex = "\"outputs\"\\s*:\\s*\\{.*?\\},";
 		        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
 		        Matcher matcher = pattern.matcher(text);

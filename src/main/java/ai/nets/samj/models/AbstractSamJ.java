@@ -361,6 +361,61 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		
 	}
 	
+	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs, Object callback) 
+			throws IOException, RuntimeException, InterruptedException {
+		Map<String, Object> results = null;
+		try {
+			Task task = python.task(script, inputs);
+			task.listen(event -> {
+	            switch (event.responseType) {
+	                case UPDATE:
+	                	if (!task.message.equals("new input"))
+	                		break;
+	                    Object numer =  task.outputs;
+	                    break;
+					default:
+						break;
+		            }
+	        });
+			task.waitFor();
+			if (task.status == TaskStatus.CANCELED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.FAILED)
+				throw new RuntimeException();
+			else if (task.status == TaskStatus.CRASHED)
+				throw new RuntimeException();
+			else if (task.status != TaskStatus.COMPLETE)
+				throw new RuntimeException();
+			else if (task.outputs.get("contours_x") == null)
+				throw new RuntimeException();
+			else if (task.outputs.get("contours_y") == null)
+				throw new RuntimeException();
+			else if (task.outputs.get("rle") == null)
+				throw new RuntimeException();
+			results = task.outputs;
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			try {
+				this.shma.close();
+			} catch (IOException e1) {
+				throw new IOException(e.toString() + System.lineSeparator() + e1.toString());
+			}
+			throw e;
+		}
+
+		final List<List<Number>> contours_x_container = (List<List<Number>>)results.get("contours_x");
+		final Iterator<List<Number>> contours_x = contours_x_container.iterator();
+		final Iterator<List<Number>> contours_y = ((List<List<Number>>)results.get("contours_y")).iterator();
+		final Iterator<List<Number>> rles = ((List<List<Number>>)results.get("rle")).iterator();
+		final List<Mask> masks = new ArrayList<Mask>(contours_x_container.size());
+		while (contours_x.hasNext()) {
+			int[] xArr = contours_x.next().stream().mapToInt(Number::intValue).toArray();
+			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
+			long[] rle = rles.next().stream().mapToLong(Number::longValue).toArray();
+			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle));
+		}
+		return masks;
+	}
+	
 	@SuppressWarnings("unchecked")
 	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs) 
 			throws IOException, RuntimeException, InterruptedException {
@@ -437,7 +492,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			inputs.put("rect_prompts", rectPrompts);
 			processPromptsBatchWithSAM(maskShma, returnAll);
 			printScript(script, "Batch of prompts inference");
-			List<Mask> polys = processAndRetrieveContours(inputs);
+			List<Mask> polys = processAndRetrieveContours(inputs, null);
 			recalculatePolys(polys, encodeCoords);
 			return polys;
 		} catch (IOException | RuntimeException | InterruptedException ex) {

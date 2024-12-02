@@ -461,6 +461,9 @@ public class Sam2 extends AbstractSamJ {
 				+ "contours_x = []" + System.lineSeparator()
 				+ "contours_y = []" + System.lineSeparator()
 				+ "rle_masks = []" + System.lineSeparator()
+				+ "task.update('new input')" + System.lineSeparator()
+				+ "args = {\"outputs\": {'test': contours_x}}" + System.lineSeparator()
+				+ "task._respond(ResponseType.UPDATE, args)" + System.lineSeparator()
 				// TODO right now is geetting the mask after each prompt
 				// TODO test processing first every prompt and then getting the masks
 				+ "" + System.lineSeparator()

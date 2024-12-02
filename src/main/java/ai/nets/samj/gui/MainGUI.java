@@ -10,7 +10,6 @@ import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
-import ai.nets.samj.gui.components.ProgressBarAndButton;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.RandomAccessibleInterval;
@@ -50,7 +49,8 @@ public class MainGUI extends JFrame {
     private JButton export = new JButton("Export...");
     private JRadioButton radioButton1;
     private JRadioButton radioButton2;
-    private ProgressBarAndButton batchProgress = new ProgressBarAndButton("Stop");
+    private JProgressBar batchProgress = new JProgressBar();
+    private ResizableButton stopProgressBtn = new ResizableButton("■", 10, 2, 2);
     private final ModelSelection cmbModels;
     private final ImageSelection cmbImages;
     private ModelDrawerPanel drawerPanel;
@@ -108,6 +108,9 @@ public class MainGUI extends JFrame {
 				e1.printStackTrace();
 			}
 		});
+        stopProgressBtn.addActionListener(e -> {
+        	// TODO stopProgress();
+        });
         close.addActionListener(e -> dispose());
         help.addActionListener(e -> consumer.exportImageLabeling());
 
@@ -181,6 +184,9 @@ public class MainGUI extends JFrame {
         this.export.setEnabled(enabled);
         this.radioButton1.setEnabled(enabled);
         this.radioButton2.setEnabled(enabled);
+        this.batchProgress.setEnabled(enabled);
+        if (!enabled)
+        	this.stopProgressBtn.setEnabled(enabled);
     }
 
     private void loadModel() {
@@ -346,7 +352,7 @@ public class MainGUI extends JFrame {
         gbc0.gridy = 0;
         gbc0.anchor = GridBagConstraints.NORTH;
         gbc0.fill = GridBagConstraints.NONE;
-        gbc0.weighty = 0.2;
+        gbc0.weighty = 0.1;
         gbc0.insets = new Insets(0, 2, 5, 2);
         gbc0.weightx = 1;
         card2.add(new JLabel(ROIM_STR), gbc0);
@@ -354,13 +360,27 @@ public class MainGUI extends JFrame {
         gbc0.gridy = 1;
         gbc0.anchor = GridBagConstraints.CENTER;
         gbc0.fill = GridBagConstraints.BOTH;
-        gbc0.weighty = 0.6;
+        gbc0.weighty = 0.8;
         card2.add(btnBatchSAMize, gbc0);
 
         gbc0.gridy = 2;
-        gbc0.weighty = 0.2;
-        gbc0.fill = GridBagConstraints.HORIZONTAL;
-        card2.add(batchProgress, gbc0);
+        gbc0.weighty = 0.1;
+        gbc0.anchor = GridBagConstraints.CENTER;
+        gbc0.fill = GridBagConstraints.BOTH;
+        JPanel wrapper = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc1 = new GridBagConstraints();
+        gbc1.insets = new Insets(0, 0, 0, 0);
+        gbc1.gridy = 0;
+        gbc1.gridx = 0;
+        gbc1.anchor = GridBagConstraints.CENTER;
+        gbc1.fill = GridBagConstraints.BOTH;
+        gbc1.weighty = 1;
+        gbc1.weightx = 0.9;
+        wrapper.add(this.batchProgress, gbc1);
+        gbc1.gridx = 1;
+        gbc1.weightx = 0.1;
+        wrapper.add(stopProgressBtn, gbc1);
+        card2.add(wrapper, gbc0);
 
         cardPanel.add(card1, MANUAL_STR);
         cardPanel.add(card2, PRESET_STR);
@@ -451,7 +471,9 @@ public class MainGUI extends JFrame {
     		// TODO add label that is displayed when there are no prompts selected
     		return;
     	}
+    	this.stopProgressBtn.setEnabled(true);
     	this.consumer.addPolygonsFromGUI(this.cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai));
+    	this.stopProgressBtn.setEnabled(false);
     	pointPrompts.stream().forEach(pp -> consumer.deletePointRoi(pp));
     	rectPrompts.stream().forEach(pp -> consumer.deleteRectRoi(pp));
     }

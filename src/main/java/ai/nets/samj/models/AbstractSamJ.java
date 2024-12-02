@@ -73,6 +73,20 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	protected static long ENCODE_MARGIN = 64;
 	
 	protected static int MAX_IMG_SIZE = 2024;
+	
+	protected static String UPDATE_ID_N_CONTOURS = UUID.randomUUID().toString();
+	
+	protected static String UPDATE_ID_CONTOUR = UUID.randomUUID().toString();
+
+	/** Essentially, a syntactic-shortcut for a String consumer */
+	public interface BatchCallback { 
+		
+		void setTotalNumberOfRois(int nRois);
+		
+		void updateProgress(int n);
+		
+		void drawRoi(List<Mask> masks);
+		}
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface DebugTextPrinter { void printText(String text); }
@@ -153,6 +167,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * it is not, the image is encoded on demand
 	 */
 	protected boolean imageSmall = true;
+	
+	private int nRoisProcessed;
 	
 	/**
 	 * List of encodings that are cached to avoid recalculating
@@ -361,17 +377,22 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		
 	}
 	
-	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs, Object callback) 
+	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs, BatchCallback callback) 
 			throws IOException, RuntimeException, InterruptedException {
 		Map<String, Object> results = null;
 		try {
 			Task task = python.task(script, inputs);
+			nRoisProcessed = 1;
 			task.listen(event -> {
 	            switch (event.responseType) {
 	                case UPDATE:
-	                	if (!task.message.equals("new input"))
+	                	if (!task.message.equals(UPDATE_ID_CONTOUR) && !task.message.equals(UPDATE_ID_N_CONTOURS))
 	                		break;
-	                    Object numer =  task.outputs;
+	                	else if (task.message.equals(UPDATE_ID_CONTOUR)) {
+	                		callback.updateProgress(nRoisProcessed ++);
+	                	} else if (task.message.equals(UPDATE_ID_N_CONTOURS)) {
+	                		callback.setTotalNumberOfRois(Integer.parseInt((String) task.outputs.get("n")));
+	                	}
 	                    break;
 					default:
 						break;
@@ -392,6 +413,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				throw new RuntimeException();
 			else if (task.outputs.get("rle") == null)
 				throw new RuntimeException();
+			callback.updateProgress(Integer.parseInt((String) task.outputs.get("n")));
 			results = task.outputs;
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			try {
@@ -462,6 +484,47 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	public <T extends RealType<T> & NativeType<T>>
+	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai, BatchCallback callback) 
+			throws IOException, RuntimeException, InterruptedException {
+		return processBatchOfPrompts(points, rects, rai, true, callback);
+	}
+	
+	public <T extends RealType<T> & NativeType<T>>
+	List<Mask> processBatchOfPrompts(List<int[]> pointsList, List<Rectangle> rects, 
+			RandomAccessibleInterval<T> rai, boolean returnAll, BatchCallback callback) 
+					throws IOException, RuntimeException, InterruptedException {
+		if ((pointsList == null || pointsList.size() == 0) && (rects == null || rects.size() == 0) && (rai == null))
+			return new ArrayList<Mask>();
+		checkPrompts(pointsList, rects, rai);
+
+		// TODO adapt to reencoding for big images, ideally it should process points close together together
+		pointsList = adaptPointPrompts(pointsList);
+		// TODO adapt rect prompts
+		this.script = "";
+		SharedMemoryArray maskShma = null;
+		if (rai != null)
+			maskShma = SharedMemoryArray.createSHMAFromRAI(rai, false, false);
+
+		try {
+			HashMap<String, Object> inputs = new HashMap<String, Object>();
+			inputs.put("point_prompts", pointsList == null ? new ArrayList<int[]>() : pointsList);
+			List<int[]> rectPrompts = new ArrayList<int[]>();
+			if (rects != null && rects.size() > 0)
+				rectPrompts = rects.stream().map(rr -> new int[] {rr.x, rr.y, rr.x + rr.width, rr.y + rr.height})
+											.collect(Collectors.toList());
+			inputs.put("rect_prompts", rectPrompts);
+			processPromptsBatchWithSAM(maskShma, returnAll);
+			printScript(script, "Batch of prompts inference");
+			List<Mask> polys = processAndRetrieveContours(inputs, callback);
+			return polys;
+		} catch (IOException | RuntimeException | InterruptedException ex) {
+			if (maskShma != null)
+				maskShma.close();
+			throw ex;
+		}
+	}
+	
+	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai) 
 			throws IOException, RuntimeException, InterruptedException {
 		return processBatchOfPrompts(points, rects, rai, true);
@@ -492,7 +555,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			inputs.put("rect_prompts", rectPrompts);
 			processPromptsBatchWithSAM(maskShma, returnAll);
 			printScript(script, "Batch of prompts inference");
-			List<Mask> polys = processAndRetrieveContours(inputs, null);
+			List<Mask> polys = processAndRetrieveContours(inputs);
 			recalculatePolys(polys, encodeCoords);
 			return polys;
 		} catch (IOException | RuntimeException | InterruptedException ex) {

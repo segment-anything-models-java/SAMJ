@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.models.AbstractSamJ;
+import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.SAMJLogger;
 import net.imglib2.Interval;
 import net.imglib2.Localizable;
@@ -183,6 +184,12 @@ public abstract class SAMModel {
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai) 
 			throws IOException, RuntimeException, InterruptedException {
 		return samj.processBatchOfPrompts(points, rects, rai, !onlyBiggest);
+	}
+
+	public <T extends RealType<T> & NativeType<T>>
+	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai, BatchCallback callback) 
+			throws IOException, RuntimeException, InterruptedException {
+		return samj.processBatchOfPrompts(points, rects, rai, !onlyBiggest, callback);
 	}
 
 	/**

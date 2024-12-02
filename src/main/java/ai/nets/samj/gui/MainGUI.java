@@ -1,5 +1,6 @@
 package ai.nets.samj.gui;
 
+import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.EfficientSAM;
 import ai.nets.samj.communication.model.EfficientViTSAML2;
 import ai.nets.samj.communication.model.SAM2Large;
@@ -10,6 +11,7 @@ import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
+import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.RandomAccessibleInterval;
@@ -37,6 +39,7 @@ public class MainGUI extends JFrame {
     private ImageSelectionListener imageListener;
     private ModelSelectionListener modelListener;
     private ModelDrawerPanelListener modelDrawerListener;
+    private BatchCallback batchDrawerCallback;
     private ConsumerInterface consumer;
 
     private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
@@ -101,13 +104,7 @@ public class MainGUI extends JFrame {
         chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected()));
         chkRoiManager.addActionListener(e -> consumer.enableAddingToRoiManager(chkRoiManager.isSelected()));
         retunLargest.addActionListener(e -> cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected()));
-        btnBatchSAMize.addActionListener(e -> {
-			try {
-				batchSAMize();
-			} catch (IOException | RuntimeException | InterruptedException e1) {
-				e1.printStackTrace();
-			}
-		});
+        btnBatchSAMize.addActionListener(e -> batchSAMize());
         stopProgressBtn.addActionListener(e -> {
         	// TODO stopProgress();
         });
@@ -461,10 +458,12 @@ public class MainGUI extends JFrame {
         repaint();
     }
     
-    private < T extends RealType< T > & NativeType< T > > void batchSAMize() throws IOException, RuntimeException, InterruptedException {
-    	RandomAccessibleInterval<T> rai = null;
+    private < T extends RealType< T > & NativeType< T > > void batchSAMize() {
+    	RandomAccessibleInterval<T> rai;
     	if (this.consumer.getFocusedImage() != this.cmbImages.getSelectedObject())
     		rai = this.consumer.getFocusedImageAsRai();
+    	else
+    		rai = null;
     	List<int[]> pointPrompts = this.consumer.getPointRoisOnFocusImage();
     	List<Rectangle> rectPrompts = this.consumer.getRectRoisOnFocusImage();
     	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null){
@@ -475,8 +474,14 @@ public class MainGUI extends JFrame {
     		return;
     	}
     	this.stopProgressBtn.setEnabled(true);
-    	this.consumer.addPolygonsFromGUI(this.cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai));
-    	this.stopProgressBtn.setEnabled(false);
+    	new Thread(() -> {
+    		try {
+				cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai, batchDrawerCallback);
+			} catch (IOException | RuntimeException | InterruptedException e) {
+				e.printStackTrace();
+			}
+    		SwingUtilities.invokeLater(() -> stopProgressBtn.setEnabled(false));
+    	}).start();;
     	pointPrompts.stream().forEach(pp -> consumer.deletePointRoi(pp));
     	rectPrompts.stream().forEach(pp -> consumer.deleteRectRoi(pp));
     }
@@ -526,6 +531,30 @@ public class MainGUI extends JFrame {
 			        }).start();
 				}
 			}
+        };
+        
+        batchDrawerCallback = new BatchCallback() {
+        	private int nRois;
+
+			@Override
+			public void setTotalNumberOfRois(int nRois) {
+				this.nRois = nRois;
+				SwingUtilities.invokeLater(() -> {
+					batchProgress.setValue(0);
+				});
+			}
+
+			@Override
+			public void updateProgress(int n) {
+				SwingUtilities.invokeLater(() -> batchProgress.setValue((int) Math.round(100 * n / (double) nRois) ));
+			}
+
+			@Override
+			public void drawRoi(List<Mask> masks) {
+				// TODO Auto-generated method stub
+				
+			}
+        	
         };
     }
 

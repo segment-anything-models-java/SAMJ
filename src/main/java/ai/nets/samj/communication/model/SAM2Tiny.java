@@ -82,8 +82,9 @@ public class SAM2Tiny extends SAMModel {
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
-			int idx = text.indexOf("contours_x");
-			if (idx > 0) this.log.info( text.substring(0,idx) );
+			int idx = text.indexOf("\"responseType\": \"COMPLETION\"");
+			int idxProgress = text.indexOf("\"message\": \"8f821f82-db6f-42a3-8500-794a5033114e\"");
+			if (idx > 0) this.log.info( text.substring(0,idx) + "\"responseType\": \"COMPLETION\"}");
 			else this.log.info( text );
 		};
 		if (this.samj == null)

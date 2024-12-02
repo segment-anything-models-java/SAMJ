@@ -23,7 +23,7 @@ public class ProgressBarAndButton extends JPanel {
     public ProgressBarAndButton(String btLabel) {
         this.btn = new JButton(btLabel);
         btn.setMargin(new Insets(2, 3, 2, 2));
-
+        
         // Use GridBagLayout instead of null layout
         setLayout(new GridBagLayout());
 

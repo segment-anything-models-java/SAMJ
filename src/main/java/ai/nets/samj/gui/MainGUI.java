@@ -467,7 +467,10 @@ public class MainGUI extends JFrame {
     		rai = this.consumer.getFocusedImageAsRai();
     	List<int[]> pointPrompts = this.consumer.getPointRoisOnFocusImage();
     	List<Rectangle> rectPrompts = this.consumer.getRectRoisOnFocusImage();
-    	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(rai.getType() instanceof IntegerType)){
+    	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null){
+    		// TODO add label that is displayed when there are no prompts selected
+    		return;
+    	} else if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(rai.getType() instanceof IntegerType)){
     		// TODO add label that is displayed when there are no prompts selected
     		return;
     	}

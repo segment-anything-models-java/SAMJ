@@ -26,6 +26,8 @@ import net.imglib2.util.Cast;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.Sam2;
@@ -83,9 +85,16 @@ public class SAM2Tiny extends SAMModel {
 			this.log = useThisLoggerForIt;
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 			int idx = text.indexOf("\"responseType\": \"COMPLETION\"");
-			int idxProgress = text.indexOf("\"message\": \"8f821f82-db6f-42a3-8500-794a5033114e\"");
-			if (idx > 0) this.log.info( text.substring(0,idx) + "\"responseType\": \"COMPLETION\"}");
-			else this.log.info( text );
+			int idxProgress = text.indexOf(AbstractSamJ.getProgressString());
+			if (idx > 0) 
+				text = text.substring(0,idx) + "\"responseType\": \"COMPLETION\"}";
+			if (idxProgress != -1) {
+				String regex = "\"outputs\"\\s*:\\s*\\{.*?\\},";
+		        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
+		        Matcher matcher = pattern.matcher(text);
+		        text = matcher.replaceAll("");
+			}
+			this.log.info( text );
 		};
 		if (this.samj == null)
 			samj = Sam2.initializeSam("tiny", manager, filteringLogger, false);

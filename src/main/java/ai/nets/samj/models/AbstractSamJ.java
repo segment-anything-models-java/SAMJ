@@ -74,9 +74,9 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected static int MAX_IMG_SIZE = 2024;
 	
-	protected static String UPDATE_ID_N_CONTOURS = UUID.randomUUID().toString();
+	protected static String UPDATE_ID_N_CONTOURS = "PROMPT_NUMBER_" + UUID.randomUUID().toString();
 	
-	protected static String UPDATE_ID_CONTOUR = UUID.randomUUID().toString();
+	protected static String UPDATE_ID_CONTOUR = "FOUND_CONTOUR_" + UUID.randomUUID().toString();
 
 	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface BatchCallback { 
@@ -1214,5 +1214,9 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			throw e;
 		}
 		this.savedEncodings.remove(encodingName);
+	}
+	
+	public static String getProgressString() {
+		return UPDATE_ID_CONTOUR;
 	}
 }

@@ -30,6 +30,8 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import ai.nets.samj.models.AbstractSamJ;
@@ -115,9 +117,17 @@ public class EfficientSAM extends SAMModel {
 			efficientSamJ = EfficientSamJ.initializeSam(manager);
 		try {
 			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
-				int idx = text.indexOf("contours_x");
-				if (idx > 0) this.log.info( text.substring(0,idx) );
-				else this.log.info( text );
+				int idx = text.indexOf("\"responseType\": \"COMPLETION\"");
+				int idxProgress = text.indexOf(AbstractSamJ.getProgressString());
+				if (idx > 0) 
+					text = text.substring(0,idx) + "\"responseType\": \"COMPLETION\"}";
+				if (idxProgress != -1) {
+					String regex = "\"outputs\"\\s*:\\s*\\{.*?\\},";
+			        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
+			        Matcher matcher = pattern.matcher(text);
+			        text = matcher.replaceAll("");
+				}
+				this.log.info( text );
 			};
 			this.efficientSamJ.setDebugPrinter(filteringLogger);
 			this.efficientSamJ.setImage(Cast.unchecked(image));;

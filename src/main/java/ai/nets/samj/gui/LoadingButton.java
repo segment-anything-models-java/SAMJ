@@ -105,10 +105,6 @@ public class LoadingButton extends JButton {
             public void mouseReleased(MouseEvent e) {
             	if (isEnabled()) {
                     showAnimation(!isSelected());
-                    fireActionPerformed(
-                    		new ActionEvent(LoadingButton.this, 
-                    				ActionEvent.ACTION_PERFORMED, 
-                    				getActionCommand()));
                 }
             }
         });

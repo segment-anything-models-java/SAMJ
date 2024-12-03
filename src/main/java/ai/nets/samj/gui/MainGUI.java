@@ -217,6 +217,7 @@ public class MainGUI extends JFrame {
             } catch (IOException | RuntimeException | InterruptedException ex) {
                 ex.printStackTrace();
             }
+            this.go.showAnimation(false);
         }).start();
     }
 

@@ -104,7 +104,7 @@ public class LoadingButton extends JButton {
             @Override
             public void mouseReleased(MouseEvent e) {
             	if (isEnabled()) {
-                    setPressed(!isSelected());
+                    showAnimation(!isSelected());
                     fireActionPerformed(
                     		new ActionEvent(LoadingButton.this, 
                     				ActionEvent.ACTION_PERFORMED, 
@@ -163,13 +163,11 @@ public class LoadingButton extends JButton {
     }
 	
 	/**
-	 * Set the button as pressed or not pressed, changing the image displayed
-	 * @param isPressed
-	 * 	whether the button is pressed or not
+	 * Show the animation
+	 * @param show
+	 * 	whether the animation is shown or not
 	 */
-	public void setPressed(boolean isPressed) {
-		super.setEnabled(!isPressed);
-        gifLabel.setVisible(isPressed);
-		this.setSelected(isPressed);
+	public void showAnimation(boolean show) {
+        gifLabel.setVisible(show);
 	}
 }

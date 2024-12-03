@@ -386,6 +386,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs, BatchCallback callback) 
 			throws IOException, RuntimeException, InterruptedException {
 		Map<String, Object> results = null;
+		List<Mask> totalPolys = new ArrayList<Mask>();
 		try {
 			Task task = python.task(script, inputs);
 			nRoisProcessed = 1;
@@ -399,6 +400,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	                		List<Mask> polys = defineMask((List<List<Number>>)task.outputs.get("temp_x"), 
 	                				(List<List<Number>>)task.outputs.get("temp_y"), (List<List<Number>>)task.outputs.get("temp_mask"));
 	                		callback.drawRoi(polys);
+	                		totalPolys.addAll(polys);
 	                	} else if (task.message.equals(UPDATE_ID_N_CONTOURS)) {
 	                		callback.setTotalNumberOfRois(Integer.parseInt((String) task.outputs.get("n")));
 	                		
@@ -435,6 +437,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 		List<Mask> polys = defineMask((List<List<Number>>)results.get("contours_x"), 
 				(List<List<Number>>)results.get("contours_y"), (List<List<Number>>)results.get("rle"));
+		callback.drawRoi(polys);
+		totalPolys.addAll(polys);
 		return polys;
 	}
 	

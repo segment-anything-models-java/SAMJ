@@ -80,11 +80,9 @@ public class Sam2 extends AbstractSamJ {
 			+ "import sys" + System.lineSeparator()
 			+ "import os" + System.lineSeparator()
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
-			+ "task.update('import sam')" + System.lineSeparator()
 			+ "from sam2.build_sam import build_sam2" + System.lineSeparator()
 			+ "from sam2.sam2_image_predictor import SAM2ImagePredictor" + System.lineSeparator()
 			+ "from sam2.utils.misc import variant_to_config_mapping" + System.lineSeparator()
-			+ "task.update('imported')" + System.lineSeparator()
 			+ "model = build_sam2(variant_to_config_mapping['%s'],r'%s')" + System.lineSeparator()
 			+ "predictor = SAM2ImagePredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
@@ -303,7 +301,6 @@ public class Sam2 extends AbstractSamJ {
 		script += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
 		script += ""
-			+ "task.update(str(im.shape))" + System.lineSeparator()
 			+ "predictor.set_image(im)";
 	}
 
@@ -336,8 +333,6 @@ public class Sam2 extends AbstractSamJ {
 				+ "    point_labels=input_label," + System.lineSeparator()
 				+ "    multimask_output=False," + System.lineSeparator()
 				+ "    box=None,)" + System.lineSeparator()
-				+ "task.update('end predict')" + System.lineSeparator()
-				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
@@ -357,8 +352,6 @@ public class Sam2 extends AbstractSamJ {
 				+ "    point_labels=None," + System.lineSeparator()
 				+ "    multimask_output=False," + System.lineSeparator()
 				+ "    box=input_box,)" + System.lineSeparator()
-				+ "task.update('end predict')" + System.lineSeparator()
-				+ "task.update(str(mask.shape))" + System.lineSeparator()
 				//+ "np.save('/home/carlos/git/mask.npy', mask)" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()

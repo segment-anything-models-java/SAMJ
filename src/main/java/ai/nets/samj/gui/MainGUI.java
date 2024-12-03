@@ -199,6 +199,7 @@ public class MainGUI extends JFrame {
                 consumer.setFocusedImage(cmbImages.getSelectedObject());
                 consumer.setModel(cmbModels.getSelectedModel());
                 setInstantPromptsEnabled(this.chkInstant.isSelected());
+                cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected());
                 setTwoThirdsEnabled(true);
             } catch (IOException | RuntimeException | InterruptedException ex) {
                 ex.printStackTrace();
@@ -392,6 +393,7 @@ public class MainGUI extends JFrame {
         	CardLayout cl = (CardLayout) (cardPanel.getLayout());
         	cl.show(cardPanel, PRESET_STR);
         	this.chkInstant.setSelected(false);
+        	setInstantPromptsEnabled(false);
         });
 
         GridBagConstraints gbc = new GridBagConstraints();

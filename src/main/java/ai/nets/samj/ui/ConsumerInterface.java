@@ -38,6 +38,14 @@ import net.imglib2.type.numeric.RealType;
 public abstract class ConsumerInterface {
 	
 	protected SAMModel selectedModel;
+	
+	public interface ConsumerCallback { 
+		
+		void validPromptChosen(boolean isValid);
+		
+		}
+	
+	protected ConsumerCallback callback;
 
 	/**
 	 * Method to be implemented in the softwar that wants to use the SAMJ default GUI.
@@ -91,8 +99,14 @@ public abstract class ConsumerInterface {
 	public abstract void deletePointRoi(int[] pp);
 
 	public abstract void deleteRectRoi(Rectangle rect);
+
+	public abstract boolean isValidPromptSelected();
 	
 	public void setModel(SAMModel model) {
 		this.selectedModel = model;
+	}
+	
+	public void setCallback(ConsumerCallback callback) {
+		this.callback = callback;
 	}
 }

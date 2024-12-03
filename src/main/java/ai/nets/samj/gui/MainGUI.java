@@ -13,6 +13,7 @@ import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
+import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
 import ai.nets.samj.utils.Constants;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
@@ -40,7 +41,10 @@ public class MainGUI extends JFrame {
     private ModelSelectionListener modelListener;
     private ModelDrawerPanelListener modelDrawerListener;
     private BatchCallback batchDrawerCallback;
+    private ConsumerCallback consumerCallback;
+    
     private ConsumerInterface consumer;
+    private boolean isValidPrompt = true;
 
     private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
     private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
@@ -58,6 +62,7 @@ public class MainGUI extends JFrame {
     private final ImageSelection cmbImages;
     private ModelDrawerPanel drawerPanel;
     private JPanel cardPanel;
+    private JPanel cardPanel1_2;
 
     private static double HEADER_VERTICAL_RATIO = 0.1;
 
@@ -68,6 +73,8 @@ public class MainGUI extends JFrame {
     private static String MANUAL_STR = "Manual";
     private static String PRESET_STR = "Preset prompts";
     private static String ROIM_STR = "Selection from ROIManager";
+    private static String VISIBLE_STR = "visible";
+    private static String INVISIBLE_STR = "invisible";
 
     private static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
     static {
@@ -87,6 +94,8 @@ public class MainGUI extends JFrame {
 
         createListeners();
         this.consumer = consumer;
+        this.consumer.setCallback(consumerCallback);
+        consumerCallback.validPromptChosen(consumer.isValidPromptSelected());
         cmbImages = ImageSelection.create(this.consumer, imageListener);
 
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
@@ -101,7 +110,7 @@ public class MainGUI extends JFrame {
         cmbModels.getButton().addActionListener(e -> toggleDrawer());
         go.addActionListener(e -> loadModel());
         export.addActionListener(e -> consumer.exportImageLabeling());
-        chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected()));
+        chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected() && this.isValidPrompt));
         chkRoiManager.addActionListener(e -> consumer.enableAddingToRoiManager(chkRoiManager.isSelected()));
         retunLargest.addActionListener(e -> cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected()));
         btnBatchSAMize.addActionListener(e -> batchSAMize());
@@ -198,7 +207,7 @@ public class MainGUI extends JFrame {
             	consumer.enableAddingToRoiManager(this.chkRoiManager.isSelected());
                 consumer.setFocusedImage(cmbImages.getSelectedObject());
                 consumer.setModel(cmbModels.getSelectedModel());
-                setInstantPromptsEnabled(this.chkInstant.isSelected());
+                setInstantPromptsEnabled(this.chkInstant.isSelected() && this.isValidPrompt);
                 cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected());
                 setTwoThirdsEnabled(true);
             } catch (IOException | RuntimeException | InterruptedException ex) {
@@ -337,13 +346,16 @@ public class MainGUI extends JFrame {
         gbc0.gridy = 0;
         gbc0.weighty = 0.2;
         gbc0.anchor = GridBagConstraints.NORTH;
-        card1.add(new JLabel("Instant Annotation"), gbc0);
+        cardPanel1_2 = new JPanel(new CardLayout());
+        cardPanel1_2.add(new JPanel() {{ setOpaque(false); }}, INVISIBLE_STR);
+        cardPanel1_2.add(new JLabel("<html><font color='orange'>&#9888; Only rect and points!</font></html>"), VISIBLE_STR);
+        card1.add(cardPanel1_2, gbc0);
 
         gbc0.gridy = 1;
         gbc0.anchor = GridBagConstraints.CENTER;
         gbc0.fill = GridBagConstraints.BOTH;
         gbc0.weighty = 0.8;
-        gbc0.insets = new Insets(0, 0, 10, 0);
+        gbc0.insets = new Insets(0, 5, 10, 5);
         card1.add(chkInstant, gbc0);
 
         JPanel card2 = new JPanel(new GridBagLayout());
@@ -387,6 +399,7 @@ public class MainGUI extends JFrame {
         radioButton1.addActionListener(e -> {
             CardLayout cl = (CardLayout) (cardPanel.getLayout());
             cl.show(cardPanel, MANUAL_STR);
+        	this.chkInstant.setEnabled(this.isValidPrompt);
         });
 
         radioButton2.addActionListener(e -> {
@@ -567,6 +580,27 @@ public class MainGUI extends JFrame {
 				SwingUtilities.invokeLater(() -> promptList.stream()
 						.map(rect -> new Rectangle(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]))
 						.forEach(roi -> consumer.deleteRectRoi(roi)));
+			}
+        	
+        };
+        
+        consumerCallback = new ConsumerCallback() {
+
+			@Override
+			public void validPromptChosen(boolean isValid) {
+				if (isValid && !isValidPrompt) {
+					CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
+		        	lyt.show(cardPanel1_2, INVISIBLE_STR);
+		        	isValidPrompt = true;
+		        	MainGUI.this.chkInstant.setEnabled(true);
+				} else if (!isValid && isValidPrompt) {
+					CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
+		        	lyt.show(cardPanel1_2, VISIBLE_STR);
+		        	isValidPrompt = false;
+		        	MainGUI.this.chkInstant.setSelected(false);
+		        	MainGUI.this.chkInstant.setEnabled(false);
+		        	MainGUI.this.setInstantPromptsEnabled(false);;
+				}
 			}
         	
         };

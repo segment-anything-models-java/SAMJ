@@ -78,7 +78,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected static String UPDATE_ID_CONTOUR = "FOUND_CONTOUR_" + UUID.randomUUID().toString();
 
-	/** Essentially, a syntactic-shortcut for a String consumer */
 	public interface BatchCallback { 
 		
 		void setTotalNumberOfRois(int nRois);

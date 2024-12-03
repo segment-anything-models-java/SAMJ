@@ -547,8 +547,14 @@ public class MainGUI extends JFrame {
             public void imageActionsOnImageChanged() {
                 consumer.deactivateListeners();
                 consumer.deselectImage();
-                setTwoThirdsEnabled(false);
-                go.setEnabled(cmbImages.getSelectedObject() != null);
+            	setTwoThirdsEnabled(false);
+                if (go.isEnabled())
+                	return;
+                go.showAnimation(true);
+                new Thread(() -> {
+                    go.setEnabled(cmbModels.getSelectedModel().isInstalled());
+                    go.showAnimation(false);
+                }).start();
             }
         };
         modelListener = new ModelSelectionListener() {
@@ -564,6 +570,12 @@ public class MainGUI extends JFrame {
 			public void changeGUI() {
                 setTwoThirdsEnabled(false);
                 go.setEnabled(cmbImages.getSelectedObject() != null);
+                go.setEnabled(false);
+                go.showAnimation(true);
+                new Thread(() -> {
+                    go.setEnabled(cmbModels.getSelectedModel().isInstalled());
+                    go.showAnimation(false);
+                }).start();
 			}
         };
         modelDrawerListener = new ModelDrawerPanelListener() {

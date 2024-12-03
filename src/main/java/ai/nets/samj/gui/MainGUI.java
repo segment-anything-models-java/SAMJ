@@ -59,7 +59,10 @@ public class MainGUI extends JFrame {
     private JProgressBar batchProgress = new JProgressBar();
     private ResizableButton stopProgressBtn = new ResizableButton("■", 10, 2, 2);
     private final ModelSelection cmbModels;
-    private final ImageSelection cmbImages;
+    // TODO add information tab to cmbImages, same as cmbModels
+    // TODO changes to just a combobox on december 2024
+    // TODO private final ImageSelection cmbImages;
+    private final ImageSelectionOnlyComboBox cmbImages;
     private ModelDrawerPanel drawerPanel;
     private JPanel cardPanel;
     private JPanel cardPanel1_2;
@@ -100,7 +103,7 @@ public class MainGUI extends JFrame {
         this.consumer = consumer;
         this.consumer.setCallback(consumerCallback);
         consumerCallback.validPromptChosen(consumer.isValidPromptSelected());
-        cmbImages = ImageSelection.create(this.consumer, imageListener);
+        cmbImages = ImageSelectionOnlyComboBox.create(this.consumer, imageListener);
 
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
         else this.modelList = modelList;
@@ -379,9 +382,31 @@ public class MainGUI extends JFrame {
         gbc0.anchor = GridBagConstraints.CENTER;
         gbc0.fill = GridBagConstraints.BOTH;
         gbc0.weighty = 0.8;
-        card2.add(btnBatchSAMize, gbc0);
+        JPanel wrapperBtn = new JPanel(new GridBagLayout());
+        GridBagConstraints gbcBtn = new GridBagConstraints();
+        gbcBtn.weightx = 0.05;
+        gbcBtn.weighty = 1;
+        gbcBtn.fill = GridBagConstraints.NONE;
+        gbcBtn.insets = new Insets(0, 0, 0, 0);
+        gbcBtn.gridy = 0;
+        gbcBtn.gridx = 1;
+        Icon questionIcon = UIManager.getIcon("OptionPane.questionIcon");
+        if (questionIcon == null) {
+            questionIcon = UIManager.getIcon("OptionPane.informationIcon");
+        }
+        CustomInsetsJLabel questionMark = new CustomInsetsJLabel(questionIcon, 4, 2, 0, 0);
+        //questionMark.setBorder(LineBorder.createBlackLineBorder());
+        questionMark.setToolTipText("Very useful help");
+        wrapperBtn.add(questionMark, gbcBtn);
+        gbcBtn.gridx = 0;
+        gbcBtn.fill = GridBagConstraints.BOTH;
+        gbcBtn.weightx = 0.95;
+        wrapperBtn.add(btnBatchSAMize, gbcBtn);
+        gbc0.insets = new Insets(0, 5, 5, 0);
+        card2.add(wrapperBtn, gbc0);
 
         gbc0.gridy = 2;
+        gbc0.insets = new Insets(0, 2, 5, 2);
         gbc0.weighty = 0.1;
         gbc0.anchor = GridBagConstraints.CENTER;
         gbc0.fill = GridBagConstraints.BOTH;

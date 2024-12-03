@@ -49,7 +49,7 @@ public class MainGUI extends JFrame {
     private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
     private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
     private JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
-    private JButton go = new JButton("Go");
+    private LoadingButton go = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation_samj.gif", 20);;
     private JButton btnBatchSAMize = new JButton("Batch SAMize");
     private JButton close = new JButton("Close");
     private JButton help = new JButton("Help");
@@ -73,9 +73,12 @@ public class MainGUI extends JFrame {
 
     private static String MANUAL_STR = "Manual";
     private static String PRESET_STR = "Preset prompts";
-    private static String ROIM_STR = "Selection from ROIManager";
     private static String VISIBLE_STR = "visible";
     private static String INVISIBLE_STR = "invisible";
+	/**
+	 * Name of the folder where the icon images for the dialog buttons are within the resources folder
+	 */
+	private static final String RESOURCES_FOLDER = "icons_samj/";
 
     private static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
     static {

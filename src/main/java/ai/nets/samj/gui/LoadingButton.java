@@ -20,6 +20,9 @@
 package ai.nets.samj.gui;
 
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -96,6 +99,19 @@ public class LoadingButton extends JButton {
         gifLabel = new JLabel(gifIcon);
         gifLabel.setVisible(false); // Initially hide GIF animation
         add(gifLabel);
+        
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            	if (isEnabled()) {
+                    setPressed(!isSelected());
+                    fireActionPerformed(
+                    		new ActionEvent(LoadingButton.this, 
+                    				ActionEvent.ACTION_PERFORMED, 
+                    				getActionCommand()));
+                }
+            }
+        });
 	}
 	
 	@Override

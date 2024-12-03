@@ -43,7 +43,7 @@ public class SAM2Tiny extends SAMModel {
 	/**
 	 * Name of the model
 	 */
-	public static final String FULL_NAME = "SAM2 Tiny";
+	public static final String FULL_NAME = "SAM2.1 Tiny";
 	/**
 	 * Axes order required for the input image by the model
 	 */
@@ -60,9 +60,9 @@ public class SAM2Tiny extends SAMModel {
 		this.paperLink = "https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/";
 		this.githubName = "facebookresearch/segment-anything-2";
 		this.paperName = "SAM 2: Segment Anything in Images and Videos";
-		this.speedRank = 3;
-		this.performanceRank = 3;
-		this.size = 155.9;
+		this.speedRank = 2;
+		this.performanceRank = 4;
+		this.size = 156.0;
 		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "tiny");
 	}
 

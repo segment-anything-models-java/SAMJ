@@ -120,7 +120,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	/**
 	 * URL to download the EfficientSAM model 
 	 */
-	final static public String SAM2_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_%s.pt";
+	final static public String SAM2_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_%s.pt";
 	
 	private Sam2EnvManager(String modelType) {
 		List<String> modelTypes = SAM2_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());

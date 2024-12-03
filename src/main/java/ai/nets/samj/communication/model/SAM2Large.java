@@ -44,7 +44,7 @@ public class SAM2Large extends SAMModel {
 	/**
 	 * Name of the model
 	 */
-	public static final String FULL_NAME = "SAM2 Large";
+	public static final String FULL_NAME = "SAM2.1 Large";
 	/**
 	 * Axes order required for the input image by the model
 	 */
@@ -61,9 +61,9 @@ public class SAM2Large extends SAMModel {
 		this.paperLink = "https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/";
 		this.githubName = "facebookresearch/segment-anything-2";
 		this.paperName = "SAM 2: Segment Anything in Images and Videos";
-		this.speedRank = 3;
-		this.performanceRank = 3;
-		this.size = 155.9;
+		this.speedRank = 4;
+		this.performanceRank = 1;
+		this.size = 898.1;
 		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "large");
 	}
 

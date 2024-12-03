@@ -60,8 +60,8 @@ public class EfficientViTSAML2 extends SAMModel {
 		this.githubName = "mit-han-lab/efficientvit";
 		this.paperName = "EfficientViT-SAM: Accelerated Segment Anything Model Without Performance Loss";
 		this.paperLink = "https://arxiv.org/pdf/2402.05008.pdf";
-		this.speedRank = 3;
-		this.performanceRank = 3;
+		this.speedRank = 1;
+		this.performanceRank = 5;
 		this.size = 245.7;
 		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "l2");
 	}

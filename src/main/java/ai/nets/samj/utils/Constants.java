@@ -29,6 +29,13 @@ import java.util.Properties;
  */
 public class Constants {
 	
+	public static final String HELP_MSG = "<html>"
+			+ "Click to segment all selected prompts at once on the encoded image.<br><br>"
+			+ "Prompts can be point or rectangle ROIs on the image or ROI Manager,<br>"
+			+ "or pixels in an integer mask representing points of interest.<br><br>"
+			+ "No prompts on the encoded image, no action."
+			+ "</html>";
+	
 	public static final String SAMJ_VERSION = getVersion();
 	
 	public static final String JAR_NAME = getNAME();

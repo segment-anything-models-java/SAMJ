@@ -396,7 +396,7 @@ public class MainGUI extends JFrame {
         }
         CustomInsetsJLabel questionMark = new CustomInsetsJLabel(questionIcon, 4, 2, 0, 0);
         //questionMark.setBorder(LineBorder.createBlackLineBorder());
-        questionMark.setToolTipText("Very useful help");
+        questionMark.setToolTipText(Constants.HELP_MSG);
         wrapperBtn.add(questionMark, gbcBtn);
         gbcBtn.gridx = 0;
         gbcBtn.fill = GridBagConstraints.BOTH;

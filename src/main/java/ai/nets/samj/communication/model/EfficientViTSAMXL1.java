@@ -90,8 +90,9 @@ public class EfficientViTSAMXL1 extends SAMModel {
 			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 				int idx = text.indexOf("\"responseType\": \"COMPLETION\"");
 				int idxProgress = text.indexOf(AbstractSamJ.getProgressString());
-				if (idx > 0 || idxProgress != -1) {
-					String regex = "\"outputs\"\\s*:\\s*\\{.*?\\},";
+				if (idxProgress != -1) return;
+				if (idx > 0) {
+					String regex = "\"outputs\"\\s*:\\s*\\{.*?\\}(,)?";
 			        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
 			        Matcher matcher = pattern.matcher(text);
 			        text = matcher.replaceAll("");

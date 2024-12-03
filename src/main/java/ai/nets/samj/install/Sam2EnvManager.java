@@ -119,11 +119,19 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	/**
 	 * URL to download the SAM2 model 
 	 */
-	final static private String SAM2_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_%s.pt";
+	final static private String SAM2_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_%s.pt";
 	/**
 	 * URL to download the SAM2 model 
 	 */
-	final static private String SAM2_FNAME = "sam2.1_hiera_%s.pt";
+	final static private String SAM2_FNAME = "sam2_hiera_%s.pt";
+	/**
+	 * URL to download the SAM2 model 
+	 */
+	final static private String SAM2_1_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_%s.pt";
+	/**
+	 * URL to download the SAM2 model 
+	 */
+	final static private String SAM2_1_FNAME = "sam2.1_hiera_%s.pt";
 	
 	private Sam2EnvManager(String modelType) {
 		List<String> modelTypes = SAM2_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());

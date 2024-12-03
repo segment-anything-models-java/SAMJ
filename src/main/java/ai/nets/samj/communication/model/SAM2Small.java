@@ -48,6 +48,8 @@ public class SAM2Small extends SAMModel {
 	 * Axes order required for the input image by the model
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
+	
+	private static String ID = "small";
 		
 
 	/**
@@ -62,8 +64,9 @@ public class SAM2Small extends SAMModel {
 		this.paperName = "SAM 2: Segment Anything in Images and Videos";
 		this.speedRank = 3;
 		this.performanceRank = 3;
-		this.size = 184.4;
-		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "small");
+		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, ID);
 	}
 
 	@Override
@@ -84,7 +87,7 @@ public class SAM2Small extends SAMModel {
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
 		if (this.samj == null)
-			samj = Sam2.initializeSam("small", manager);
+			samj = Sam2.initializeSam(ID, manager);
 		try {
 			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
 				int idx = text.indexOf("\"responseType\": \"COMPLETION\"");

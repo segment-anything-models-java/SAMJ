@@ -47,7 +47,9 @@ public class SAM2Tiny extends SAMModel {
 	/**
 	 * Axes order required for the input image by the model
 	 */
-	public static final String INPUT_IMAGE_AXES = "xyc";	
+	public static final String INPUT_IMAGE_AXES = "xyc";
+	
+	private static String ID = "tiny";
 	
 
 	/**
@@ -62,8 +64,9 @@ public class SAM2Tiny extends SAMModel {
 		this.paperName = "SAM 2: Segment Anything in Images and Videos";
 		this.speedRank = 2;
 		this.performanceRank = 4;
-		this.size = 156.0;
-		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "tiny");
+		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, ID);
 	}
 
 	@Override
@@ -96,7 +99,7 @@ public class SAM2Tiny extends SAMModel {
 			this.log.info( text );
 		};
 		if (this.samj == null)
-			samj = Sam2.initializeSam("tiny", manager, filteringLogger, false);
+			samj = Sam2.initializeSam(ID, manager, filteringLogger, false);
 		try {
 			this.samj.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {

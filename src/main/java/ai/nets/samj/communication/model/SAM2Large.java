@@ -44,11 +44,13 @@ public class SAM2Large extends SAMModel {
 	/**
 	 * Name of the model
 	 */
-	public static final String FULL_NAME = "SAM2.1 Large";
+	public static final String FULL_NAME = "SAM2 Large";
 	/**
 	 * Axes order required for the input image by the model
 	 */
-	public static final String INPUT_IMAGE_AXES = "xyc";	
+	public static final String INPUT_IMAGE_AXES = "xyc";
+	
+	private static String ID = "large";
 	
 
 	/**
@@ -63,8 +65,9 @@ public class SAM2Large extends SAMModel {
 		this.paperName = "SAM 2: Segment Anything in Images and Videos";
 		this.speedRank = 4;
 		this.performanceRank = 1;
-		this.size = 898.1;
-		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, "large");
+		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, ID);
 	}
 
 	@Override
@@ -97,7 +100,7 @@ public class SAM2Large extends SAMModel {
 			this.log.info( text );
 		};
 		if (this.samj == null)
-			samj = Sam2.initializeSam("large", manager, filteringLogger, false);
+			samj = Sam2.initializeSam(ID, manager, filteringLogger, false);
 		try {
 			this.samj.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {

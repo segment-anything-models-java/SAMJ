@@ -43,7 +43,7 @@ public class SAM2Tiny extends SAMModel {
 	/**
 	 * Name of the model
 	 */
-	public static final String FULL_NAME = "SAM2.1 Tiny";
+	public static final String FULL_NAME = "SAM2 Tiny";
 	/**
 	 * Axes order required for the input image by the model
 	 */

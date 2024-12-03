@@ -63,6 +63,7 @@ public class MainGUI extends JFrame {
     private ModelDrawerPanel drawerPanel;
     private JPanel cardPanel;
     private JPanel cardPanel1_2;
+    private JPanel cardPanel2_2;
 
     private static double HEADER_VERTICAL_RATIO = 0.1;
 
@@ -365,7 +366,10 @@ public class MainGUI extends JFrame {
         gbc0.weighty = 0.1;
         gbc0.insets = new Insets(0, 2, 5, 2);
         gbc0.weightx = 1;
-        card2.add(new JLabel(ROIM_STR), gbc0);
+        cardPanel2_2 = new JPanel(new CardLayout());
+        cardPanel2_2.add(new JPanel() {{ setOpaque(false); }}, INVISIBLE_STR);
+        cardPanel2_2.add(new JLabel("<html><font color='orange'>&#9888; No prompt was provided!</font></html>"), VISIBLE_STR);
+        card2.add(cardPanel2_2, gbc0);
 
         gbc0.gridy = 1;
         gbc0.anchor = GridBagConstraints.CENTER;
@@ -481,13 +485,15 @@ public class MainGUI extends JFrame {
     		rai = null;
     	List<int[]> pointPrompts = this.consumer.getPointRoisOnFocusImage();
     	List<Rectangle> rectPrompts = this.consumer.getRectRoisOnFocusImage();
-    	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null){
-    		// TODO add label that is displayed when there are no prompts selected
+		CardLayout lyt = (CardLayout) cardPanel2_2.getLayout();
+    	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null) {
+        	lyt.show(cardPanel2_2, VISIBLE_STR);
     		return;
     	} else if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(rai.getType() instanceof IntegerType)){
-    		// TODO add label that is displayed when there are no prompts selected
+        	lyt.show(cardPanel2_2, VISIBLE_STR);
     		return;
     	}
+    	lyt.show(cardPanel2_2, INVISIBLE_STR);
     	this.stopProgressBtn.setEnabled(true);
     	new Thread(() -> {
     		try {

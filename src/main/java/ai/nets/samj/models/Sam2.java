@@ -470,6 +470,7 @@ public class Sam2 extends AbstractSamJ {
 				code += l + ",";
 			code += "])" + System.lineSeparator();
 			code += "labeled_array, num_features = label(mask_batch)" + System.lineSeparator();
+			code += "num_features -= 1" + System.lineSeparator();
 		}
 		code += ""
 				+ "contours_x = []" + System.lineSeparator()
@@ -483,7 +484,7 @@ public class Sam2 extends AbstractSamJ {
 				+ "with ThreadPoolExecutor(max_workers=num_threads) as executor:" + System.lineSeparator()
 				+ "  futures = []" + System.lineSeparator()
 				+ "  n_objects = 0" + System.lineSeparator()
-				+ "  for n_feat in range(num_features):" + System.lineSeparator()
+				+ "  for n_feat in range(1, num_features + 1):" + System.lineSeparator()
 				+ "    extracted_point_prompts = []" + System.lineSeparator()
 				+ "    extracted_point_labels = []" + System.lineSeparator()
 				+ "    inds = np.where(labeled_array == n_feat)" + System.lineSeparator()

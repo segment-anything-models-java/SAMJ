@@ -64,6 +64,7 @@ public class EfficientSamJ extends AbstractSamJ {
 			+ "from skimage import measure" + System.lineSeparator()
 			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
+			+ "from scipy.ndimage import label" + System.lineSeparator()
 			+ "from scipy.ndimage import binary_fill_holes" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
 			+ "sys.path.append(r'%s')" + System.lineSeparator()
@@ -80,6 +81,7 @@ public class EfficientSamJ extends AbstractSamJ {
 			+ "globals()['measure'] = measure" + System.lineSeparator()
 			+ "globals()['np'] = np" + System.lineSeparator()
 			+ "globals()['torch'] = torch" + System.lineSeparator()
+			+ "globals()['label'] = label" + System.lineSeparator()
 			+ "globals()['binary_fill_holes'] = binary_fill_holes" + System.lineSeparator()
 			+ "globals()['predictor'] = predictor" + System.lineSeparator();
 
@@ -413,6 +415,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				code += l + ",";
 			code += "])" + System.lineSeparator();
 			code += "labeled_array, num_features = label(mask_batch)" + System.lineSeparator();
+			code += "num_features -= 1" + System.lineSeparator();
 		}
 		code += ""
 				+ "contours_x = []" + System.lineSeparator()
@@ -426,7 +429,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "with ThreadPoolExecutor(max_workers=num_threads) as executor:" + System.lineSeparator()
 				+ "  futures = []" + System.lineSeparator()
 				+ "  n_objects = 0" + System.lineSeparator()
-				+ "  for n_feat in range(num_features):" + System.lineSeparator()
+				+ "  for n_feat in range(1, num_features + 1):" + System.lineSeparator()
 				+ "    extracted_point_prompts = []" + System.lineSeparator()
 				+ "    extracted_point_labels = []" + System.lineSeparator()
 				+ "    inds = np.where(labeled_array == n_feat)" + System.lineSeparator()
@@ -435,7 +438,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "    for pp in range(n_points):" + System.lineSeparator()
 				+ "      extracted_point_prompts += [[inds[0][random_positions[pp]], inds[1][random_positions[pp]]]]" + System.lineSeparator()
 				+ "      extracted_point_labels += [n_feat]" + System.lineSeparator()
-				+ "    ip = torch.reshape(torch.tensor(np.array(extracted_point_prompts).reshape(1, 2)), [1, 1, -1, 2])" + System.lineSeparator()
+				+ "    ip = torch.reshape(torch.tensor(np.array(extracted_point_prompts).reshape(len(extracted_point_prompts), 2)), [1, 1, -1, 2])" + System.lineSeparator()
 				+ "    il = torch.reshape(torch.tensor(np.array(extracted_point_labels)), [1, 1, -1])" + System.lineSeparator()
 				+ "    predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
 				+ "      ip," + System.lineSeparator()
@@ -530,7 +533,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
 				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
-		code += "mask = 0" + System.lineSeparator();
+		code += "mask_batch = None" + System.lineSeparator();
 		if (shmArr != null) {
 			code += "shm_mask.close()" + System.lineSeparator();
 			code += "shm_mask.unlink()" + System.lineSeparator();

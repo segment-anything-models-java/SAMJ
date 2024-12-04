@@ -48,6 +48,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 /**
@@ -582,7 +583,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		long[] dims;
 		if ((pointsList == null || pointsList.size() == 0)
 				&& (rects == null || rects.size() == 0)
-				&& rai != null && !(rai.getType() instanceof IntegerType)) {
+				&& rai != null && !(Util.getTypeFromInterval(rai) instanceof IntegerType)) {
 			throw new IllegalArgumentException("The mask provided should be of any integer type.");
 		} else if ((pointsList == null || pointsList.size() == 0)
 				&& (rects == null || rects.size() == 0)

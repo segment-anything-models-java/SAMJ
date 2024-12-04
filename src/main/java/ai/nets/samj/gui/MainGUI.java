@@ -20,6 +20,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
+import net.imglib2.util.Util;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -518,7 +519,7 @@ public class MainGUI extends JFrame {
     	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null) {
         	lyt.show(cardPanel2_2, VISIBLE_STR);
     		return;
-    	} else if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(rai.getType() instanceof IntegerType)){
+    	} else if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(Util.getTypeFromInterval(rai) instanceof IntegerType)){
         	lyt.show(cardPanel2_2, VISIBLE_STR);
     		return;
     	}

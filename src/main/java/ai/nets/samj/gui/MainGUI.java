@@ -103,7 +103,6 @@ public class MainGUI extends JFrame {
         createListeners();
         this.consumer = consumer;
         this.consumer.setCallback(consumerCallback);
-        consumerCallback.validPromptChosen(consumer.isValidPromptSelected());
         cmbImages = ImageSelectionOnlyComboBox.create(this.consumer, imageListener);
 
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
@@ -160,6 +159,8 @@ public class MainGUI extends JFrame {
 
         // Set the initial size of the frame
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE); // Width x Height
+        
+        consumerCallback.validPromptChosen(consumer.isValidPromptSelected());
 
         this.addWindowListener(new WindowAdapter() {
             @Override

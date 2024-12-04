@@ -41,6 +41,7 @@ import io.bioimage.modelrunner.apposed.appose.Environment;
 import io.bioimage.modelrunner.apposed.appose.Service;
 import io.bioimage.modelrunner.apposed.appose.Service.Task;
 import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
+import io.bioimage.modelrunner.system.PlatformDetection;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
@@ -205,7 +206,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * Close the Python process and clean the memory
 	 */
 	public void close() {
-		if (python != null) python.close();
+		if (python != null) 
+			python.close();
 	}
 	
 	/**
@@ -426,12 +428,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				throw new RuntimeException();
 			callback.updateProgress(Integer.parseInt((String) task.outputs.get("n")));
 			results = task.outputs;
-		} catch (IOException | InterruptedException | RuntimeException e) {
-			try {
-				this.shma.close();
-			} catch (IOException e1) {
-				throw new IOException(e.toString() + System.lineSeparator() + e1.toString());
-			}
+		} catch (InterruptedException | RuntimeException e) {
 			throw e;
 		}
 		List<Mask> polys = defineMask((List<List<Number>>)results.get("contours_x"), 
@@ -478,12 +475,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			else if (task.outputs.get("rle") == null)
 				throw new RuntimeException();
 			results = task.outputs;
-		} catch (IOException | InterruptedException | RuntimeException e) {
-			try {
-				this.shma.close();
-			} catch (IOException e1) {
-				throw new IOException(e.toString() + System.lineSeparator() + e1.toString());
-			}
+		} catch (InterruptedException | RuntimeException e) {
 			throw e;
 		}
 
@@ -534,6 +526,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			processPromptsBatchWithSAM(maskShma, returnAll);
 			printScript(script, "Batch of prompts inference");
 			List<Mask> polys = processAndRetrieveContours(inputs, callback);
+			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (maskShma != null)
@@ -575,6 +568,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			printScript(script, "Batch of prompts inference");
 			List<Mask> polys = processAndRetrieveContours(inputs);
 			recalculatePolys(polys, encodeCoords);
+			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
 		} catch (IOException | RuntimeException | InterruptedException ex) {
 			if (maskShma != null)

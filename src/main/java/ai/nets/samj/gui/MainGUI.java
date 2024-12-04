@@ -112,7 +112,7 @@ public class MainGUI extends JFrame {
 
         drawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         cmbModels.getButton().addActionListener(e -> toggleDrawer());
         go.addActionListener(e -> loadModel());

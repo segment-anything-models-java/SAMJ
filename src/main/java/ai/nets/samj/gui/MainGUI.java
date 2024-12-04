@@ -642,7 +642,8 @@ public class MainGUI extends JFrame {
 					CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
 		        	lyt.show(cardPanel1_2, INVISIBLE_STR);
 		        	isValidPrompt = true;
-		        	MainGUI.this.chkInstant.setEnabled(true);
+		        	if (cmbModels.getSelectedModel().isLoaded())
+		        		MainGUI.this.chkInstant.setEnabled(true);
 				} else if (!isValid && isValidPrompt) {
 					CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
 		        	lyt.show(cardPanel1_2, VISIBLE_STR);

@@ -337,6 +337,9 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	    isLoading = false;
 	    if (loadingAnimationThread != null && loadingAnimationThread.isAlive()) {
 	        loadingAnimationThread.interrupt();
+	        try {
+	        	loadingAnimationThread.join();
+	        } catch (InterruptedException e) {}
 	    }
 	}
 

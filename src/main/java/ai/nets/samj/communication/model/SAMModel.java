@@ -313,6 +313,14 @@ public abstract class SAMModel {
 			samj.close();
 		samj = null;
 	}
+	
+	/**
+	 * Check whether the model is loaded or not
+	 * @return whether the model is loaded or not
+	 */
+	public boolean isLoaded() {
+		return samj != null;
+	}
 
 	public String persistEncoding() throws IOException, InterruptedException {
 		try {

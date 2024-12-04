@@ -524,6 +524,7 @@ public class MainGUI extends JFrame {
     	}
     	lyt.show(cardPanel2_2, INVISIBLE_STR);
     	this.stopProgressBtn.setEnabled(true);
+    	consumer.setFocusedImage(this.cmbImages.getSelectedObject());
     	new Thread(() -> {
     		try {
 				cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai, batchDrawerCallback);

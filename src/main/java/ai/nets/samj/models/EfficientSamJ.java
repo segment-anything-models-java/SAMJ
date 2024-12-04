@@ -131,11 +131,11 @@ public class EfficientSamJ extends AbstractSamJ {
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
-			throw new RuntimeException();
+			throw new RuntimeException("Task canceled");
 		else if (task.status == TaskStatus.FAILED)
-			throw new RuntimeException();
+			throw new RuntimeException(task.error);
 		else if (task.status == TaskStatus.CRASHED)
-			throw new RuntimeException();
+			throw new RuntimeException(task.error);
 	}
 
 	/**

@@ -306,11 +306,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
+				throw new RuntimeException("Task canceled");
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			this.shma.close();
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			try {
@@ -335,11 +335,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
+				throw new RuntimeException("Task canceled");
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			this.shma.close();
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			try {
@@ -413,19 +413,19 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	        });
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
+				throw new RuntimeException("Task canceled");
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status != TaskStatus.COMPLETE)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.outputs.get("contours_x") == null)
-				throw new RuntimeException();
+				throw new RuntimeException("No 'contours_x' output found");
 			else if (task.outputs.get("contours_y") == null)
-				throw new RuntimeException();
+				throw new RuntimeException("No 'contours_y' output found");
 			else if (task.outputs.get("rle") == null)
-				throw new RuntimeException();
+				throw new RuntimeException("No 'rle' outputs found");
 			callback.updateProgress(Integer.parseInt((String) task.outputs.get("n")));
 			results = task.outputs;
 		} catch (InterruptedException | RuntimeException e) {
@@ -461,19 +461,19 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(script, inputs);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
+				throw new RuntimeException("Task canceled");
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status != TaskStatus.COMPLETE)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.outputs.get("contours_x") == null)
-				throw new RuntimeException();
+				throw new RuntimeException("No 'contours_x' output found");
 			else if (task.outputs.get("contours_y") == null)
-				throw new RuntimeException();
+				throw new RuntimeException("No 'outputs_y' ouptut found");
 			else if (task.outputs.get("rle") == null)
-				throw new RuntimeException();
+				throw new RuntimeException("No 'rle' outputs found");
 			results = task.outputs;
 		} catch (InterruptedException | RuntimeException e) {
 			throw e;
@@ -1177,11 +1177,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(saveEncodings);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
+				throw new RuntimeException("Task canceled");
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			throw e;
 		}
@@ -1197,11 +1197,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(setEncoding);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
+				throw new RuntimeException("Task canceled");
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			throw e;
 		}
@@ -1217,11 +1217,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(returnEncoding);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException();
+				throw new RuntimeException("Task canceled");
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException();
+				throw new RuntimeException(task.error);
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			throw e;
 		}

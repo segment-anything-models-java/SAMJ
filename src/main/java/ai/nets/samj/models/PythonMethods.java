@@ -85,7 +85,6 @@ public class PythonMethods {
 			+ "    y_contours = []" + System.lineSeparator()
 			+ "    rles = []" + System.lineSeparator()
 			+ "    sizes = []" + System.lineSeparator()
-			+ "    np.save('/home/carlos/git/test.npy', sam_result)" + System.lineSeparator()
 			+ "    for obj in labels:" + System.lineSeparator()
 			+ "        if obj.num_pixels >= at_least_of_this_size:" + System.lineSeparator()
 			+ "            x_coords,y_coords = trace_contour(obj.image, obj.num_pixels, obj.bbox[1],obj.bbox[0])" + System.lineSeparator()

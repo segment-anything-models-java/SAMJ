@@ -410,9 +410,14 @@ public class EfficientSamJ extends AbstractSamJ {
 		if (shmArr != null) {
 			code += ""
 					+ "shm_mask = shared_memory.SharedMemory(name='" + shmArr.getNameForPython() + "')" + System.lineSeparator()
-					+ "mask_batch = np.frombuffer(buffer=shm_mask.buf, dtype='" + shmArr.getOriginalDataType() + "').reshape([";
-			for (long l : shmArr.getOriginalShape()) 
+					+ "mask_batch = np.ndarray(%s, buffer=shm_mask.buf, dtype='" 
+					+ shmArr.getOriginalDataType() + "').reshape([";
+			long size = 1;
+			for (long l : shmArr.getOriginalShape()) {
 				code += l + ",";
+				size *= l;
+			}
+			code = String.format(code, size);
 			code += "])" + System.lineSeparator();
 			code += "labeled_array, num_features = label(mask_batch)" + System.lineSeparator();
 			code += "num_features -= 1" + System.lineSeparator();

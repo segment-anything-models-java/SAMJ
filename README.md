@@ -31,4 +31,5 @@ SAMJ logic depends on the size of the input image. If both sides of the input im
 
 The other operation required to create a mask is the prompt encoding. This requires the user interacts and gives a prompt, in the form of a point, a list of points or a bounding box (rectangle). The prompts are encoded, combined with the image encodings and then decoded into a mask. The process if fast and lightweight, thus it can be done in real-time at the same time that the user is providing more prompts.
 
+On the other hand, big images cannot be fully encoded at once as it would lose its resolution, leading to the smaller objects disappearing.
 

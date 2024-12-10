@@ -501,7 +501,6 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			code = String.format(code, size);
 			code += "])" + System.lineSeparator();
 			code += "labeled_array, num_features = label(mask_batch)" + System.lineSeparator();
-			code += "num_features -= 1" + System.lineSeparator();
 		}
 		code += ""
 				+ "contours_x = []" + System.lineSeparator()
@@ -523,7 +522,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 				+ "    random_positions = np.random.choice(inds[0].shape[0], n_points, replace=False)" + System.lineSeparator()
 				+ "    for pp in range(n_points):" + System.lineSeparator()
 				+ "      extracted_point_prompts += [[inds[0][random_positions[pp]], inds[1][random_positions[pp]]]]" + System.lineSeparator()
-				+ "      extracted_point_labels += [n_feat]" + System.lineSeparator()
+				+ "      extracted_point_labels += [1]" + System.lineSeparator()
 				+ "    mask, _, _ = predictor.predict(" + System.lineSeparator()
 				+ "      point_coords=np.array(extracted_point_prompts)," + System.lineSeparator()
 				+ "      point_labels=np.array(extracted_point_labels)," + System.lineSeparator()

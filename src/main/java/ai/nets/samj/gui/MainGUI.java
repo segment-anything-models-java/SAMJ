@@ -34,57 +34,57 @@ import java.util.List;
 
 public class MainGUI extends JFrame {
 
-    private static final long serialVersionUID = -797293687195076077L;
+    protected static final long serialVersionUID = -797293687195076077L;
 
-    private boolean isDrawerOpen = false;
-    private final List<SAMModel> modelList;
-    private ImageSelectionListener imageListener;
-    private ModelSelectionListener modelListener;
-    private ModelDrawerPanelListener modelDrawerListener;
-    private BatchCallback batchDrawerCallback;
-    private ConsumerCallback consumerCallback;
+    protected boolean isDrawerOpen = false;
+    protected final List<SAMModel> modelList;
+    protected ImageSelectionListener imageListener;
+    protected ModelSelectionListener modelListener;
+    protected ModelDrawerPanelListener modelDrawerListener;
+    protected BatchCallback batchDrawerCallback;
+    protected ConsumerCallback consumerCallback;
     
-    private ConsumerInterface consumer;
-    private boolean isValidPrompt = true;
+    protected ConsumerInterface consumer;
+    protected boolean isValidPrompt = true;
 
-    private JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
-    private JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
-    private JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
-    private LoadingButton go = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation_samj.gif", 20);;
-    private JButton btnBatchSAMize = new JButton("Batch SAMize");
-    private JButton close = new JButton("Close");
-    private JButton help = new JButton("Help");
-    private JButton export = new JButton("Export...");
-    private JRadioButton radioButton1;
-    private JRadioButton radioButton2;
-    private JProgressBar batchProgress = new JProgressBar();
-    private ResizableButton stopProgressBtn = new ResizableButton("■", 10, 2, 2);
-    private final ModelSelection cmbModels;
+    protected JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
+    protected JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
+    protected JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
+    protected LoadingButton go = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation_samj.gif", 20);;
+    protected JButton btnBatchSAMize = new JButton("Batch SAMize");
+    protected JButton close = new JButton("Close");
+    protected JButton help = new JButton("Help");
+    protected JButton export = new JButton("Export...");
+    protected JRadioButton radioButton1;
+    protected JRadioButton radioButton2;
+    protected JProgressBar batchProgress = new JProgressBar();
+    protected ResizableButton stopProgressBtn = new ResizableButton("■", 10, 2, 2);
+    protected final ModelSelection cmbModels;
     // TODO add information tab to cmbImages, same as cmbModels
     // TODO changes to just a combobox on december 2024
     // TODO private final ImageSelection cmbImages;
-    private final ImageSelectionOnlyComboBox cmbImages;
-    private ModelDrawerPanel drawerPanel;
-    private JPanel cardPanel;
-    private JPanel cardPanel1_2;
-    private JPanel cardPanel2_2;
+    protected final ImageSelectionOnlyComboBox cmbImages;
+    protected ModelDrawerPanel drawerPanel;
+    protected JPanel cardPanel;
+    protected JPanel cardPanel1_2;
+    protected JPanel cardPanel2_2;
 
-    private static double HEADER_VERTICAL_RATIO = 0.1;
+    protected static double HEADER_VERTICAL_RATIO = 0.1;
 
-    private static int MAIN_VERTICAL_SIZE = 400;
-    private static int MAIN_HORIZONTAL_SIZE = 250;
-    private static int DRAWER_HORIZONTAL_SIZE = 450;
+    protected static int MAIN_VERTICAL_SIZE = 400;
+    protected static int MAIN_HORIZONTAL_SIZE = 250;
+    protected static int DRAWER_HORIZONTAL_SIZE = 450;
 
-    private static String MANUAL_STR = "Manual";
-    private static String PRESET_STR = "Preset prompts";
-    private static String VISIBLE_STR = "visible";
-    private static String INVISIBLE_STR = "invisible";
+    protected static String MANUAL_STR = "Manual";
+    protected static String PRESET_STR = "Preset prompts";
+    protected static String VISIBLE_STR = "visible";
+    protected static String INVISIBLE_STR = "invisible";
 	/**
 	 * Name of the folder where the icon images for the dialog buttons are within the resources folder
 	 */
-	private static final String RESOURCES_FOLDER = "icons_samj/";
+	protected static final String RESOURCES_FOLDER = "icons_samj/";
 
-    private static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
+    protected static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
     static {
         DEFAULT_MODEL_LIST.add(new SAM2Tiny());
         DEFAULT_MODEL_LIST.add(new SAM2Small());
@@ -182,7 +182,7 @@ public class MainGUI extends JFrame {
         setVisible(true);
     }
 
-    private void setInstantPromptsEnabled(boolean enabled) {
+    protected void setInstantPromptsEnabled(boolean enabled) {
         if (enabled) {
         	consumer.enableAddingToRoiManager(this.chkRoiManager.isSelected());
             consumer.activateListeners();
@@ -191,7 +191,7 @@ public class MainGUI extends JFrame {
         }
     }
 
-    private void setTwoThirdsEnabled(boolean enabled) {
+    protected void setTwoThirdsEnabled(boolean enabled) {
         this.chkInstant.setEnabled(enabled);
         this.retunLargest.setEnabled(enabled);
         this.chkRoiManager.setEnabled(enabled);
@@ -204,7 +204,7 @@ public class MainGUI extends JFrame {
         	this.stopProgressBtn.setEnabled(enabled);
     }
 
-    private void loadModel() {
+    protected void loadModel() {
         SwingUtilities.invokeLater(() -> {
             go.setEnabled(false);
             setTwoThirdsEnabled(false);
@@ -226,13 +226,13 @@ public class MainGUI extends JFrame {
         }).start();
     }
 
-    private void close() {
+    protected void close() {
         cmbModels.unLoadModel();
         this.drawerPanel.interruptThreads();
     }
 
     // Method to create the title panel
-    private JPanel createTitlePanel() {
+    protected JPanel createTitlePanel() {
         JPanel titlePanel = new JPanel();
         titlePanel.setBackground(Color.LIGHT_GRAY);
         int height = (int) (HEADER_VERTICAL_RATIO * MAIN_VERTICAL_SIZE);
@@ -249,7 +249,7 @@ public class MainGUI extends JFrame {
     }
 
     // Method to create the center panel
-    private JPanel createCenterPanel() {
+    protected JPanel createCenterPanel() {
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new GridBagLayout());
 
@@ -278,7 +278,7 @@ public class MainGUI extends JFrame {
     }
 
     // Method to create the bottom panel
-    private JPanel createBottomPanel() {
+    protected JPanel createBottomPanel() {
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new GridBagLayout());
         bottomPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
@@ -298,7 +298,7 @@ public class MainGUI extends JFrame {
     }
 
     // Method to create the first component
-    private JPanel createFirstComponent() {
+    protected JPanel createFirstComponent() {
         JPanel firstComponent = new JPanel();
         firstComponent.setLayout(new GridBagLayout());
         firstComponent.setBorder(new LineBorder(Color.BLACK));
@@ -328,7 +328,7 @@ public class MainGUI extends JFrame {
     }
 
     // Method to create the second component
-    private JPanel createSecondComponent() {
+    protected JPanel createSecondComponent() {
         JPanel secondComponent = new JPanel();
         secondComponent.setLayout(new GridBagLayout());
         secondComponent.setBorder(new LineBorder(Color.BLACK));
@@ -464,7 +464,7 @@ public class MainGUI extends JFrame {
     }
 
     // Method to create the third component
-    private JPanel createThirdComponent() {
+    protected JPanel createThirdComponent() {
         JPanel thirdComponent = new JPanel();
         thirdComponent.setLayout(new GridBagLayout());
         thirdComponent.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
@@ -492,7 +492,7 @@ public class MainGUI extends JFrame {
         return thirdComponent;
     }
 
-    private void toggleDrawer() {
+    protected void toggleDrawer() {
         if (drawerPanel.isVisible()) {
             drawerPanel.setVisible(false);
             this.cmbModels.getButton().setText("▶");
@@ -508,7 +508,7 @@ public class MainGUI extends JFrame {
         repaint();
     }
     
-    private < T extends RealType< T > & NativeType< T > > void batchSAMize() {
+    protected < T extends RealType< T > & NativeType< T > > void batchSAMize() {
     	RandomAccessibleInterval<T> rai;
     	if (this.consumer.getFocusedImage() != this.cmbImages.getSelectedObject())
     		rai = this.consumer.getFocusedImageAsRai();
@@ -539,7 +539,7 @@ public class MainGUI extends JFrame {
     	rectPrompts.stream().forEach(pp -> consumer.deleteRectRoi(pp));
     }
 
-    private void createListeners() {
+    protected void createListeners() {
         imageListener = new ImageSelectionListener() {
             @Override
             public void modelActionsOnImageChanged() {

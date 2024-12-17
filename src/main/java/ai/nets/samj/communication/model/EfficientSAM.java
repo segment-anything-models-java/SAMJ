@@ -100,22 +100,21 @@ public class EfficientSAM extends SAMModel {
 		Objects.requireNonNull(image, "The image cannot be null.");
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
+		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
+			int idx = text.indexOf("\"responseType\": \"COMPLETION\"");
+			int idxProgress = text.indexOf(AbstractSamJ.getProgressString());
+			if (idxProgress != -1) return;
+			if (idx > 0) {
+				String regex = "\"outputs\"\\s*:\\s*\\{.*?\\}(,)?";
+		        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
+		        Matcher matcher = pattern.matcher(text);
+		        text = matcher.replaceAll("");
+			}
+			this.log.info( text );
+		};
 		if (this.samj == null)
-			samj = EfficientSamJ.initializeSam(manager);
+			samj = EfficientSamJ.initializeSam(manager, filteringLogger, false);
 		try {
-			AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
-				int idx = text.indexOf("\"responseType\": \"COMPLETION\"");
-				int idxProgress = text.indexOf(AbstractSamJ.getProgressString());
-				if (idxProgress != -1) return;
-				if (idx > 0) {
-					String regex = "\"outputs\"\\s*:\\s*\\{.*?\\}(,)?";
-			        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
-			        Matcher matcher = pattern.matcher(text);
-			        text = matcher.replaceAll("");
-				}
-				this.log.info( text );
-			};
-			this.samj.setDebugPrinter(filteringLogger);
 			this.samj.setImage(Cast.unchecked(image));;
 		} catch (IOException | InterruptedException | RuntimeException e) {
 			log.error(FULL_NAME + " experienced an error: " + e.getMessage());

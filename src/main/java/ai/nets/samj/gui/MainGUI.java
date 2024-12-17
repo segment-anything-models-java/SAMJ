@@ -179,6 +179,17 @@ public class MainGUI extends JFrame {
             	SwingUtilities.invokeLater(() -> go.setEnabled(true));
         }).start();
         // Make the frame visible
+        makeVisibleOnInstantiation();
+    }
+
+    /**
+     * The purpose of this method is two-fold: To make this JFrame visible,
+     * and to be called from default constructor of this class. So the default
+     * behaviour is that this JFrame is immediately displayed. However, if
+     * a class derived from this one needs a different behaviour, that class
+     * can override this method...
+     */
+    protected void makeVisibleOnInstantiation() {
         setVisible(true);
     }
 

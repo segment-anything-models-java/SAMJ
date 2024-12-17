@@ -157,7 +157,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
 	 * @param modelType
-	 * 	each of the possible model types (sizes) that EfficientiTSAM can have. They are the keys of
+	 * 	each of the possible model types (sizes) that EfficientViTSAM can have. They are the keys of
 	 * 	the following map {@link #EFFICIENTVITSAM_BYTE_SIZES_MAP}
 	 * @param consumer
 	 * 	an specific consumer where info about the installation is going to be communicated
@@ -191,6 +191,15 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 */
 	public static EfficientViTSamEnvManager create(Consumer<String> consumer) {
 		return create(DEFAULT_DIR, null, consumer);
+	}
+	
+	/**
+	 * 
+	 * @return which of the possible EfficientViTSAM this is. The possible variants are the 
+	 * 	keys of the following map: {@link #EFFICIENTVITSAM_BYTE_SIZES_MAP}
+	 */
+	public String getModelType() {
+		return this.modelType;
 	}
 	
 	/**

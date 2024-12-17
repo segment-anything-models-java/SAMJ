@@ -201,6 +201,14 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
+	 * 
+	 * @return which of the possible SAM2 this is. The possible variants are the keys of the following map: {@link #SAM2_BYTE_SIZES_MAP}
+	 */
+	public String getModelType() {
+		return this.modelType;
+	}
+	
+	/**
 	 * Check whether the Python environment with the corresponding packages needed to run EfficientSAM
 	 * has been installed or not. The environment folder should be named {@value #SAM2_ENV_NAME} 
 	 * @return whether the Python environment with the corresponding packages needed to run EfficientSAM

@@ -49,6 +49,8 @@ public class EfficientViTSAMXL1 extends SAMModel {
 	 * Axes order required for the input image by the model
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
+	
+	private static final String ID = "xl1";
 
 
 	/**
@@ -65,6 +67,24 @@ public class EfficientViTSAMXL1 extends SAMModel {
 		this.performanceRank = 3;
 		this.size = 814;
 		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "xl1");
+	}
+
+	/**
+	 * Create an instance of the model that loads the model and encodes an image
+	 */
+	public EfficientViTSAMXL1(EfficientViTSamEnvManager manager) {
+		this.isHeavy = false;
+		this.fullName = "EfficientViT-SAM smallest version (XL1)";
+		this.githubLink = "https://github.com/mit-han-lab/efficientvit";
+		this.githubName = "mit-han-lab/efficientvit";
+		this.paperName = "EfficientViT-SAM: Accelerated Segment Anything Model Without Performance Loss";
+		this.paperLink = "https://arxiv.org/pdf/2402.05008.pdf";
+		this.speedRank = 3;
+		this.performanceRank = 3;
+		this.size = 814;
+		if (!manager.getModelType().equals(ID))
+			throw new IllegalArgumentException("The model type should be: " + ID + " vs manager model type: " + manager.getModelType());
+		this.manager = manager;
 	}
 	
 	@Override

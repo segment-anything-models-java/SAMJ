@@ -69,6 +69,26 @@ public class SAM2Large extends SAMModel {
 		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
 		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, ID);
 	}
+	
+
+	/**
+	 * Create an instance of the model that loads the model and encodes an image
+	 */
+	public SAM2Large(Sam2EnvManager manager) {
+		this.isHeavy = true;
+		this.fullName = "SAM-2: Segment Anything Model 2 (Large)";
+		this.githubLink = "https://github.com/facebookresearch/segment-anything-2";
+		this.paperLink = "https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/";
+		this.githubName = "facebookresearch/segment-anything-2";
+		this.paperName = "SAM 2: Segment Anything in Images and Videos";
+		this.speedRank = 4;
+		this.performanceRank = 1;
+		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		if (!manager.getModelType().equals(ID))
+			throw new IllegalArgumentException("The model type should be: " + ID + " vs manager model type: " + manager.getModelType());
+		this.manager = manager;
+	}
 
 	@Override
 	/**

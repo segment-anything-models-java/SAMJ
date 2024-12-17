@@ -49,7 +49,7 @@ public class EfficientSAM extends SAMModel {
 	 */
 	public static final String INPUT_IMAGE_AXES = "xyc";
 	
-	
+
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
@@ -65,6 +65,22 @@ public class EfficientSAM extends SAMModel {
 		this.performanceRank = 2;
 		this.size = 105.7;
 		this.manager = EfficientSamEnvManager.create();
+	}
+
+	/**
+	 * Create an instance of the model that loads the model and encodes an image
+	 */
+	public EfficientSAM(EfficientSamEnvManager manager) {
+		this.isHeavy = true;
+		this.fullName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything";
+		this.githubLink = "https://github.com/yformer/EfficientSAM";
+		this.paperLink = "https://arxiv.org/pdf/2312.00863.pdf";
+		this.githubName = "yformer/EfficientSAM";
+		this.paperName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment";
+		this.speedRank = 5;
+		this.performanceRank = 2;
+		this.size = 105.7;
+		this.manager = manager;
 	}
 
 	@Override

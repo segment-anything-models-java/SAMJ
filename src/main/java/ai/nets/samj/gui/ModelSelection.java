@@ -51,6 +51,13 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements ItemLi
 		return false;
 	}
 
+	protected SAMModel getModelByName(String modelName) {
+		for (SAMModel m : this.models) {
+			if (m.getName().equals(modelName)) return m;
+		}
+		return null;
+	}
+
 	protected JButton getButton() {
 		return this.btn;
 	}

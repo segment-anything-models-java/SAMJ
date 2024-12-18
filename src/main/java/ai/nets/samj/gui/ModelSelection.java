@@ -44,7 +44,14 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements PopupM
 	protected SAMModel getSelectedModel() {
 		return selected;
 	}
-	
+
+	protected boolean isModelInstalled(String modelName) {
+		for (SAMModel m : this.models) {
+			if (m.getName().equals(modelName)) return m.isInstalled();
+		}
+		return false;
+	}
+
 	protected JButton getButton() {
 		return this.btn;
 	}

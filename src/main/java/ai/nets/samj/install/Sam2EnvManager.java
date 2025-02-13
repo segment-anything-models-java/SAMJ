@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -41,8 +42,7 @@ import ai.nets.samj.gui.tools.Files;
 import ai.nets.samj.models.Sam2;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallerUtils;
-import io.bioimage.modelrunner.bioimageio.download.DownloadModel;
+import io.bioimage.modelrunner.download.FileDownloader;
 
 /*
  * Class that is manages the installation of SAM and EfficientSAM together with Python, their corresponding environments
@@ -266,25 +266,19 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 			return;
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING SAM2 WEIGHTS (" + modelType + ")");
         try {
-    		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", DownloadModel.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toFile();
+    		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();
-    		URL url = MambaInstallerUtils.redirectedURL(new URL(String.format(SAM2_URL, modelType)));
+    		URL url = FileDownloader.redirectedURL(new URL(String.format(SAM2_URL, modelType)));
     		Thread parentThread = Thread.currentThread();
-    		Thread downloadThread = new Thread(() -> {
-    			try {
-    				downloadFile(url.toString(), file, parentThread);
-    			} catch (IOException | URISyntaxException | InterruptedException e) {
-    				e.printStackTrace();
-    			}
-            });
-    		downloadThread.start();
-    		long size = DownloadModel.getFileSize(url);
-        	while (downloadThread.isAlive()) {
-        		try {Thread.sleep(280);} catch (InterruptedException e) {break;}
-        		double progress = Math.round( (double) 100 * file.length() / size ); 
-        		if (progress < 0 || progress > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: UNKNOWN%");
-        		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: " + progress + "%");
-        	}
+    		FileDownloader fd = new FileDownloader(url.toString(), file, false);
+    		long size = fd.getOnlineFileSize();
+    		Consumer<Double> dConsumer = (d) -> {
+    			d = (double) (Math.round(d * 1000) / 10);
+    			if (d < 0 || d > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: UNKNOWN%");
+        		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: " + d + "%");
+    		};
+    		fd.setPartialProgressConsumer(dConsumer);
+    		fd.download(parentThread);    		    		
         	if (size != file.length())
         		throw new IOException("Model SAM2" + modelType + " was not correctly downloaded");
         } catch (IOException ex) {
@@ -294,7 +288,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
         } catch (URISyntaxException e1) {
             passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
             throw new IOException("Unable to find the download URL for SAM2 " + modelType + ": " + String.format(SAM2_URL, modelType));
-
+		} catch (ExecutionException e) {
+            thread.interrupt();
+            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
+            throw new RuntimeException(e);
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS INSTALLED");
@@ -401,7 +398,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 */
 	public String getModelWeigthsName() {
 		try {
-			return DownloadModel.getFileNameFromURLString(String.format(SAM2_URL, modelType));
+			return FileDownloader.getFileNameFromURLString(String.format(SAM2_URL, modelType));
 		} catch (MalformedURLException e) {
 			return String.format(SAM2_FNAME, modelType);
 		}
@@ -411,7 +408,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	public String getModelWeigthPath() {
 		File file;
 		try {
-			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", DownloadModel.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toFile();
+			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toFile();
 		} catch (MalformedURLException e) {
 			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format(SAM2_FNAME, modelType)).toFile();
 		}

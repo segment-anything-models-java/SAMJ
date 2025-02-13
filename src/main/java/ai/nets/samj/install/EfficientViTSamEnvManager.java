@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -46,8 +47,7 @@ import ai.nets.samj.gui.tools.Files;
 import ai.nets.samj.models.EfficientViTSamJ;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallerUtils;
-import io.bioimage.modelrunner.bioimageio.download.DownloadModel;
+import io.bioimage.modelrunner.download.FileDownloader;
 
 /*
  * Class that is manages the installation of SAM and EfficientSAM together with Python, their corresponding environments
@@ -272,25 +272,19 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 			return;
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTVITSAM WEIGHTS (" + modelType + ")");
         try {
-    		File file = Paths.get(path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", DownloadModel.getFileNameFromURLString(String.format(EVITSAM_URL, modelType))).toFile();
+    		File file = Paths.get(path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EVITSAM_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();
-    		URL url = MambaInstallerUtils.redirectedURL(new URL(String.format(EVITSAM_URL, modelType)));
+    		URL url = FileDownloader.redirectedURL(new URL(String.format(EVITSAM_URL, modelType)));
     		Thread parentThread = Thread.currentThread();
-    		Thread downloadThread = new Thread(() -> {
-    			try {
-    				downloadFile(url.toString(), file, parentThread);
-    			} catch (IOException | URISyntaxException | InterruptedException e) {
-    				e.printStackTrace();
-    			}
-            });
-    		downloadThread.start();
-    		long size = DownloadModel.getFileSize(url);
-        	while (downloadThread.isAlive()) {
-        		try {Thread.sleep(280);} catch (InterruptedException e) {break;}
-        		double progress = Math.round( (double) 100 * file.length() / size ); 
-        		if (progress < 0 || progress > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: UNKNOWN%");
-        		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: " + progress + "%");
-        	}
+    		FileDownloader fd = new FileDownloader(url.toString(), file, false);
+    		long size = fd.getOnlineFileSize();
+    		Consumer<Double> dConsumer = (d) -> {
+    			d = (double) (Math.round(d * 1000) / 10);
+    			if (d < 0 || d > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: UNKNOWN%");
+        		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: " + d + "%");
+    		};
+    		fd.setPartialProgressConsumer(dConsumer);
+    		fd.download(parentThread);
         	if (size != file.length())
         		throw new IOException("Model EfficientViTSAM-" + modelType + " was not correctly downloaded");
         } catch (IOException ex) {
@@ -300,7 +294,10 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
         } catch (URISyntaxException e1) {
             passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EFFICIENTVITSAM WEIGHTS INSTALLATION");
             throw new IOException("Unable to find the download URL for EfficientViTSAM " + modelType + ": " + String.format(EVITSAM_URL, modelType));
-
+		} catch (ExecutionException e) {
+            thread.interrupt();
+            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EFFICIENTVITSAM WEIGHTS INSTALLATION");
+            throw new RuntimeException(e);
 		}
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS INSTALLED");

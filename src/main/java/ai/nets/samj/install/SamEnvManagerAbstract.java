@@ -24,11 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
-import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,9 +32,7 @@ import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import io.bioimage.modelrunner.engine.installation.FileDownloader;
 import io.bioimage.modelrunner.system.PlatformDetection;
-import io.bioimage.modelrunner.utils.CommonUtils;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
@@ -227,42 +221,6 @@ public abstract class SamEnvManagerAbstract {
 	 */
 	public String getEnvsPath() {
 		return Paths.get(path, "envs").toFile().getAbsolutePath();
-	}
-	
-	/**
-	 * Method that downloads a file
-	 * @param downloadURL
-	 * 	url of the file to be downloaded
-	 * @param targetFile
-	 * 	file where the file from the url will be downloaded too
-	 * @param parentThread
-	 * 	main thread that launched the current one where the download is happening
-	 * @throws IOException if there si any error downloading the file
-	 * @throws URISyntaxException if there is any error in the URL syntax
-	 * @throws InterruptedException if the parent thread is stopped and the download stopped
-	 */
-	public void downloadFile(String downloadURL, File targetFile, Thread parentThread) 
-								throws IOException, URISyntaxException, InterruptedException {
-		FileOutputStream fos = null;
-		ReadableByteChannel rbc = null;
-		try {
-			URL website = new URL(downloadURL);
-	        HttpURLConnection conn = (HttpURLConnection) website.openConnection();
-	        conn.setRequestMethod("GET");
-	        conn.setRequestProperty("User-Agent", CommonUtils.getJDLLUserAgent());
-	        rbc = Channels.newChannel(conn.getInputStream());
-			// TODO rbc = Channels.newChannel(website.openStream());
-			// Create the new model file as a zip
-			fos = new FileOutputStream(targetFile);
-			// Send the correct parameters to the progress screen
-			FileDownloader downloader = new FileDownloader(rbc, fos);
-			downloader.call(parentThread);
-		} finally {
-			if (fos != null)
-				fos.close();
-			if (rbc != null)
-				rbc.close();
-		}
 	}
 	
 	/**

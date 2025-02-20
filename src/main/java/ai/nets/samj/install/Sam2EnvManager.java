@@ -45,7 +45,7 @@ import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
 import io.bioimage.modelrunner.download.FileDownloader;
 
 /*
- * Class that is manages the installation of SAM and EfficientSAM together with Python, their corresponding environments
+ * Class that is manages the installation of SAM and SAM2 together with Python, their corresponding environments
  * and dependencies
  * 
  * @author Carlos Javier Garcia Lopez de Haro
@@ -109,11 +109,11 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		SAM2_1_BYTE_SIZES_MAP.put("large", (long) 898_083_611);
 	}
 	/**
-	 * Name of the environment that contains the code and weigths to run EfficientSAM models
+	 * Name of the environment that contains the code and weigths to run SAM2 models
 	 */
 	final static public String SAM2_ENV_NAME = "sam2";
 	/**
-	 * Name of the folder that contains the code and weigths for EfficientSAM models
+	 * Name of the folder that contains the code and weigths for SAM2 models
 	 */
 	final static public String SAM2_NAME = "sam2";
 	/**
@@ -209,9 +209,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Check whether the Python environment with the corresponding packages needed to run EfficientSAM
+	 * Check whether the Python environment with the corresponding packages needed to run SAM2
 	 * has been installed or not. The environment folder should be named {@value #SAM2_ENV_NAME} 
-	 * @return whether the Python environment with the corresponding packages needed to run EfficientSAM
+	 * @return whether the Python environment with the corresponding packages needed to run SAM2
 	 * has been installed or not
 	 */
 	public boolean checkSAMDepsInstalled() {
@@ -231,7 +231,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * 
-	 * @return whether the weights needed to run EfficientSAM Small (the standard EfficientSAM) have been 
+	 * @return whether the weights needed to run SAM2 Small (the standard SAM2) have been 
 	 * downloaded and installed or not
 	 */
 	public boolean checkModelWeightsInstalled() {
@@ -245,7 +245,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Install the weights of EfficientSAM Small.
+	 * Install the weights of SAM2 Small.
 	 * Does not overwrite the weights file if it already exists.
 	 */
 	public void installModelWeigths() throws IOException, InterruptedException {
@@ -253,7 +253,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Install the weights of EfficientSAM Small.
+	 * Install the weights of SAM2 Small.
 	 * @param force
 	 * 	whether to overwrite the weights file if it already exists
 	 * @throws InterruptedException if the download of weights is interrupted
@@ -274,8 +274,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
     		long size = fd.getOnlineFileSize();
     		Consumer<Double> dConsumer = (d) -> {
     			d = (double) (Math.round(d * 1000) / 10);
-    			if (d < 0 || d > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: UNKNOWN%");
-        		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTVITSAM WEIGHTS DOWNLOAD: " + d + "%");
+    			if (d < 0 || d > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: UNKNOWN%");
+        		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: " + d + "%");
     		};
     		fd.setPartialProgressConsumer(dConsumer);
     		fd.download(parentThread);    		    		
@@ -298,7 +298,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Install the Python environment and dependencies required to run an EfficientSAM model.
+	 * Install the Python environment and dependencies required to run an SAM2 model.
 	 * If Micromamba is not installed in the path of the {@link Sam2EnvManager} instance, this method
 	 * installs it.
 	 * 
@@ -313,7 +313,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Install the Python environment and dependencies required to run an EfficientSAM model.
+	 * Install the Python environment and dependencies required to run an SAM2 model.
 	 * If Micromamba is not installed in the path of the {@link Sam2EnvManager} instance, this method
 	 * installs it.
 	 * @param force
@@ -362,8 +362,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Install all the requirements to run EfficientSAM. First, checks if micromamba is installed, if not installs it;
-	 * then checks if the Python environment and packages needed to run EfficientSAM are installed and if not installs it
+	 * Install all the requirements to run SAM2. First, checks if micromamba is installed, if not installs it;
+	 * then checks if the Python environment and packages needed to run SAM2 are installed and if not installs it
 	 * and finally checks whether the weights are installed, and if not installs them too.
 	 * 
 	 * 
@@ -384,7 +384,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * 
-	 * @return the the path to the Python environment needed to run EfficientSAM
+	 * @return the the path to the Python environment needed to run SAM2
 	 */
 	public String getModelEnv() {
 		File file = Paths.get(path, "envs", SAM2_ENV_NAME).toFile();
@@ -394,7 +394,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * 
-	 * @return the official name of the EfficientSAM Small weights
+	 * @return the official name of the SAM2 Small weights
 	 */
 	public String getModelWeigthsName() {
 		try {

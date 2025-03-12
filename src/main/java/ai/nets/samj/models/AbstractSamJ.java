@@ -507,6 +507,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		if ((pointsList == null || pointsList.size() == 0) && (rects == null || rects.size() == 0) && (rai == null))
 			return new ArrayList<Mask>();
 		checkPrompts(pointsList, rects, rai);
+		
+		if ((img.dimensionsAsLongArray()[0] > 512 || img.dimensionsAsLongArray()[1] > 512)
+				&& ((encodeCoords[0] != 0 || encodeCoords[1] != 0)
+				    ||(targetDims[0] != img.dimensionsAsLongArray()[0] || targetDims[1] != img.dimensionsAsLongArray()[1]))) {
+			this.encodeCoords = new long[] {0, 0, img.dimensionsAsLongArray()[0], img.dimensionsAsLongArray()[1]}
+			reencodeCrop(null);
+		}
 
 		// TODO adapt to reencoding for big images, ideally it should process points close together together
 		pointsList = adaptPointPrompts(pointsList);

@@ -511,7 +511,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		if ((img.dimensionsAsLongArray()[0] > 512 || img.dimensionsAsLongArray()[1] > 512)
 				&& ((encodeCoords[0] != 0 || encodeCoords[1] != 0)
 				    ||(targetDims[0] != img.dimensionsAsLongArray()[0] || targetDims[1] != img.dimensionsAsLongArray()[1]))) {
-			this.encodeCoords = new long[] {0, 0, img.dimensionsAsLongArray()[0], img.dimensionsAsLongArray()[1]}
+			this.encodeCoords = new long[] {0, 0, img.dimensionsAsLongArray()[0], img.dimensionsAsLongArray()[1]};
 			reencodeCrop(null);
 		}
 

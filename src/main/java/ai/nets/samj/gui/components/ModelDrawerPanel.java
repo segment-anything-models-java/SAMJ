@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -50,7 +52,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF", 200, 200);
     
     private SAMModel model;
-    private ModelDrawerPanelListener listener;
+    private final List<ModelDrawerPanelListener> listeners;
     private int hSize;
     private Thread modelInstallThread;
     private Thread infoThread;
@@ -69,7 +71,8 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	
 	private ModelDrawerPanel(int hSize, ModelDrawerPanelListener listener) {
 		this.hSize = hSize;
-		this.listener = listener;
+		this.listeners = new ArrayList<>(5);
+		this.listeners.add(listener);
 		createDrawerPanel();
 		this.install.addActionListener(this);
 		this.uninstall.addActionListener(this);
@@ -180,7 +183,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	}
 	
 	private void installModel() {
-		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
+		SwingUtilities.invokeLater(() -> listeners.forEach(l -> l.setGUIEnabled(false)));
 		SwingUtilities.invokeLater(() -> install.setEnabled(false));
 		modelInstallThread = new Thread(() ->{
 			try {
@@ -190,7 +193,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 				SwingUtilities.invokeLater(() -> {
 					this.setInfo();
 			    	setButtons();
-					listener.setGUIEnabled(true);
+					listeners.forEach(l -> l.setGUIEnabled(true));
 				});
 			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException
 					| MambaInstallException e) {
@@ -198,7 +201,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 				SwingUtilities.invokeLater(() -> {
 					this.setInfo();
 			    	setButtons();
-					listener.setGUIEnabled(true);
+					listeners.forEach(l -> l.setGUIEnabled(true));
 				});
 			}
 		});
@@ -292,7 +295,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     }
 	
 	private void uninstallModel() {
-		SwingUtilities.invokeLater(() -> listener.setGUIEnabled(false));
+		SwingUtilities.invokeLater(() -> listeners.forEach(l -> l.setGUIEnabled(false)));
 		SwingUtilities.invokeLater(() -> uninstall.setEnabled(false));
 	    startLoadingAnimation("Uninstalling model");
 		modelInstallThread = new Thread(() ->{
@@ -301,7 +304,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 			SwingUtilities.invokeLater(() -> {
 				this.setInfo();
 		    	setButtons();
-				listener.setGUIEnabled(true);
+				listeners.forEach(l -> l.setGUIEnabled(true));
 			});
 		});
 		modelInstallThread.start();
@@ -358,4 +361,10 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	    void setGUIEnabled(boolean enabled);
 	}
 
+	public void addModelDrawerPanelListener(ModelDrawerPanelListener listener) {
+		 this.listeners.add(listener);
+	}
+	public void removeModelDrawerPanelListener(ModelDrawerPanelListener listener) {
+		this.listeners.remove(listener);
+	}
 }

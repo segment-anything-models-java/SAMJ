@@ -20,31 +20,37 @@
 package ai.nets.samj.gui.tools;
 
 import java.awt.Desktop;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.io.IOException;
 
 /**
  * Class that contains helper tools for SAMJ
  * @author Daniel Sage
  * @author Carlos Garcia
+ * @author Vladimir Ulman
  */
 public class Tools {
+	public static final String URL_WITH_DEFAULT_IJ_HELP = "https://github.com/segment-anything-models-java/SAMJ-IJ";
 
 	/**
-	 * Method that opens a website where there is some documentation about SAMJ
-	 * @return true if the method was able to access the website or false otherwise
+	 * Opens user's default desktop web browser on the given 'url'.
 	 */
-	static public boolean help() {
-		String url = "https://github.com/segment-anything-models-java/SAMJ-IJ"; 
-		Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
-		if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
-			try {
-				desktop.browse(new URL(url).toURI());
-				return true;
+	public static void openUrlInWebBrowser(final String url) {
+		final String myOS = System.getProperty("os.name").toLowerCase();
+		try {
+			if (myOS.contains("mac")) {
+				Runtime.getRuntime().exec("open "+url);
 			}
-			catch (Exception e) {
-				e.printStackTrace();
+			else if (myOS.contains("nux") || myOS.contains("nix")) {
+				Runtime.getRuntime().exec("xdg-open "+url);
 			}
-		}
-		return false;
+			else if (Desktop.isDesktopSupported()) {
+				Desktop.getDesktop().browse(new URI(url));
+			}
+			else {
+				System.out.println("Please, open this URL yourself: "+url);
+			}
+		} catch (IOException | URISyntaxException ignored) {}
 	}
 }

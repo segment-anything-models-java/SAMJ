@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.EfficientSamJ;
 import ai.nets.samj.install.EfficientSamEnvManager;
+import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.ui.SAMJLogger;
 
 /**
@@ -69,6 +70,9 @@ public class EfficientSAM extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @param manager
+	 * 	the model manager that contains the info about where the model
+	 * 	environment and model weights are installed
 	 */
 	public EfficientSAM(EfficientSamEnvManager manager) {
 		this.isHeavy = true;

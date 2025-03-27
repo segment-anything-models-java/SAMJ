@@ -72,6 +72,9 @@ public class SAM2Tiny extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @param manager
+	 * 	the model manager {@link Sam2EnvManager} that contains the info about where the model
+	 * 	environment and model weights are installed
 	 */
 	public SAM2Tiny(Sam2EnvManager manager) {
 		this.isHeavy = false;

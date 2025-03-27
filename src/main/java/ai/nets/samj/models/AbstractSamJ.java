@@ -243,7 +243,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @param designationOfTheScript
 	 * 	the name (or some string to design) of the text that is going to be printed
 	 */
-	public <T extends RealType<T> & NativeType<T>> void printScript(final String script, final String designationOfTheScript) {
+	public void printScript(final String script, final String designationOfTheScript) {
 		if (!isDebugging) return;
 		debugPrinter.printText("START: =========== "+designationOfTheScript+" ===========");
 		debugPrinter.printText(LocalDateTime.now().toString());
@@ -883,7 +883,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 
 	 * @param <T>
 	 * 	ImgLib2 datatype of the mask
-	 * @param img
+	 * @param rai
 	 * 	mask used as the prompt
 	 * @param returnAll
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
@@ -912,6 +912,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return not;
 	}
 	
+	/**
+	 * 
+	 * @return a rectangle with the are that is currently encoded. This is the area where annotations can be
+	 * created in real time
+	 */
 	public Rectangle getCurrentlyEncodedArea() {
 		Rectangle alreadyEncoded;
 		alreadyEncoded = new Rectangle((int) encodeCoords[0], (int) encodeCoords[1], 

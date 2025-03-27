@@ -40,8 +40,6 @@ public abstract class ComboBoxItem {
     /**
      * An object that associates a unique identifier with an Object.
      * The unique identifier cannot be -1, as it is reserved for empty objects
-     * @param uniqueID
-     * 	the unique identifier
      * @param seq
      * 	the object
      */

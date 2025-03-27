@@ -35,6 +35,8 @@ public class Tools {
 
 	/**
 	 * Opens user's default desktop web browser on the given 'url'.
+	 * @param url 
+	 * 	the url of interest as a String
 	 */
 	public static void openUrlInWebBrowser(final String url) {
 		final String myOS = System.getProperty("os.name").toLowerCase();

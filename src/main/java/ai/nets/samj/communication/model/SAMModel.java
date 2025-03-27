@@ -132,6 +132,9 @@ public abstract class SAMModel {
 
 	/**
 	 * Instantiate a SAM based model. Provide also an image that will be encoded by the model encoder
+	 * @param <T>
+	 * 	ImgLib2 datatype of the image
+	 * 
 	 * @param image
 	 * 	the image of interest for segmentation or annotation
 	 * @param useThisLoggerForIt
@@ -322,6 +325,15 @@ public abstract class SAMModel {
 		return samj != null;
 	}
 
+	/**
+	 * Decide to maintain the encoded area in memory and not deleting it as it is done usually.
+	 * Usually when we want to switch between the same encoded areas many times and we want to avoid 
+	 * re-encoding
+	 * 
+	 * @return the name given to the encoded area
+	 * @throws IOException if it is not possible to maintain it
+	 * @throws InterruptedException if the connection with Python is lost
+	 */
 	public String persistEncoding() throws IOException, InterruptedException {
 		try {
 			return samj.persistEncoding();
@@ -331,15 +343,31 @@ public abstract class SAMModel {
 		}
 	}
 
+	/**
+	 * Select the name of the encoded image or part of the image that we want to use now.
+	 * Useful for when we have encoded various parts of the image and we want to switch between them
+	 * without having to reencode
+	 * @param encodingName
+	 * 	the unique name given to the encoded area that we want
+	 * @throws IOException if there is no encoded area by the wanted name
+	 * @throws InterruptedException if the connection with Python is interrupted abruptly
+	 */
 	public void selectEncoding(String encodingName) throws IOException, InterruptedException {
 		try {
 			samj.selectEncoding(encodingName);
 		} catch (IOException | InterruptedException | RuntimeException e) {
-			log.error(getName()+", unable to persist the encoding named '" + encodingName + "': "+e.getMessage());
+			log.error(getName()+", unable to fetch the encoding named '" + encodingName + "': "+e.getMessage());
 			throw e;
 		}
 	}
 
+	/**
+	 * Deelte from memory the encoding selected
+	 * @param encodingName
+	 * 	the name of the name that we want to delete
+	 * @throws IOException if the name provided does not correspond to an encoding
+	 * @throws InterruptedException if the connection with Python is lost
+	 */
 	public void deleteEncoding(String encodingName) throws IOException, InterruptedException {
 		try {
 			samj.deleteEncoding(encodingName);

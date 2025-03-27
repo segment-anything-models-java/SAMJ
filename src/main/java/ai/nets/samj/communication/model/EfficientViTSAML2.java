@@ -54,9 +54,6 @@ public class EfficientViTSAML2 extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
-	 * @param manager
-	 * 	the model manager that contains the info about where the model
-	 * 	environment and model weights are installed
 	 */
 	public EfficientViTSAML2() {
 		this.isHeavy = false;
@@ -73,6 +70,9 @@ public class EfficientViTSAML2 extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @param manager
+	 * 	the model manager that contains the info about where the model
+	 * 	environment and model weights are installed
 	 */
 	public EfficientViTSAML2(EfficientViTSamEnvManager manager) {
 		this.isHeavy = false;

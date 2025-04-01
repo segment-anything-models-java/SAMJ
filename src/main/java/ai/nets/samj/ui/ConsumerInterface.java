@@ -101,6 +101,11 @@ public abstract class ConsumerInterface {
 	public abstract void deleteRectRoi(Rectangle rect);
 
 	public abstract boolean isValidPromptSelected();
+
+	/**
+	 * Notify when the user has clicked on the button batchSAMIZe
+	 */
+	public abstract void notifyBatchSamize();
 	
 	public void setModel(SAMModel model) {
 		this.selectedModel = model;

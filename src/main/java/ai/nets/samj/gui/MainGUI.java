@@ -540,6 +540,7 @@ public class MainGUI extends JFrame {
     	consumer.setFocusedImage(this.cmbImages.getSelectedObject());
     	new Thread(() -> {
     		try {
+    			consumer.notifyBatchSamize();
 				cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai, batchDrawerCallback);
 			} catch (IOException | RuntimeException | InterruptedException e) {
 				e.printStackTrace();

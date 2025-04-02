@@ -80,6 +80,8 @@ public abstract class ConsumerInterface {
 
 	public abstract Object getFocusedImage();
 
+	public abstract String getFocusedImageName();
+
 	public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getFocusedImageAsRai();
 	
 	public abstract List<int[]> getPointRoisOnFocusImage();
@@ -104,8 +106,13 @@ public abstract class ConsumerInterface {
 
 	/**
 	 * Notify when the user has clicked on the button batchSAMIZe
+	 * 
+	 * @param modelName
+	 * 	the model that is going to be used
+	 * @param maskPrompt
+	 * 	the name of the image that contained the prompts wanted
 	 */
-	public abstract void notifyBatchSamize();
+	public abstract void notifyBatchSamize(String modelName, String maskPrompt);
 	
 	public void setModel(SAMModel model) {
 		this.selectedModel = model;

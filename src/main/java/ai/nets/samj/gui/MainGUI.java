@@ -84,7 +84,7 @@ public class MainGUI extends JFrame {
 	 */
 	protected static final String RESOURCES_FOLDER = "icons_samj/";
 
-    protected static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
+    public static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
     static {
         DEFAULT_MODEL_LIST.add(new SAM2Tiny());
         DEFAULT_MODEL_LIST.add(new SAM2Small());

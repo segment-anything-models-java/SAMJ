@@ -110,6 +110,8 @@ public class MainGUI extends JFrame {
         this.consumer.setGuiCallback(() -> {
 	            setTwoThirdsEnabled(false);
 	            cmbImages.updateList();
+	            if (cmbImages.getSelectedObject() == null)
+	            	return;
 	            go.setEnabled(false);
 	            go.showAnimation(true);
 	            new Thread(() -> {
@@ -575,6 +577,10 @@ public class MainGUI extends JFrame {
                 consumer.deactivateListeners();
                 consumer.deselectImage();
             	setTwoThirdsEnabled(false);
+            	if (MainGUI.this.cmbImages.getSelectedObject() == null) {
+            		go.setEnabled(false);
+            		return;
+            	}
                 if (go.isEnabled())
                 	return;
                 go.showAnimation(true);

@@ -55,6 +55,8 @@ public class ImageSelectionOnlyComboBox extends ComboBoxComp<ComboBoxItem> imple
 	        DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
 	        if (selected != null && objects.length != 0)
 	        	comboBoxModel.setSelectedItem(selected);
+	        if (objects.length == 0)
+	        	selected = null;
 	        this.cmbBox.setModel(comboBoxModel);
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -70,7 +72,12 @@ public class ImageSelectionOnlyComboBox extends ComboBoxComp<ComboBoxItem> imple
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 		try {
 			ComboBoxItem item = (ComboBoxItem) this.cmbBox.getSelectedItem();
-			if (selected == null || item == null || !selected.getId().equals(item.getId())) {
+			if ((selected == null && item != null) || (selected != null && item == null)
+					|| (selected != null && item != null && !selected.getId().equals(item.getId()))) {
+				listener.modelActionsOnImageChanged();
+				listener.imageActionsOnImageChanged();
+			} else if (selected == null && item == null) {
+				selected = null;
 				listener.modelActionsOnImageChanged();
 				listener.imageActionsOnImageChanged();
 			}

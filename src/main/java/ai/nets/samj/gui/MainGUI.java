@@ -102,12 +102,23 @@ public class MainGUI extends JFrame {
 
         createListeners();
         this.consumer = consumer;
-        this.consumer.setCallback(consumerCallback);
         cmbImages = ImageSelectionOnlyComboBox.create(this.consumer, imageListener);
-
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
         else this.modelList = modelList;
         cmbModels = ModelSelection.create(this.modelList, modelListener);
+        
+        this.consumer.setGuiCallback(() -> {
+	            setTwoThirdsEnabled(false);
+	            cmbImages.updateList();
+	            go.setEnabled(false);
+	            go.showAnimation(true);
+	            new Thread(() -> {
+	                go.setEnabled(cmbModels.getSelectedModel().isInstalled());
+	                go.showAnimation(false);
+	            }).start();
+			});
+        this.consumer.setCallback(consumerCallback);
+
         
 
         drawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);

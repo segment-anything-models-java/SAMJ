@@ -23,6 +23,8 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.List;
 
+import javax.security.auth.callback.Callback;
+
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.components.ComboBoxItem;
@@ -44,6 +46,8 @@ public abstract class ConsumerInterface {
 		void validPromptChosen(boolean isValid);
 		
 		}
+	
+	protected Runnable guiCallback;
 	
 	protected ConsumerCallback callback;
 
@@ -116,6 +120,10 @@ public abstract class ConsumerInterface {
 	
 	public void setModel(SAMModel model) {
 		this.selectedModel = model;
+	}
+	
+	public void setGuiCallback(Runnable guiCallback) {
+		this.guiCallback = guiCallback;
 	}
 	
 	public void setCallback(ConsumerCallback callback) {

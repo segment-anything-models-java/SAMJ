@@ -46,9 +46,8 @@ public class ImageSelectionOnlyComboBox extends ComboBoxComp<ComboBoxItem> imple
 	protected <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> getSelectedRai() {
 		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getImageAsImgLib2();
 	}
-
-	@Override
-	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+	
+	protected void updateList() {
 		try {
 	        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
 	        ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
@@ -60,6 +59,11 @@ public class ImageSelectionOnlyComboBox extends ComboBoxComp<ComboBoxItem> imple
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	@Override
+	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+		updateList();
 	}
 
 	@Override

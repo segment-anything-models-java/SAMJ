@@ -77,7 +77,9 @@ public abstract class SamEnvManagerAbstract {
 	/**
 	 * Default directory where micromamba is installed and where all the environments are created
 	 */
-	final static public String DEFAULT_DIR = new File("appose_x86_64").getAbsolutePath();
+	final static public String DEFAULT_DIR = new File("appose_"
+			+ ((!PlatformDetection.isMacOS() || !PlatformDetection.isUsingRosseta()) ? PlatformDetection.getArch()
+			: PlatformDetection.ARCH_ARM64 )).getAbsolutePath();
 
 	
 	public abstract boolean checkEverythingInstalled();

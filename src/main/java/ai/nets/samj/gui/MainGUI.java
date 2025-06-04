@@ -244,6 +244,7 @@ public class MainGUI extends JFrame {
                 cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected());
                 setTwoThirdsEnabled(true);
             } catch (IOException | RuntimeException | InterruptedException ex) {
+                go.setEnabled(true);
                 ex.printStackTrace();
             }
             this.go.showAnimation(false);

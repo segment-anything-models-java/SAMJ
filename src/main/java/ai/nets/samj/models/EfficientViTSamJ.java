@@ -83,7 +83,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			+ "from scipy.ndimage import binary_fill_holes" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
 			+ "import os" + System.lineSeparator()
-			+ "os.chdir(r'%s')" + System.lineSeparator()
+			+ "sys.path.append(r'%s')" + System.lineSeparator()
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
 			+ "task.update('import sam')" + System.lineSeparator()
 			+ "from efficientvit.models.efficientvit import EfficientViTSam, %s" + System.lineSeparator()

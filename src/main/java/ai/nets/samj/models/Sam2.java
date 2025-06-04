@@ -75,6 +75,12 @@ public class Sam2 extends AbstractSamJ {
 			+ "from skimage import measure" + System.lineSeparator()
 			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
+			+ "device = 'cpu'" + System.lineSeparator()
+			+ ((!IS_APPLE_SILICON) ? ""
+					: "from torch.backends import mps" + System.lineSeparator()
+					+ "if mps.is_built() and mps.is_available():" + System.lineSeparator()
+					+ "  device = 'mps'" + System.lineSeparator())
+			+ "print(device)" + System.lineSeparator()
 			+ "from scipy.ndimage import binary_fill_holes" + System.lineSeparator()
 			+ "from scipy.ndimage import label" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
@@ -83,7 +89,7 @@ public class Sam2 extends AbstractSamJ {
 			+ "from sam2.build_sam import build_sam2" + System.lineSeparator()
 			+ "from sam2.sam2_image_predictor import SAM2ImagePredictor" + System.lineSeparator()
 			+ "from sam2.utils.misc import variant_to_config_mapping" + System.lineSeparator()
-			+ "model = build_sam2(variant_to_config_mapping['%s'],r'%s')" + System.lineSeparator()
+			+ "model = build_sam2(variant_to_config_mapping['%s'],r'%s').to(device)" + System.lineSeparator()
 			+ "predictor = SAM2ImagePredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
@@ -94,7 +100,8 @@ public class Sam2 extends AbstractSamJ {
 			+ "globals()['torch'] = torch" + System.lineSeparator()
 			+ "globals()['label'] = label" + System.lineSeparator()
 			+ "globals()['binary_fill_holes'] = binary_fill_holes" + System.lineSeparator()
-			+ "globals()['predictor'] = predictor" + System.lineSeparator();
+			+ "globals()['predictor'] = predictor" + System.lineSeparator()
+			+ "globals()['device'] = device" + System.lineSeparator();
 	/**
 	 * String containing the Python imports code after it has been formated with the correct 
 	 * paths and names

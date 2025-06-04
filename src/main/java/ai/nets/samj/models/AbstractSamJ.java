@@ -79,6 +79,9 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	protected static String UPDATE_ID_N_CONTOURS = "PROMPT_NUMBER_" + UUID.randomUUID().toString();
 	
 	protected static String UPDATE_ID_CONTOUR = "FOUND_CONTOUR_" + UUID.randomUUID().toString();
+	
+	protected static final boolean IS_APPLE_SILICON = PlatformDetection.isMacOS() 
+			&& PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64);
 
 	public interface BatchCallback { 
 		

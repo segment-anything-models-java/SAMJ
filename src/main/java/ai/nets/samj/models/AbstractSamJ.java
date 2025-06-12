@@ -37,10 +37,10 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.IOException;
 
-import io.bioimage.modelrunner.apposed.appose.Environment;
-import io.bioimage.modelrunner.apposed.appose.Service;
-import io.bioimage.modelrunner.apposed.appose.Service.Task;
-import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
+import org.apposed.appose.Environment;
+import org.apposed.appose.Service;
+import org.apposed.appose.Service.Task;
+import org.apposed.appose.Service.TaskStatus;
 import io.bioimage.modelrunner.system.PlatformDetection;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import net.imglib2.RandomAccessibleInterval;

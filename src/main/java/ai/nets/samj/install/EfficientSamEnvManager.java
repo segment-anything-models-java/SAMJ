@@ -39,8 +39,7 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.gui.tools.Files;
-import io.bioimage.modelrunner.apposed.appose.Mamba;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
+import org.apposed.appose.mamba.Mamba;
 
 /*
  * Class that is manages the installation of SAM and EfficientSAM together with Python, their corresponding environments

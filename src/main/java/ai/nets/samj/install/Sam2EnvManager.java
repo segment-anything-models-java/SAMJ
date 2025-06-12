@@ -40,8 +40,7 @@ import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.gui.tools.Files;
 import ai.nets.samj.models.Sam2;
-import io.bioimage.modelrunner.apposed.appose.Mamba;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
+import org.apposed.appose.mamba.Mamba;
 import io.bioimage.modelrunner.download.FileDownloader;
 
 /*

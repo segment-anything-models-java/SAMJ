@@ -218,10 +218,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		File pythonEnv = Paths.get(this.path, "envs", SAM2_ENV_NAME).toFile();
 		if (!pythonEnv.exists()) return false;
 		
-		List<String> uninstalled;
+		List<String> uninstalled = new ArrayList<String>();
 		try {
-			uninstalled = mamba.checkUninstalledDependenciesInEnv(pythonEnv.getAbsolutePath(), CHECK_DEPS);
-		} catch (MambaInstallException e) {
+			// TODO uninstalled = mamba.checkUninstalledDependenciesInEnv(pythonEnv.getAbsolutePath(), CHECK_DEPS);
+		} catch (Exception e) {
 			return false;
 		}
 		
@@ -305,9 +305,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the installation is interrupted
 	 * @throws ArchiveException if there is any error decompressing the micromamba installer files
 	 * @throws URISyntaxException if there is any error witht the URL to download micromamba
-	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException {
+	public void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException {
 		installSAMDeps(false);
 	}
 	
@@ -323,7 +322,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the installation is interrupted
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installSAMDeps(boolean force) throws IOException, InterruptedException, MambaInstallException {
+	public void installSAMDeps(boolean force) throws IOException, InterruptedException {
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to install Python without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- CREATING THE SAM2 PYTHON ENVIRONMENT WITH ITS DEPENDENCIES");
@@ -334,12 +333,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		for (String ss : INSTALL_CONDA_DEPS) args[c ++] = ss;
 		if (!this.checkSAMDepsInstalled() || force) {
 			try {
-				mamba.create(SAM2_ENV_NAME, true, args);
-			} catch (MambaInstallException e) {
-	            thread.interrupt();
-	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 PYTHON ENVIRONMENT CREATION");
-				throw new MambaInstallException("Unable to install Python without first installing Mamba. ");
-			} catch (IOException | InterruptedException e) {
+				// TODO mamba.create(SAM2_ENV_NAME, true, args);
+			} catch (Exception e) {
 	            thread.interrupt();
 	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 PYTHON ENVIRONMENT CREATION");
 				throw e;
@@ -348,8 +343,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
 			for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
 			try {
-				Mamba.runPythonIn(Paths.get(path,  "envs", SAM2_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
-			} catch (IOException | InterruptedException e) {
+				// TODO Mamba.runPythonIn(Paths.get(path,  "envs", SAM2_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
+			} catch (Exception e) {
 	            thread.interrupt();
 	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
 				throw e;
@@ -373,7 +368,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installEverything() throws IOException, InterruptedException, 
-													ArchiveException, URISyntaxException, MambaInstallException {
+													ArchiveException, URISyntaxException {
 		if (!this.checkMambaInstalled()) this.installMambaPython();
 		
 		if (!this.checkSAMDepsInstalled()) this.installSAMDeps();

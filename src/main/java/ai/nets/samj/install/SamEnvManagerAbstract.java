@@ -107,9 +107,6 @@ public abstract class SamEnvManagerAbstract {
 	
 	
 	public void setConsumer(Consumer<String> consumer) {
-		this.consumer = consumer;
-		this.mamba.setConsoleOutputConsumer(this.consumer);
-		this.mamba.setErrorOutputConsumer(this.consumer);
 	}
 	
 	/**
@@ -129,7 +126,8 @@ public abstract class SamEnvManagerAbstract {
 	public boolean checkMambaInstalled() {
 		File ff = new File(path + MAMBA_RELATIVE_PATH);
 		if (!ff.exists()) return false;
-		return mamba.checkMambaInstalled();
+		// TODO return mamba.checkMambaInstalled();
+		return true;
 	}
 	
 	/**
@@ -160,7 +158,8 @@ public abstract class SamEnvManagerAbstract {
 			throw new IllegalArgumentException("Unable to SAM without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'APPOSE' PYTHON PACKAGE");
 		String zipResourcePath = "appose-python.zip";
-        String outputDirectory = mamba.getEnvsDir() + File.separator + envName;
+		String outputDirectory = "";
+        // TODO String outputDirectory = mamba.getEnvsDir() + File.separator + envName;
         try (
             	InputStream zipInputStream = SamEnvManagerAbstract.class.getClassLoader().getResourceAsStream(zipResourcePath);
             	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
@@ -186,7 +185,7 @@ public abstract class SamEnvManagerAbstract {
     			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'APPOSE' PYTHON PACKAGE INSTALLATION");
     			throw e;
     		}
-        mamba.pipInstallIn(envName, new String[] {mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
+        // TODO mamba.pipInstallIn(envName, new String[] {mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
 		thread.interrupt();
 		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- 'APPOSE' PYTHON PACKAGE INSATLLED");
 	}
@@ -228,7 +227,8 @@ public abstract class SamEnvManagerAbstract {
 	 * @return progress made downloading Micromamba
 	 */
 	public double getMambaInstallationProcess() {
-		return this.mamba.getMicromambaDownloadProgress();
+		// TODO return this.mamba.getMicromambaDownloadProgress();
+		return 0.0;
 	}
 	
 	public String getEnvCreationProgress() {

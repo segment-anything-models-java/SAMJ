@@ -162,10 +162,10 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 		File pythonEnv = Paths.get(this.path, "envs", ESAM_ENV_NAME).toFile();
 		if (!pythonEnv.exists()) return false;
 		
-		List<String> uninstalled;
+		List<String> uninstalled = new ArrayList<String>();
 		try {
-			uninstalled = mamba.checkUninstalledDependenciesInEnv(pythonEnv.getAbsolutePath(), CHECK_DEPS);
-		} catch (MambaInstallException e) {
+			 //TODO uninstalled = mamba.checkUninstalledDependenciesInEnv(pythonEnv.getAbsolutePath(), CHECK_DEPS);
+		} catch (Exception e) {
 			return false;
 		}
 		
@@ -257,8 +257,8 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * @throws URISyntaxException if there is any error witht the URL to download micromamba
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException {
-		installSAMDeps(false);
+	public void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException {
+		//TODO installSAMDeps(false);
 	}
 	
 	/**
@@ -273,7 +273,7 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the installation is interrupted
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installSAMDeps(boolean force) throws IOException, InterruptedException, MambaInstallException {
+	public void installSAMDeps(boolean force) throws IOException, InterruptedException {
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to install Python without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- CREATING THE PYTHON ENVIRONMENT WITH ITS DEPENDENCIES");
@@ -284,12 +284,8 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 		for (String ss : INSTALL_CONDA_DEPS) args[c ++] = ss;
 		if (!checkSAMDepsInstalled() || force) {
 			try {
-				mamba.create(ESAM_ENV_NAME, true, args);
-			} catch (MambaInstallException e) {
-	            thread.interrupt();
-	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION");
-				throw new MambaInstallException("Unable to install Python without first installing Mamba. ");
-			} catch (IOException | InterruptedException e) {
+				// TODO mamba.create(ESAM_ENV_NAME, true, args);
+			} catch (Exception e) {
 	            thread.interrupt();
 	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION");
 				throw e;
@@ -298,8 +294,8 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
 			for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
 			try {
-				Mamba.runPythonIn(Paths.get(path,  "envs", ESAM_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
-			} catch (IOException | InterruptedException e) {
+				// TODO Mamba.runPythonIn(Paths.get(path,  "envs", ESAM_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
+			} catch (Exception e) {
 	            thread.interrupt();
 	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
 				throw e;
@@ -320,14 +316,14 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the package installation is interrupted
 	 * @throws MambaInstallException if there is any error with the Mamba installation
 	 */
-	private void installEfficientSAMPackage() throws IOException, InterruptedException, MambaInstallException {
+	private void installEfficientSAMPackage() throws IOException, InterruptedException {
 		if (checkEfficientSAMPackageInstalled())
 			return;
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to EfficientSAM without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'EFFICIENTSAM' PYTHON PACKAGE");
 		String zipResourcePath = "EfficientSAM.zip";
-        String outputDirectory = mamba.getEnvsDir() + File.separator + ESAM_ENV_NAME;
+        String outputDirectory = ""; // TODO mamba.getEnvsDir() + File.separator + ESAM_ENV_NAME;
         try (
         	InputStream zipInputStream = EfficientSamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
         	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
@@ -367,10 +363,9 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the model installation is interrupted
 	 * @throws ArchiveException if there is any error decompressing the micromamba installer
 	 * @throws URISyntaxException if there is any error with the URL to the micromamba installer download page
-	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installEverything() throws IOException, InterruptedException, 
-													ArchiveException, URISyntaxException, MambaInstallException {
+													ArchiveException, URISyntaxException {
 		if (!this.checkMambaInstalled()) this.installMambaPython();
 		
 		if (!this.checkSAMDepsInstalled()) this.installSAMDeps();

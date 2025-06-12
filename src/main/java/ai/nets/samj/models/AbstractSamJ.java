@@ -396,6 +396,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		try {
 			Task task = python.task(script, inputs);
 			nRoisProcessed = 1;
+			int[] nRois = new int[1];
 			task.listen(event -> {
 	            switch (event.responseType) {
 	                case UPDATE:
@@ -403,13 +404,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	                		break;
 	                	else if (task.message.equals(UPDATE_ID_CONTOUR)) {
 	                		callback.updateProgress(nRoisProcessed ++);
-	                		List<Mask> polys = defineMask((List<List<Number>>)task.outputs.get("temp_x"), 
-	                				(List<List<Number>>)task.outputs.get("temp_y"), (List<List<Number>>)task.outputs.get("temp_mask"));
+	                		List<Mask> polys = defineMask((List<List<Number>>)event.info.get("temp_x"), 
+	                				(List<List<Number>>)event.info.get("temp_y"), (List<List<Number>>)event.info.get("temp_mask"));
 	                		callback.drawRoi(polys);
 	                		totalPolys.addAll(polys);
 	                	} else if (task.message.equals(UPDATE_ID_N_CONTOURS)) {
-	                		callback.setTotalNumberOfRois(Integer.parseInt((String) task.outputs.get("n")));
-	                		
+	                		callback.setTotalNumberOfRois(Integer.parseInt((String) event.info.get("n")));
+		                	nRois[0] = Integer.parseInt((String) event.info.get("n"));
 	                	}
 	                    break;
 					default:
@@ -431,7 +432,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				throw new RuntimeException("No 'contours_y' output found");
 			else if (task.outputs.get("rle") == null)
 				throw new RuntimeException("No 'rle' outputs found");
-			callback.updateProgress(Integer.parseInt((String) task.outputs.get("n")));
+			callback.updateProgress(nRois[0]);
 			results = task.outputs;
 		} catch (InterruptedException | RuntimeException e) {
 			throw e;

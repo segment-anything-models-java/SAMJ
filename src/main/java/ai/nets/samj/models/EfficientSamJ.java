@@ -24,11 +24,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apposed.appose.Appose;
+import org.apposed.appose.Service.Task;
+import org.apposed.appose.Service.TaskStatus;
+
 import ai.nets.samj.install.EfficientSamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
-import io.bioimage.modelrunner.apposed.appose.Environment;
-import io.bioimage.modelrunner.apposed.appose.Service.Task;
-import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
@@ -119,9 +120,7 @@ public class EfficientSamJ extends AbstractSamJ {
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
-		this.env = new Environment() {
-			@Override public String base() { return manager.getModelEnv(); }
-			};
+		this.env = Appose.build(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		String IMPORTS_FORMATED = String.format(IMPORTS,

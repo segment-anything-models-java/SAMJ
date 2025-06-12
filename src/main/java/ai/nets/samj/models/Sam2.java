@@ -25,11 +25,12 @@ import java.util.List;
 import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
+import java.io.File;
 import java.io.IOException;
 
-import io.bioimage.modelrunner.apposed.appose.Environment;
-import io.bioimage.modelrunner.apposed.appose.Service.Task;
-import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
+import org.apposed.appose.Appose;
+import org.apposed.appose.Service.Task;
+import org.apposed.appose.Service.TaskStatus;
 
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
@@ -150,9 +151,7 @@ public class Sam2 extends AbstractSamJ {
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
-		this.env = new Environment() {
-			@Override public String base() { return manager.getModelEnv(); }
-			};
+		this.env = Appose.build(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());

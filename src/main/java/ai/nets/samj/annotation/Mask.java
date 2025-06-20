@@ -22,6 +22,8 @@ package ai.nets.samj.annotation;
 import java.awt.Polygon;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImgs;
@@ -37,6 +39,10 @@ public class Mask {
 
 	private final Polygon contour;
 	
+	private String name;
+	
+	private final String uuid = UUID.randomUUID().toString();
+	
 	// TODO private final long[] rleEncoding;
 	public long[] rleEncoding;
 	
@@ -47,6 +53,19 @@ public class Mask {
 	
 	public static Mask build(Polygon contour, long[] rleEncoding) {
 		return new Mask(contour, rleEncoding);
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public void setName(String name) {
+		Objects.requireNonNull(name, "argument 'name' cannot be null");
+		this.name = name;
+	}
+	
+	public String getUUID() {
+		return uuid;
 	}
 	
 	public Polygon getContour() {

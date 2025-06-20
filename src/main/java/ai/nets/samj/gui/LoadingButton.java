@@ -20,7 +20,6 @@
 package ai.nets.samj.gui;
 
 import java.awt.Image;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;

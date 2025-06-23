@@ -20,7 +20,10 @@
 package ai.nets.samj.annotation;
 
 import java.awt.Polygon;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -37,22 +40,60 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
  */
 public class Mask {
 
-	private final Polygon contour;
+	private Polygon contour;
 	
 	private String name;
 	
 	private final String uuid = UUID.randomUUID().toString();
 	
-	// TODO private final long[] rleEncoding;
 	public long[] rleEncoding;
+	
+	// TODO does it make sense to measure the level of simplification once a polygon is give?
+	// TODO at the moment we assume it is always one vertix per pixel
+	private double simplification = 0;
+	
+	private HashMap<Double, Polygon> memory = new HashMap<Double, Polygon>();
+	
+	private boolean rleValid = true;
+	
+	private static final double COMPLEXITY_DELTA = 0.5;
 	
 	private Mask(Polygon contour, long[] rleEncoding) {
 		this.contour = contour;
 		this.rleEncoding = rleEncoding;
+		memory.put(simplification, contour);
 	}
 	
 	public static Mask build(Polygon contour, long[] rleEncoding) {
 		return new Mask(contour, rleEncoding);
+	}
+	
+	public void simplify() {
+		if (this.memory.get((this.simplification + COMPLEXITY_DELTA)) != null) {
+			simplification += COMPLEXITY_DELTA;
+			this.rleValid = simplification == 0;
+			return;
+		}
+		List<Point2D> points = new ArrayList<Point2D>();
+		for (int i = 0; i < getContour().npoints; i ++) {
+			points.add(new Point2D.Double(getContour().xpoints[i], getContour().ypoints[i]));
+		}
+		List<Point2D> simple = DouglasPeucker.simplify(points, (this.simplification + COMPLEXITY_DELTA));
+		simplification += COMPLEXITY_DELTA;
+		this.rleValid = simplification == 0;
+
+		int[] xArr = simple.stream().mapToInt(pp -> (int) pp.getX()).toArray();
+		int[] yArr = simple.stream().mapToInt(pp -> (int) pp.getY()).toArray();
+		this.contour = new Polygon(xArr, yArr, xArr.length);
+		memory.put(simplification, contour);
+	}
+	
+	public void complicate() {
+		if (this.memory.get((this.simplification - COMPLEXITY_DELTA)) != null) {
+			simplification -= COMPLEXITY_DELTA;
+			this.rleValid = simplification == 0;
+			return;
+		}
 	}
 	
 	public String getName() {
@@ -73,6 +114,10 @@ public class Mask {
 	}
 	
 	public long[] getRLEMask() {
+		if (this.rleValid)
+			return this.rleEncoding;
+		// TODO implement
+		List<Integer> rle = PolygonToRLE.contourToRLE(null, 200, 200);
 		return this.rleEncoding;
 	}
 	

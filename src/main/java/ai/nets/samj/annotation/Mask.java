@@ -72,6 +72,7 @@ public class Mask {
 		if (this.memory.get((this.simplification + COMPLEXITY_DELTA)) != null) {
 			simplification += COMPLEXITY_DELTA;
 			this.rleValid = simplification == 0;
+			this.contour = memory.get(simplification);
 			return;
 		}
 		List<Point2D> points = new ArrayList<Point2D>();
@@ -92,6 +93,7 @@ public class Mask {
 		if (this.memory.get((this.simplification - COMPLEXITY_DELTA)) != null) {
 			simplification -= COMPLEXITY_DELTA;
 			this.rleValid = simplification == 0;
+			this.contour = memory.get(simplification);
 			return;
 		}
 	}
@@ -121,6 +123,10 @@ public class Mask {
 		return this.rleEncoding;
 	}
 	
+	public double getComplicationLevel() {
+		return this.simplification;
+	}
+	
 	/**
 	 * Mehtod that creates an annotation mask from several object masks in an efficient manner using RLE algorithm
 	 * @param width
@@ -145,5 +151,18 @@ public class Mask {
 		}
 		//return Utils.transpose(ArrayImgs.unsignedBytes(arr, new long[] {height, width}));
 		return (ArrayImgs.unsignedShorts(arr, new long[] {width, height}));
+	}
+
+	public void clear() {
+		this.contour = null;
+		this.memory = new HashMap<>();
+		this.rleValid = false;
+		this.rleEncoding = new long[0];
+		this.simplification = 0;
+	}
+
+	public void setContour(Polygon pol) {
+		this.clear();
+		this.contour = pol;		
 	}
 }

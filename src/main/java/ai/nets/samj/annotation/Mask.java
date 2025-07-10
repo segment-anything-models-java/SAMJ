@@ -85,7 +85,16 @@ public class Mask {
 
 		int[] xArr = simple.stream().mapToInt(pp -> (int) pp.getX()).toArray();
 		int[] yArr = simple.stream().mapToInt(pp -> (int) pp.getY()).toArray();
-		this.contour = new Polygon(xArr, yArr, xArr.length);
+		Polygon outer = new Polygon(xArr, yArr, xArr.length);
+		
+        contour = new Polygon();
+        int n = outer.npoints;
+        for (int i = n - 1; i >= 0; i --) {
+        	if (outer.xpoints[i] == outer.xpoints[((i+1)%n)]
+        			&& outer.ypoints[i] == outer.xpoints[((i+1)%n)])
+        		continue;
+        	contour.addPoint(outer.xpoints[i], outer.ypoints[i]);
+        }
 		memory.put(simplification, contour);
 	}
 	

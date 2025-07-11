@@ -19,6 +19,7 @@
  */
 package ai.nets.samj.annotation;
 
+import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -87,14 +88,19 @@ public class Mask {
 		int[] yArr = simple.stream().mapToInt(pp -> (int) pp.getY()).toArray();
 		Polygon outer = new Polygon(xArr, yArr, xArr.length);
 		
-        contour = new Polygon();
+        List<Point> list = new ArrayList<Point>();
         int n = outer.npoints;
         for (int i = n - 1; i >= 0; i --) {
         	if (outer.xpoints[i] == outer.xpoints[((i+1)%n)]
         			&& outer.ypoints[i] == outer.xpoints[((i+1)%n)])
         		continue;
-        	contour.addPoint(outer.xpoints[i], outer.ypoints[i]);
+        	list.add(new Point(outer.xpoints[i], outer.ypoints[i]));
         }
+        contour = new Polygon(
+        		list.stream().mapToInt(p -> (int) p.x).toArray(),
+        		list.stream().mapToInt(p -> (int) p.y).toArray(),
+        		list.size()
+        		);
 		memory.put(simplification, contour);
 	}
 	

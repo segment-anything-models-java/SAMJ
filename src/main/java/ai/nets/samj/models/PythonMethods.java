@@ -30,7 +30,7 @@ public class PythonMethods {
 	/**
 	 * String containing the Python methods needed to find the border of binary masks
 	 */
-	protected static String TRACE_EDGES = ""
+	public static String TRACE_EDGES = ""
 			+ "def is_edge_pixel(image, cx,cy):" + System.lineSeparator()
 			+ "    # assuming image[cy,cx] != 0" + System.lineSeparator()
 			+ "    h,w = image.shape" + System.lineSeparator()
@@ -111,7 +111,7 @@ public class PythonMethods {
 	 * String containing a Python method to encode binary masks into a compressed object using the
 	 * Run-Length Encoding (RLE) algorithm
 	 */
-	protected static String RLE_METHOD = ""
+	public static String RLE_METHOD = ""
 			+ "def encode_rle(mask):" +  System.lineSeparator()
 			+ "    \"\"\"" +  System.lineSeparator()
 			+ "    Encode a binary mask using Run-Length Encoding (RLE)." +  System.lineSeparator()

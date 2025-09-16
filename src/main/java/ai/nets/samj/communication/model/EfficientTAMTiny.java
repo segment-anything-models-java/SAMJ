@@ -60,7 +60,7 @@ public class EfficientTAMTiny extends SAMModel {
 		this.fullName = FULL_NAME;
 		this.githubLink = "https://github.com/yformer/EfficientTAM";
 		this.paperLink = "https://arxiv.org/pdf/2411.18933";
-		this.githubName = "yformer/EfficientTAM\"";
+		this.githubName = "yformer/EfficientTAM";
 		this.paperName = "Efficient Track Anything";
 		this.speedRank = 1;
 		this.performanceRank = 5;
@@ -80,7 +80,7 @@ public class EfficientTAMTiny extends SAMModel {
 		this.fullName = "EfficientTAM Tiny";
 		this.githubLink = "https://github.com/yformer/EfficientTAM";
 		this.paperLink = "https://arxiv.org/pdf/2411.18933";
-		this.githubName = "yformer/EfficientTAM\"";
+		this.githubName = "yformer/EfficientTAM";
 		this.paperName = "Efficient Track Anything";
 		this.speedRank = 1;
 		this.performanceRank = 5;

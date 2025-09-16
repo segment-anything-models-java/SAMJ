@@ -20,7 +20,10 @@
 package ai.nets.samj.install;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -32,7 +35,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
@@ -48,7 +52,7 @@ import io.bioimage.modelrunner.download.FileDownloader;
  * 
  * @author Carlos Javier Garcia Lopez de Haro
  */
-public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
+public class EfficientTamEnvManager extends SamEnvManagerAbstract {
 	
 	private final String modelType;
 	/**
@@ -95,7 +99,7 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 	 */
 	final static private String EFFTAM_FNAME = "efficienttam_%s.pt";
 	
-	private EfficientTAMEnvManager(String modelType) {
+	private EfficientTamEnvManager(String modelType) {
 		List<String> modelTypes = EFFTAM_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
 		if (!modelTypes.contains(modelType) && !modelType.equals("base")) {
 			throw new IllegalArgumentException("Invalid model variant chosen: '" + modelType + "'."
@@ -107,21 +111,21 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Creates an instance of {@link EfficientTAMEnvManager} that uses a micromamba installed at the argument
+	 * Creates an instance of {@link EfficientTamEnvManager} that uses a micromamba installed at the argument
 	 * provided by 'path'.
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
 	 * @param modelType
 	 * 	which of the possible EFFICIENTTAM wants to be used. The possible variants are the keys of the following map: {@link #EFFTAM_BYTE_SIZES_MAP}
-	 * @return an instance of {@link EfficientTAMEnvManager}
+	 * @return an instance of {@link EfficientTamEnvManager}
 	 */
-	public static EfficientTAMEnvManager create(String path, String modelType) {
+	public static EfficientTamEnvManager create(String path, String modelType) {
 		return create(path, modelType == null ? DEFAULT : modelType, (ss) -> {});
 	}
 	
 	/**
-	 * Creates an instance of {@link EfficientTAMEnvManager} that uses a micromamba installed at the argument
+	 * Creates an instance of {@link EfficientTamEnvManager} that uses a micromamba installed at the argument
 	 * provided by 'path'.
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @param path
@@ -130,10 +134,10 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 	 * 	which of the possible EFFICIENTTAM wants to be used. The possible variants are the keys of the following map: {@link #EFFTAM_BYTE_SIZES_MAP}
 	 * @param consumer
 	 * 	an specific consumer where info about the installation is going to be communicated
-	 * @return an instance of {@link EfficientTAMEnvManager}
+	 * @return an instance of {@link EfficientTamEnvManager}
 	 */
-	public static EfficientTAMEnvManager create(String path, String modelType, Consumer<String> consumer) {
-		EfficientTAMEnvManager installer = new EfficientTAMEnvManager(modelType);
+	public static EfficientTamEnvManager create(String path, String modelType, Consumer<String> consumer) {
+		EfficientTamEnvManager installer = new EfficientTamEnvManager(modelType);
 		installer.path = path;
 		installer.consumer = consumer;
 		installer.mamba = new Mamba(path);
@@ -141,24 +145,24 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
-	 * Creates an instance of {@link EfficientTAMEnvManager} that uses a micromamba installed at the default
+	 * Creates an instance of {@link EfficientTamEnvManager} that uses a micromamba installed at the default
 	 * directory {@link #DEFAULT_DIR}. Uses the default model {@link #DEFAULT}
 	 * Micromamba does not need to be installed as the code will install it automatically.
-	 * @return an instance of {@link EfficientTAMEnvManager}
+	 * @return an instance of {@link EfficientTamEnvManager}
 	 */
-	public static EfficientTAMEnvManager create() {
+	public static EfficientTamEnvManager create() {
 		return create(DEFAULT_DIR, null);
 	}
 	
 	/**
-	 * Creates an instance of {@link EfficientTAMEnvManager} that uses a micromamba installed at the default
+	 * Creates an instance of {@link EfficientTamEnvManager} that uses a micromamba installed at the default
 	 * directory {@link #DEFAULT_DIR}.
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @param consumer
 	 * 	an specific consumer where info about the installation is going to be communicated
-	 * @return an instance of {@link EfficientTAMEnvManager}
+	 * @return an instance of {@link EfficientTamEnvManager}
 	 */
-	public static EfficientTAMEnvManager create(Consumer<String> consumer) {
+	public static EfficientTamEnvManager create(Consumer<String> consumer) {
 		return create(DEFAULT_DIR, null, consumer);
 	}
 	
@@ -189,6 +193,18 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 		}
 		
 		return uninstalled.size() == 0;
+	}
+	
+	/**
+	 * Check whether the Python package to run EfficientTAM has been installed. The package will be in the folder
+	 * {@value #ESAM_ENV_NAME}. The Python executable and other dependencies will be at {@value #ESAM_ENV_NAME}
+	 * @return whether the Python package to run EfficientTAM has been installed.
+	 */
+	private boolean checkEfficientTAMPackageInstalled() {
+		if (!checkMambaInstalled()) return false;
+		File pythonEnv = Paths.get(this.path, "envs", EFFTAM_ENV_NAME, EFFTAM_NAME).toFile();
+		if (!pythonEnv.exists() || pythonEnv.list().length <= 1) return false;
+		return true;
 	}
 	
 	/**
@@ -226,6 +242,13 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 												+ EfficientTamJ.getListOfSupportedVariants());
 		if (!force && this.checkModelWeightsInstalled())
 			return;
+		if (modelType.equals(DEFAULT))
+			extractWeights();
+		else
+			downloadWeights();
+	}
+	
+	private void downloadWeights() throws IOException, InterruptedException {
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTTAM WEIGHTS (" + modelType + ")");
         try {
     		File file = Paths.get(path, "envs", EFFTAM_ENV_NAME, EFFTAM_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, modelType))).toFile();
@@ -259,9 +282,43 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTTAM WEIGHTS INSTALLED");
 	}
 	
+	private void extractWeights() throws InterruptedException, IOException {
+		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTTAM WEIGHTS");
+		String zipResourcePath = "efficienttam_ti.zip";
+        String outputDirectory = Paths.get(path, "envs", EFFTAM_ENV_NAME, EFFTAM_NAME, "weights").toFile().getAbsolutePath();
+        try (
+        	InputStream zipInputStream = EfficientTamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+        	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
+        		) {
+        	ZipEntry entry;
+        	while ((entry = zipInput.getNextEntry()) != null) {
+                File entryFile = new File(outputDirectory + File.separator + entry.getName());
+                if (entry.isDirectory()) {
+                	entryFile.mkdirs();
+                	continue;
+                }
+            	entryFile.getParentFile().mkdirs();
+                try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
+                	if (Thread.interrupted()) throw new InterruptedException("EfficientTAM download interrupted");
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = zipInput.read(buffer)) != -1) {
+                        entryOutput.write(buffer, 0, bytesRead);
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            thread.interrupt();
+            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EFFICIENTTAM WEIGHTS INSTALLATION");
+            throw ex;
+        }
+        thread.interrupt();
+        passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTTAM WEIGHTS INSTALLED");
+	}
+	
 	/**
 	 * Install the Python environment and dependencies required to run an EFFICIENTTAM model.
-	 * If Micromamba is not installed in the path of the {@link EfficientTAMEnvManager} instance, this method
+	 * If Micromamba is not installed in the path of the {@link EfficientTamEnvManager} instance, this method
 	 * installs it.
 	 * 
 	 * @throws IOException if there is any file error installing any of the requirements
@@ -276,7 +333,7 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 	
 	/**
 	 * Install the Python environment and dependencies required to run an EFFICIENTTAM model.
-	 * If Micromamba is not installed in the path of the {@link EfficientTAMEnvManager} instance, this method
+	 * If Micromamba is not installed in the path of the {@link EfficientTamEnvManager} instance, this method
 	 * installs it.
 	 * @param force
 	 * 	if the environment to be created already exists, whether to overwrite it or not
@@ -324,6 +381,51 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 	}
 	
 	/**
+	 * Install the Python package to run EfficientTAM
+	 * @param force
+	 * 	if the package already exists, whether to overwrite it or not
+	 * @throws IOException if there is any file creation related issue
+	 * @throws InterruptedException if the package installation is interrupted
+	 * @throws MambaInstallException if there is any error with the Mamba installation
+	 */
+	private void installEfficientTAMPackage() throws IOException, InterruptedException, MambaInstallException {
+		if (checkEfficientTAMPackageInstalled())
+			return;
+		if (!checkMambaInstalled())
+			throw new IllegalArgumentException("Unable to EfficientTAM without first installing Mamba. ");
+		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'EFFICIENTTAM' PYTHON PACKAGE");
+		String zipResourcePath = "EfficientTAM.zip";
+        String outputDirectory = mamba.getEnvsDir() + File.separator + EFFTAM_ENV_NAME;
+        try (
+        	InputStream zipInputStream = EfficientTamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+        	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
+        		) {
+        	ZipEntry entry;
+        	while ((entry = zipInput.getNextEntry()) != null) {
+                File entryFile = new File(outputDirectory + File.separator + entry.getName());
+                if (entry.isDirectory()) {
+                	entryFile.mkdirs();
+                	continue;
+                }
+            	entryFile.getParentFile().mkdirs();
+                try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = zipInput.read(buffer)) != -1) {
+                        entryOutput.write(buffer, 0, bytesRead);
+                    }
+                }
+            }
+        } catch (IOException e) {
+			thread.interrupt();
+			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'EFFICIENTTAM' PYTHON PACKAGE INSTALLATION");
+			throw e;
+		}
+		thread.interrupt();
+		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- 'EFFICIENTTAM' PYTHON PACKAGE INSATLLED");
+	}
+	
+	/**
 	 * Install all the requirements to run EFFICIENTTAM. First, checks if micromamba is installed, if not installs it;
 	 * then checks if the Python environment and packages needed to run EFFICIENTTAM are installed and if not installs it
 	 * and finally checks whether the weights are installed, and if not installs them too.
@@ -340,6 +442,8 @@ public class EfficientTAMEnvManager extends SamEnvManagerAbstract {
 		if (!this.checkMambaInstalled()) this.installMambaPython();
 		
 		if (!this.checkSAMDepsInstalled()) this.installSAMDeps();
+		
+		if (!this.checkEfficientTAMPackageInstalled()) this.installEfficientTAMPackage();
 		
 		if (!this.checkModelWeightsInstalled()) this.installModelWeigths();
 	}

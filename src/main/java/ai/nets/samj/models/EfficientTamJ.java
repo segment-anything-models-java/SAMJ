@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import ai.nets.samj.install.EfficientTAMEnvManager;
+import ai.nets.samj.install.EfficientTamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
 import java.io.IOException;
@@ -234,7 +234,7 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time.
 	 * 
-	 * The model used is the default one {@value EfficientTAMEnvManager#DEFAULT}
+	 * The model used is the default one {@value EfficientTamEnvManager#DEFAULT}
 	 * 
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
@@ -251,7 +251,7 @@ public class EfficientTamJ extends AbstractSamJ {
 	public static EfficientTamJ initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(EfficientTAMEnvManager.DEFAULT, manager, debugPrinter, printPythonCode);
+		return initializeSam(EfficientTamEnvManager.DEFAULT, manager, debugPrinter, printPythonCode);
 	}
 
 	/**
@@ -259,7 +259,7 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * This method encodes the image provided, so depending on the computer and on the model
 	 * it might take some time.
 	 * 
-	 * The model used is the default one {@value EfficientTAMEnvManager#DEFAULT}
+	 * The model used is the default one {@value EfficientTamEnvManager#DEFAULT}
 	 * 
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
@@ -270,7 +270,7 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static EfficientTamJ initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
-		return initializeSam(EfficientTAMEnvManager.DEFAULT, manager);
+		return initializeSam(EfficientTamEnvManager.DEFAULT, manager);
 	}
 
 	@Override
@@ -417,7 +417,7 @@ public class EfficientTamJ extends AbstractSamJ {
 	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
-		try (EfficientTamJ sam = initializeSam(EfficientTAMEnvManager.create())) {
+		try (EfficientTamJ sam = initializeSam(EfficientTamEnvManager.create())) {
 			sam.setImage(img);
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}

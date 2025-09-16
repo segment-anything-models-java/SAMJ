@@ -63,7 +63,7 @@ public class SAM2Large extends SAMModel {
 		this.paperLink = "https://ai.meta.com/research/publications/sam-2-segment-anything-in-images-and-videos/";
 		this.githubName = "facebookresearch/segment-anything-2";
 		this.paperName = "SAM 2: Segment Anything in Images and Videos";
-		this.speedRank = 4;
+		this.speedRank = 5;
 		this.performanceRank = 1;
 		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
 		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;

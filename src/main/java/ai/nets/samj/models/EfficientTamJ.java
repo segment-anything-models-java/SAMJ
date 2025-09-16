@@ -73,10 +73,13 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * String to find the config file used to load EfficientTAM
 	 */
 	private static final String CONFIG_STR = "configs/efficienttam/efficienttam_%s.yaml";
+	private static final String PRE_IMPORTS = ""
+			+ "import sys" + System.lineSeparator()
+			+ "sys.path.append(r'%s')" + System.lineSeparator();
 	/**
 	 * All the Python imports and configurations needed to start using EfficientViTSAM.
 	 */
-	public static final String IMPORTS = ""
+	private static final String IMPORTS = ""
 			+ "task.update('start')" + System.lineSeparator()
 			+ "import numpy as np" + System.lineSeparator()
 			+ "from skimage import measure" + System.lineSeparator()
@@ -89,10 +92,10 @@ public class EfficientTamJ extends AbstractSamJ {
 					+ "  device = 'mps'" + System.lineSeparator())
 			+ "from scipy.ndimage import binary_fill_holes" + System.lineSeparator()
 			+ "from scipy.ndimage import label" + System.lineSeparator()
-			+ "import sys" + System.lineSeparator()
-			+ "sys.path.append(r'%s')" + System.lineSeparator()
 			+ "import os" + System.lineSeparator()
 			+ "import platform" + System.lineSeparator()
+			+ "import torch._dynamo" + System.lineSeparator() // TODO remove
+		    + "torch._dynamo.config.suppress_errors = True" + System.lineSeparator() // TODO remove
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
 			+ "from efficient_track_anything.build_efficienttam import build_efficienttam" + System.lineSeparator()
 			+ "from efficient_track_anything.efficienttam_image_predictor import EfficientTAMImagePredictor" + System.lineSeparator()
@@ -162,11 +165,19 @@ public class EfficientTamJ extends AbstractSamJ {
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		String libPath = manager.getModelEnv() + File.separator + EfficientTamEnvManager.EFFTAM_NAME;
-		IMPORTS_FORMATED = String.format(IMPORTS, libPath,
-				libPath + String.format(CONFIG_STR, MODEL_TYPE_MAP.get(type)),
+		Task task = python.task(String.format(PRE_IMPORTS, libPath));
+		task.waitFor();
+		if (task.status == TaskStatus.CANCELED)
+			throw new RuntimeException("Task canceled");
+		else if (task.status == TaskStatus.FAILED)
+			throw new RuntimeException(task.error);
+		else if (task.status == TaskStatus.CRASHED)
+			throw new RuntimeException(task.error);
+		IMPORTS_FORMATED = String.format(IMPORTS,
+				String.format(CONFIG_STR, MODEL_TYPE_MAP.get(type)),
 				manager.getModelWeigthPath());
 		
-		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
+		task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
 			throw new RuntimeException("Task canceled");

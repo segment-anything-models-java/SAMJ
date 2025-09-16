@@ -26,6 +26,7 @@ import java.util.List;
 import ai.nets.samj.install.EfficientTamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
+import java.io.File;
 import java.io.IOException;
 
 import io.bioimage.modelrunner.apposed.appose.Environment;
@@ -69,6 +70,10 @@ public class EfficientTamJ extends AbstractSamJ {
 	 */
 	private static final List<String> MODELS_LIST = new ArrayList<>(MODEL_TYPE_MAP.keySet());
 	/**
+	 * String to find the config file used to load EfficientTAM
+	 */
+	private static final String CONFIG_STR = "configs/efficienttam/efficienttam_%s.yaml";
+	/**
 	 * All the Python imports and configurations needed to start using EfficientViTSAM.
 	 */
 	public static final String IMPORTS = ""
@@ -85,6 +90,7 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "from scipy.ndimage import binary_fill_holes" + System.lineSeparator()
 			+ "from scipy.ndimage import label" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
+			+ "sys.path.append(r'%s')" + System.lineSeparator()
 			+ "import os" + System.lineSeparator()
 			+ "import platform" + System.lineSeparator()
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
@@ -155,9 +161,11 @@ public class EfficientTamJ extends AbstractSamJ {
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);
-		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());
+		String libPath = manager.getModelEnv() + File.separator + EfficientTamEnvManager.EFFTAM_NAME;
+		IMPORTS_FORMATED = String.format(IMPORTS, libPath,
+				libPath + String.format(CONFIG_STR, MODEL_TYPE_MAP.get(type)),
+				manager.getModelWeigthPath());
 		
-		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)

@@ -79,8 +79,8 @@ public class EfficientTamEnvManager extends SamEnvManagerAbstract {
 	final public static HashMap<String, Long> EFFTAM_BYTE_SIZES_MAP;
 	static {
 		EFFTAM_BYTE_SIZES_MAP = new HashMap<String, Long>();
-		EFFTAM_BYTE_SIZES_MAP.put("tiny", (long) 136_375_868);
-		EFFTAM_BYTE_SIZES_MAP.put("small", (long) 71_616_316 );
+		EFFTAM_BYTE_SIZES_MAP.put("small", (long) 136_375_868);
+		EFFTAM_BYTE_SIZES_MAP.put("tiny", (long) 71_616_316 );
 	}
 	/**
 	 * Name of the environment that contains the code and weigths to run EFFICIENTTAM models

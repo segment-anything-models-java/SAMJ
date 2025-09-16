@@ -100,9 +100,7 @@ public class EfficientViTSAMXL0 extends SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public <T extends RealType<T> & NativeType<T>> void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) 
-						throws IOException, InterruptedException, RuntimeException {
-		Objects.requireNonNull(image, "The image cannot be null.");
+	public void loadModel(final SAMJLogger useThisLoggerForIt) throws IOException, InterruptedException, RuntimeException {
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
@@ -119,12 +117,6 @@ public class EfficientViTSAMXL0 extends SAMModel {
 		};
 		if (this.samj == null)
 			this.samj = EfficientViTSamJ.initializeSam(ID, manager, filteringLogger, false);
-		try {
-			this.samj.setImage(Cast.unchecked(image));;
-		} catch (IOException | InterruptedException | RuntimeException e) {
-			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
-			throw e;
-		}
 	}
 
 	@Override

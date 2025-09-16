@@ -63,7 +63,7 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements ItemLi
 	}
 	
 	protected <T extends RealType<T> & NativeType<T>> void loadModel(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
-		selected.setImage(rai, null);
+		selected.setImage(rai);
 	}
 	
 	protected void unLoadModel() {

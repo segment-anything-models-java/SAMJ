@@ -251,7 +251,7 @@ public class EfficientTamEnvManager extends SamEnvManagerAbstract {
 	private void downloadWeights() throws IOException, InterruptedException {
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTTAM WEIGHTS (" + modelType + ")");
         try {
-    		File file = Paths.get(path, "envs", EFFTAM_ENV_NAME, EFFTAM_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, modelType))).toFile();
+    		File file = Paths.get(path, "envs", EFFTAM_ENV_NAME, EFFTAM_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)))).toFile();
     		file.getParentFile().mkdirs();
     		URL url = FileDownloader.redirectedURL(new URL(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType))));
     		Thread parentThread = Thread.currentThread();

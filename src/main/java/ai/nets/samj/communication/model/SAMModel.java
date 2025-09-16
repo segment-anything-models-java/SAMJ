@@ -22,11 +22,13 @@ package ai.nets.samj.communication.model;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.models.AbstractSamJ;
+import ai.nets.samj.models.EfficientTamJ;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.SAMJLogger;
 import net.imglib2.Interval;
@@ -34,13 +36,14 @@ import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Cast;
 
 /**
  * A common ground for various placeholder classes to inform
  * the system that even this network may be available/installed.
  * It is, however, not creating/instancing any connection to any
  * (Python) network code or whatsoever, that happens only after the
- * {@link SAMModel#setImage(RandomAccessibleInterval, SAMJLogger)} is called, and reference
+ * {@link SAMModel#loadModel(RandomAccessibleInterval, SAMJLogger)} is called, and reference
  * to such connection is returned.
  * @author Vladimir Ulman
  * @author Carlos Javier Garcia Lopez de Haro
@@ -121,6 +124,44 @@ public abstract class SAMModel {
 	 * @return the axes order required for the input image to the model
 	 */
 	public abstract String getInputImageAxes();
+
+	/**
+	 * Instantiate a SAM based model
+	 * 
+	 * @param useThisLoggerForIt
+	 * 	a logger to provide info about the progress
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public abstract void loadModel(final SAMJLogger useThisLoggerForIt) 
+			throws IOException, RuntimeException, InterruptedException;
+
+	/**
+	 * Provide also an image that will be encoded by the model encoder.
+	 * If the model is not instantiated it, the method loads the model
+	 * @param <T>
+	 * 	ImgLib2 datatype of the image
+	 * 
+	 * @param image
+	 * 	the image of interest for segmentation or annotation
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws InterruptedException if the process in interrupted
+	 */
+	public <T extends RealType<T> & NativeType<T>> 
+	void setImage(final RandomAccessibleInterval<T> image) 
+			throws IOException, RuntimeException, InterruptedException{
+		Objects.requireNonNull(image, "The image cannot be null.");
+		if (this.samj == null)
+			this.loadModel(null);;
+		try {
+			this.samj.setImage(Cast.unchecked(image));
+		} catch (IOException | InterruptedException | RuntimeException e) {
+			log.error(this.fullName + " experienced an error: " + e.getMessage());
+			throw e;
+		}
+	}
 	
 	/**
 	 * 
@@ -129,23 +170,6 @@ public abstract class SAMModel {
 	public SamEnvManagerAbstract getInstallationManger() {
 		return this.manager;
 	}
-
-	/**
-	 * Instantiate a SAM based model. Provide also an image that will be encoded by the model encoder
-	 * @param <T>
-	 * 	ImgLib2 datatype of the image
-	 * 
-	 * @param image
-	 * 	the image of interest for segmentation or annotation
-	 * @param useThisLoggerForIt
-	 * 	a logger to provide info about the progress
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
-	 * @throws InterruptedException if the process in interrupted
-	 */
-	public abstract <T extends RealType<T> & NativeType<T>> 
-	void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) 
-			throws IOException, RuntimeException, InterruptedException;
 
 	/**
 	 * 

@@ -102,9 +102,8 @@ public class EfficientTAMSmall extends SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public <T extends RealType<T> & NativeType<T>> void setImage(final RandomAccessibleInterval<T> image, final SAMJLogger useThisLoggerForIt) 
+	public void loadModel(final SAMJLogger useThisLoggerForIt) 
 			throws IOException, InterruptedException, RuntimeException {
-		Objects.requireNonNull(image, "The image cannot be null.");
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {
@@ -121,12 +120,6 @@ public class EfficientTAMSmall extends SAMModel {
 		};
 		if (this.samj == null)
 			samj = EfficientTamJ.initializeSam(ID, manager, filteringLogger, false);
-		try {
-			this.samj.setImage(Cast.unchecked(image));;
-		} catch (IOException | InterruptedException | RuntimeException e) {
-			log.error(FULL_NAME + " experienced an error: " + e.getMessage());
-			throw e;
-		}
 	}
 
 	@Override

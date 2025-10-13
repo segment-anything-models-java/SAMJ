@@ -787,6 +787,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	private List<int[]> adaptPointPrompts(List<int[]> pointsList) {
+		if (pointsList == null)
+			pointsList = new ArrayList<int[]>();
 		pointsList = pointsList.stream().map(pp -> {
 			int[] newPoint = new int[2];
 			newPoint[0] = (int) Math.ceil((pp[0] - this.encodeCoords[0]) / (double) scale);

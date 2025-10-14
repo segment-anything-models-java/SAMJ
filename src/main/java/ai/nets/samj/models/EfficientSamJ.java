@@ -73,7 +73,7 @@ public class EfficientSamJ extends AbstractSamJ {
 			+ "from efficient_sam.efficient_sam import build_efficient_sam" + System.lineSeparator()
 			+ "task.update('imported')" + System.lineSeparator()
 			+ "" + System.lineSeparator()
-			+ "predictor = build_efficient_sam(encoder_patch_embed_dim=384,encoder_num_heads=6,checkpoint=r'%s',).eval()" + System.lineSeparator()
+			+ "predictor = build_efficient_sam(encoder_patch_embed_dim=384,encoder_num_heads=6,checkpoint=r'%s').cuda().eval()" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
 			+ "globals()['encodings_map'] = encodings_map" + System.lineSeparator()
@@ -123,7 +123,7 @@ public class EfficientSamJ extends AbstractSamJ {
 			@Override public String base() { return manager.getModelEnv(); }
 			};
 		python = env.python();
-		python.debug(debugPrinter::printText);
+		//python.debug(debugPrinter::printText);
 		String IMPORTS_FORMATED = String.format(IMPORTS,
 				manager.getModelEnv() + File.separator + EfficientSamEnvManager.ESAM_NAME,
 				manager.getModelWeigthPath());

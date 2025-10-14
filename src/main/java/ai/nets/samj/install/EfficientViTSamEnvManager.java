@@ -75,10 +75,10 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-				"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0", "cpuonly"});
+				"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0"});
 		else 
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-					"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0", "cpuonly"});
+					"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0"});
 	}
 	/**
 	 * Dependencies that have to be installed using Mamba or Conda in environments that are going

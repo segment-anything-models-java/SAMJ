@@ -161,7 +161,7 @@ public class Sam2 extends AbstractSamJ {
 			@Override public String base() { return manager.getModelEnv(); }
 			};
 		python = env.python();
-		python.debug(debugPrinter::printText);
+		//python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS, CONFIG_MAPPING.get(type), manager.getModelWeigthPath());
 		
 		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");

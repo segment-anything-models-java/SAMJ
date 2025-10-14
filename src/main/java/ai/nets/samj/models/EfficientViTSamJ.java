@@ -90,7 +90,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			+ "from efficientvit.models.efficientvit.sam import EfficientViTSamPredictor" + System.lineSeparator()
 			+ "task.update('imported')" + System.lineSeparator()
 			+ "" + System.lineSeparator()
-			+ "model = %s().cpu().eval()" + System.lineSeparator()
+			+ "model = %s().cuda().eval()" + System.lineSeparator()
 			+ "eps = 1e-6" + System.lineSeparator()
 			+ "for m in model.modules():" + System.lineSeparator()
 			+ "  if isinstance(m, (torch.nn.GroupNorm, torch.nn.LayerNorm, torch.nn.modules.batchnorm._BatchNorm)):" + System.lineSeparator()
@@ -163,7 +163,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			@Override public String base() { return manager.getModelEnv(); }
 			};
 		python = env.python();
-		python.debug(debugPrinter::printText);
+		//python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS,
 									manager.getModelEnv() + File.separator + EfficientViTSamEnvManager.EVITSAM_NAME,
 									MODELS_DICT.get(type), MODELS_DICT.get(type), manager.getModelWeigthPath());

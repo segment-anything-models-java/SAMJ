@@ -20,7 +20,10 @@
 package ai.nets.samj.install;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,6 +36,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
@@ -63,7 +68,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * General for every supported model.
 	 */
 	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.4.0", 
-			"torchvision=0.19.0", "skimage", "sam2", "pytest"});
+			"torchvision=0.19.0", "skimage", "SAM-2=1.0", "pytest"});
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
 	 */
@@ -80,11 +85,11 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	final public static List<String> INSTALL_PIP_DEPS;
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta() && PlatformDetection.isMacOS())
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2023.2.2", "samv2==0.0.4", "pytest"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2023.2.2", "pytest"});
 		else if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "samv2==0.0.4", "pytest"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "pytest"});
 		else 
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"samv2==0.0.4", "pytest"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"pytest"});
 	}
 	/**
 	 * Byte sizes of all the SAM2 options
@@ -359,6 +364,51 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
         thread.interrupt();
         passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 PYTHON ENVIRONMENT CREATED");
         installApposePackage(SAM2_ENV_NAME);
+		installSAM2Package();
+	}
+	
+	/**
+	 * Install the Python package to run SAM2
+	 * @throws IOException if there is any file creation related issue
+	 * @throws InterruptedException if the package installation is interrupted
+	 * @throws MambaInstallException if there is any error with the Mamba installation
+	 */
+	private void installSAM2Package() throws IOException, InterruptedException, MambaInstallException {
+		if (!checkMambaInstalled())
+			throw new IllegalArgumentException("Unable to SAM2 without first installing Mamba. ");
+		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'SAM2' PYTHON PACKAGE");
+		String zipResourcePath = "sam2.zip";
+        String outputDirectory = mamba.getEnvsDir() + File.separator + SAM2_ENV_NAME + "_package";
+        try (
+        	InputStream zipInputStream = Sam2EnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
+        	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
+        		) {
+        	ZipEntry entry;
+        	while ((entry = zipInput.getNextEntry()) != null) {
+                File entryFile = new File(outputDirectory + File.separator + entry.getName());
+                if (entry.isDirectory()) {
+                	entryFile.mkdirs();
+                	continue;
+                }
+            	entryFile.getParentFile().mkdirs();
+                try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = zipInput.read(buffer)) != -1) {
+                        entryOutput.write(buffer, 0, bytesRead);
+                    }
+                }
+            }
+        } catch (IOException e) {
+			thread.interrupt();
+			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'SAM2' PYTHON PACKAGE INSTALLATION");
+			throw e;
+		}
+        mamba.pipInstallIn(SAM2_ENV_NAME, 
+        		new String[] {mamba.getEnvsDir() + File.separator + SAM2_ENV_NAME + "_package" + File.separator + SAM2_ENV_NAME,
+        				"--no-deps", "--no-build-isolation"});
+		thread.interrupt();
+		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- 'SAM2' PYTHON PACKAGE INSATLLED");
 	}
 	
 	/**

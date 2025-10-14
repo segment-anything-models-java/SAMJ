@@ -20,6 +20,7 @@
 package ai.nets.samj.models;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import ai.nets.samj.install.Sam2EnvManager;
@@ -66,6 +67,13 @@ public class Sam2 extends AbstractSamJ {
 		MODELS_LIST.add("base_plus");
 		MODELS_LIST.add("large");
 	}
+	private static final HashMap<String, String> CONFIG_MAPPING = new HashMap<String, String>();
+	static {
+		CONFIG_MAPPING.put("tiny", "configs/sam2/sam2_hiera_t.yaml");
+		CONFIG_MAPPING.put("small", "configs/sam2/sam2_hiera_s.yaml");
+		CONFIG_MAPPING.put("base_plus", "configs/sam2/sam2_hiera_b+.yaml");
+		CONFIG_MAPPING.put("large", "configs/sam2/sam2_hiera_l.yaml");
+	}
 	/**
 	 * All the Python imports and configurations needed to start using EfficientViTSAM.
 	 */
@@ -75,7 +83,7 @@ public class Sam2 extends AbstractSamJ {
 			+ "from skimage import measure" + System.lineSeparator()
 			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
-			+ "device = 'cpu'" + System.lineSeparator()
+			+ "device = 'cuda'" + System.lineSeparator()
 			+ ((!IS_APPLE_SILICON || true) ? "" // TODO Add a button so the user can decide whether to use accelerators or not (I tried enabling by default and some models might be out of memory)
 					: "from torch.backends import mps" + System.lineSeparator()
 					+ "if mps.is_built() and mps.is_available():" + System.lineSeparator()
@@ -88,8 +96,7 @@ public class Sam2 extends AbstractSamJ {
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
 			+ "from sam2.build_sam import build_sam2" + System.lineSeparator()
 			+ "from sam2.sam2_image_predictor import SAM2ImagePredictor" + System.lineSeparator()
-			+ "from sam2.utils.misc import variant_to_config_mapping" + System.lineSeparator()
-			+ "model = build_sam2(variant_to_config_mapping['%s'],r'%s').to(device)" + System.lineSeparator()
+			+ "model = build_sam2('%s',ckpt_path=r'%s', device=device)" + System.lineSeparator()
 			+ "predictor = SAM2ImagePredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
@@ -155,7 +162,7 @@ public class Sam2 extends AbstractSamJ {
 			};
 		python = env.python();
 		python.debug(debugPrinter::printText);
-		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());
+		IMPORTS_FORMATED = String.format(IMPORTS, CONFIG_MAPPING.get(type), manager.getModelWeigthPath());
 		
 		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);

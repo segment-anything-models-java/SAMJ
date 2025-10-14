@@ -307,7 +307,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		sendImgLib2AsNp();
 		createEncodeImageScript();
 		try {
-			printScript(script, "Creation of initial embeddings");
+			//printScript(script, "Creation of initial embeddings");
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
@@ -336,7 +336,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		sendCropAsNp(cropSize);
 		createEncodeImageScript();
 		try {
-			printScript(script, "Creation of the cropped embeddings");
+			//printScript(script, "Creation of the cropped embeddings");
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
@@ -536,7 +536,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 											.collect(Collectors.toList());
 			inputs.put("rect_prompts", rectPrompts);
 			processPromptsBatchWithSAM(maskShma, returnAll);
-			printScript(script, "Batch of prompts inference");
+			//printScript(script, "Batch of prompts inference");
 			List<Mask> polys = processAndRetrieveContours(inputs, callback);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
@@ -577,7 +577,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 											.collect(Collectors.toList());
 			inputs.put("rect_prompts", rectPrompts);
 			processPromptsBatchWithSAM(maskShma, returnAll);
-			printScript(script, "Batch of prompts inference");
+			//printScript(script, "Batch of prompts inference");
 			List<Mask> polys = processAndRetrieveContours(inputs);
 			recalculatePolys(polys, encodeCoords);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
@@ -779,7 +779,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_points", pointsList);
 		inputs.put("input_neg_points", pointsNegList);
-		printScript(script, "Points and negative points inference");
+		//printScript(script, "Points and negative points inference");
 		List<Mask> polys = processAndRetrieveContours(inputs);
 		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
@@ -852,7 +852,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		processBoxWithSAM(returnAll);
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_box", adaptedBoundingBox);
-		printScript(script, "Rectangle inference");
+		//printScript(script, "Rectangle inference");
 		List<Mask> polys = processAndRetrieveContours(inputs);
 		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");

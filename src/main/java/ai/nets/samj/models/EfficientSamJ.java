@@ -224,7 +224,7 @@ public class EfficientSamJ extends AbstractSamJ {
 		code += "im_shm.unlink()" + System.lineSeparator();
 		this.script += code;
 		this.script += ""
-				+ "_ = predictor.get_image_embeddings(im[None, ...])" + System.lineSeparator();
+				+ "_ = predictor.get_image_embeddings(im[None, ...].cuda())" + System.lineSeparator();
 	}
 
 	@Override
@@ -245,7 +245,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "input_label = np.array([1] * " + (nPoints + nNegPoints) + ")" + System.lineSeparator()
 				+ "input_label[" + nPoints + ":] -= 1" + System.lineSeparator()
 				+ "input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
-				+ "predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
+				+ "predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images.cuda()," + System.lineSeparator()
 				+ "    input_points," + System.lineSeparator()
 				+ "    input_label," + System.lineSeparator()
 				+ "    multimask_output=True," + System.lineSeparator()
@@ -277,7 +277,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "input_box = torch.reshape(torch.tensor(input_box), [1, 1, -1, 2])" + System.lineSeparator()
 				+ "input_label = np.array([2,3])" + System.lineSeparator()
 				+ "input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
-				+ "predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
+				+ "predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images.cuda()," + System.lineSeparator()
 				+ "    input_box," + System.lineSeparator()
 				+ "    input_label," + System.lineSeparator()
 				+ "    multimask_output=True," + System.lineSeparator()
@@ -444,7 +444,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "      extracted_point_labels += [1]" + System.lineSeparator()
 				+ "    ip = torch.reshape(torch.tensor(np.array(extracted_point_prompts).reshape(len(extracted_point_prompts), 2)), [1, 1, -1, 2])" + System.lineSeparator()
 				+ "    il = torch.reshape(torch.tensor(np.array(extracted_point_labels)), [1, 1, -1])" + System.lineSeparator()
-				+ "    predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
+				+ "    predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images.cuda()," + System.lineSeparator()
 				+ "      ip," + System.lineSeparator()
 				+ "      il," + System.lineSeparator()
 				+ "      multimask_output=True," + System.lineSeparator()
@@ -470,7 +470,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "  for p_prompt in point_prompts:" + System.lineSeparator()
 				+ "    ip = torch.reshape(torch.tensor(np.array(p_prompt).reshape(1, 2)), [1, 1, -1, 2])" + System.lineSeparator()
 				+ "    il = torch.reshape(torch.tensor(np.array([1])), [1, 1, -1])" + System.lineSeparator()
-				+ "    predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
+				+ "    predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images.cuda()," + System.lineSeparator()
 				+ "      ip," + System.lineSeparator()
 				+ "      il," + System.lineSeparator()
 				+ "      multimask_output=True," + System.lineSeparator()
@@ -499,7 +499,7 @@ public class EfficientSamJ extends AbstractSamJ {
 				+ "    input_box = torch.reshape(torch.tensor(input_box), [1, 1, -1, 2])" + System.lineSeparator()
 				+ "    input_label = np.array([2,3])" + System.lineSeparator()
 				+ "    input_label = torch.reshape(torch.tensor(input_label), [1, 1, -1])" + System.lineSeparator()
-				+ "    predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images," + System.lineSeparator()
+				+ "    predicted_logits, predicted_iou = predictor.predict_masks(predictor.encoded_images.cuda()," + System.lineSeparator()
 				+ "      input_box," + System.lineSeparator()
 				+ "      input_label," + System.lineSeparator()
 				+ "      multimask_output=True," + System.lineSeparator()

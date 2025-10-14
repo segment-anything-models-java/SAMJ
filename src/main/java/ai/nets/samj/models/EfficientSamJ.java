@@ -223,8 +223,8 @@ public class EfficientSamJ extends AbstractSamJ {
 		//code += "task.update('after ' + str(im.shape))" + System.lineSeparator();
 		code += "im_shm.unlink()" + System.lineSeparator();
 		this.script += code;
-		this.script += ""
-				+ "_ = predictor.get_image_embeddings(im[None, ...].cuda())" + System.lineSeparator();
+		this.script += "with torch.no_grad():" + System.lineSeparator()
+				+ "  _ = predictor.get_image_embeddings(im[None, ...].cuda())" + System.lineSeparator();
 	}
 
 	@Override

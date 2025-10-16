@@ -1064,7 +1064,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		rect.width = (int) Math.max(maxX - minX, MIN_ENCODED_AREA_SIDE);
 		rect.height = (int) Math.max(maxY - minY, MIN_ENCODED_AREA_SIDE);
 		rect.x -= (Math.max(rect.x + rect.width - img.dimensionsAsLongArray()[0], 0));
+		rect.x = Math.max(rect.x, 0);
+		rect.width = (int) Math.min(rect.width, img.dimensionsAsLongArray()[0]);
 		rect.y -= (Math.max(rect.y + rect.height - img.dimensionsAsLongArray()[1], 0));
+		rect.y = Math.max(rect.y, 0);
+		rect.height = (int) Math.min(rect.height, img.dimensionsAsLongArray()[1]);
 		return rect;
 	}
 	

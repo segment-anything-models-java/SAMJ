@@ -57,8 +57,8 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
 	 * General for every supported model.
 	 */
-	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.4.0", 
-			"torchvision=0.19.0", "skimage"});
+	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.7.0", 
+			"torchvision=0.22.0", "skimage"});
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
 	 */
@@ -66,10 +66,10 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-				"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0", "cpuonly"});
+				"scikit-image", "pytorch=2.7.0", "torchvision=0.22.0"});
 		else 
 			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"libpng", "libjpeg-turbo", 
-					"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0", "cpuonly"});
+					"scikit-image", "pytorch=2.7.0", "torchvision=0.22.0"});
 	}
 	/**
 	 * Dependencies for every environment that need to be installed using PIP

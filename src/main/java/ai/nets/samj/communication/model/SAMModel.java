@@ -31,6 +31,7 @@ import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.EfficientTamJ;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.SAMJLogger;
+import io.bioimage.modelrunner.apposed.appose.Types;
 import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
@@ -297,7 +298,7 @@ public abstract class SAMModel {
 			};
 			return samj.processBox(bbox, !onlyBiggest);
 		} catch (IOException | InterruptedException | RuntimeException e) {
-			log.error(getName()+", providing empty result because of some trouble: "+e.getMessage());
+			log.error(getName()+", providing empty result because of some trouble: "+Types.stackTrace(e));
 			throw e;
 		}
 	}

@@ -96,7 +96,7 @@ public class PythonMethods {
 			+ "            x_contours.append(x_coords)" + System.lineSeparator()
 			+ "            y_contours.append(y_coords)" + System.lineSeparator()
 			+ "            sizes.append(obj.num_pixels)" + System.lineSeparator()
-			+ "    if only_biggest:" + System.lineSeparator()
+			+ "    if only_biggest and np.array(sizes).shape[0] > 0:" + System.lineSeparator()
 			+ "        max_size_pos = np.array(sizes).argmax()" + System.lineSeparator()
 			+ "        x_contours = [x_contours[max_size_pos]]" + System.lineSeparator()
 			+ "        y_contours = [y_contours[max_size_pos]]" + System.lineSeparator()

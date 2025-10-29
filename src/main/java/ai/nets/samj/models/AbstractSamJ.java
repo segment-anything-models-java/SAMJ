@@ -788,6 +788,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	private List<int[]> adaptPointPrompts(List<int[]> pointsList) {
+		if (pointsList == null)
+			pointsList = new ArrayList<int[]>();
 		pointsList = pointsList.stream().map(pp -> {
 			int[] newPoint = new int[2];
 			newPoint[0] = (int) Math.ceil((pp[0] - this.encodeCoords[0]) / (double) scale);
@@ -1027,7 +1029,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		rect.width = (int) Math.max(maxX - minX, MIN_ENCODED_AREA_SIDE);
 		rect.height = (int) Math.max(maxY - minY, MIN_ENCODED_AREA_SIDE);
 		rect.x -= (Math.max(rect.x + rect.width - img.dimensionsAsLongArray()[0], 0));
+		rect.x = Math.max(rect.x, 0);
+		rect.width = (int) Math.min(rect.width, img.dimensionsAsLongArray()[0]);
 		rect.y -= (Math.max(rect.y + rect.height - img.dimensionsAsLongArray()[1], 0));
+		rect.y = Math.max(rect.y, 0);
+		rect.height = (int) Math.min(rect.height, img.dimensionsAsLongArray()[1]);
 		return rect;
 	}
 	
@@ -1059,7 +1065,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		rect.width = (int) Math.max(maxX - minX, MIN_ENCODED_AREA_SIDE);
 		rect.height = (int) Math.max(maxY - minY, MIN_ENCODED_AREA_SIDE);
 		rect.x -= (Math.max(rect.x + rect.width - img.dimensionsAsLongArray()[0], 0));
+		rect.x = Math.max(rect.x, 0);
+		rect.width = (int) Math.min(rect.width, img.dimensionsAsLongArray()[0]);
 		rect.y -= (Math.max(rect.y + rect.height - img.dimensionsAsLongArray()[1], 0));
+		rect.y = Math.max(rect.y, 0);
+		rect.height = (int) Math.min(rect.height, img.dimensionsAsLongArray()[1]);
 		return rect;
 	}
 	

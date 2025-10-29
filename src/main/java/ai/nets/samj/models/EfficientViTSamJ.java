@@ -101,7 +101,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			+ "if \"state_dict\" in weight:" + System.lineSeparator()
 			+ "  weight = weight[\"state_dict\"]" + System.lineSeparator()
 			+ "model.load_state_dict(weight)" + System.lineSeparator()
-			+ "predictor = EfficientViTSamPredictor(model).cuda()" + System.lineSeparator()
+			+ "predictor = EfficientViTSamPredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
 			+ "globals()['encodings_map'] = encodings_map" + System.lineSeparator()

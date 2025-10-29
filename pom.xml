@@ -153,6 +153,11 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.apposed</groupId>
+		    <artifactId>appose</artifactId>
+		    <version>0.8.0</version>
+		</dependency>
 		<!-- 
 		<dependency>
 			<groupId>org.apposed</groupId>

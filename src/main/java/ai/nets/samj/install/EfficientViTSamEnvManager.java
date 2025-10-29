@@ -65,7 +65,7 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
 	 * General for every supported model.
 	 */
-	final public static List<String> CHECK_DEPS_EVSAM = Arrays.asList(new String[] {"appose", "torch=2.4.0", "torchvision=0.19.0", 
+	final public static List<String> CHECK_DEPS_EVSAM = Arrays.asList(new String[] {"appose=0.7.1", "torch=2.4.0", "torchvision=0.19.0", 
 			"skimage", "onnxsim", "timm", "onnx", "segment_anything"});
 	/**
 	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
@@ -90,11 +90,11 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	final public static List<String> INSTALL_PIP_DEPS;
 	static {
 		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta() && PlatformDetection.isMacOS())
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2023.2.2", "appose"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2023.2.2", "appose=0.7.1"});
 		else if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "appose"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "appose=0.7.1"});
 		else 
-			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"appose"});
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"appose=0.7.1"});
 	}
 	/**
 	 * Dependencies for EfficientViTSAM environments that need to be installed using PIP

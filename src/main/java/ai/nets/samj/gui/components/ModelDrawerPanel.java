@@ -30,8 +30,7 @@ import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.HTMLPane;
-import io.bioimage.modelrunner.apposed.appose.Mamba;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
+import org.apposed.appose.mamba.Mamba;
 
 /**
  * TODO improve the way the installation is logged
@@ -195,8 +194,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 			    	setButtons();
 					listeners.forEach(l -> l.setGUIEnabled(true));
 				});
-			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException
-					| MambaInstallException e) {
+			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException e) {
 				e.printStackTrace();
 				SwingUtilities.invokeLater(() -> {
 					this.setInfo();

@@ -25,11 +25,12 @@ import java.util.List;
 import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
+import java.io.File;
 import java.io.IOException;
 
-import io.bioimage.modelrunner.apposed.appose.Environment;
-import io.bioimage.modelrunner.apposed.appose.Service.Task;
-import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
+import org.apposed.appose.Appose;
+import org.apposed.appose.Service.Task;
+import org.apposed.appose.Service.TaskStatus;
 
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
@@ -150,9 +151,7 @@ public class Sam2 extends AbstractSamJ {
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
-		this.env = new Environment() {
-			@Override public String base() { return manager.getModelEnv(); }
-			};
+		this.env = Appose.build(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());
@@ -459,7 +458,7 @@ public class Sam2 extends AbstractSamJ {
 				+ "  globals()['as_completed'] = as_completed" + System.lineSeparator()
 				+ "lock = threading.Lock()" + System.lineSeparator()
 				+ "def respond_in_thread(task, args, inds, lock, finished_threads):" + System.lineSeparator()
-				+ "  task._respond(ResponseType.UPDATE, args)" + System.lineSeparator()
+				+ "  task.update(args['message'], info=args['outputs'])" + System.lineSeparator()
 				+ "  with lock:" + System.lineSeparator()
 				+ "    finished_threads.extend(inds)" + System.lineSeparator()
 				+ "" + System.lineSeparator()
@@ -488,8 +487,8 @@ public class Sam2 extends AbstractSamJ {
 				+ "contours_y = []" + System.lineSeparator()
 				+ "rle_masks = []" + System.lineSeparator()
 				+ "ntot = num_features + len(point_prompts) + len(rect_prompts)" + System.lineSeparator()
-				+ "args = {\"outputs\": {'n': str(ntot)}, \"message\": '" + AbstractSamJ.UPDATE_ID_N_CONTOURS + "'}" + System.lineSeparator()
-				+ "task._respond(ResponseType.UPDATE, args)" + System.lineSeparator()
+				+ "info = {'n': str(ntot)}" + System.lineSeparator()
+				+ String.format("task.update('%s', info=info)", AbstractSamJ.UPDATE_ID_N_CONTOURS) + System.lineSeparator()
 				// TODO right now is geetting the mask after each prompt
 				// TODO test processing first every prompt and then getting the masks
 				+ "with ThreadPoolExecutor(max_workers=num_threads) as executor:" + System.lineSeparator()

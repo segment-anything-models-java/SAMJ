@@ -36,8 +36,7 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
-import io.bioimage.modelrunner.apposed.appose.Mamba;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
+import org.apposed.appose.mamba.Mamba;
 
 /*
  * Class that is manages the installation of SAM and EfficientSAM together with Python, their corresponding environments
@@ -86,9 +85,9 @@ public abstract class SamEnvManagerAbstract {
 	
 	public abstract boolean checkSAMDepsInstalled();
 	
-	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException;
 
-	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException;
 
 	public abstract boolean checkModelWeightsInstalled();
 	
@@ -96,7 +95,7 @@ public abstract class SamEnvManagerAbstract {
 	
 	public abstract void installModelWeigths(boolean force) throws IOException, InterruptedException;
 	
-	public abstract void installEverything() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+	public abstract void installEverything() throws IOException, InterruptedException, ArchiveException, URISyntaxException;
 	
 	public abstract String getModelWeigthsName();
 	
@@ -108,9 +107,6 @@ public abstract class SamEnvManagerAbstract {
 	
 	
 	public void setConsumer(Consumer<String> consumer) {
-		this.consumer = consumer;
-		this.mamba.setConsoleOutputConsumer(this.consumer);
-		this.mamba.setErrorOutputConsumer(this.consumer);
 	}
 	
 	/**
@@ -130,7 +126,8 @@ public abstract class SamEnvManagerAbstract {
 	public boolean checkMambaInstalled() {
 		File ff = new File(path + MAMBA_RELATIVE_PATH);
 		if (!ff.exists()) return false;
-		return mamba.checkMambaInstalled();
+		// TODO return mamba.checkMambaInstalled();
+		return true;
 	}
 	
 	/**
@@ -142,7 +139,7 @@ public abstract class SamEnvManagerAbstract {
 	 * @throws InterruptedException if the package installation is interrupted
 	 * @throws MambaInstallException if there is any error with the Mamba installation
 	 */
-	protected void installApposePackage(String envName) throws IOException, InterruptedException, MambaInstallException {
+	protected void installApposePackage(String envName) throws IOException, InterruptedException {
 		installApposePackage(envName, false);
 	}
 	
@@ -155,14 +152,14 @@ public abstract class SamEnvManagerAbstract {
 	 * 	if the package already exists, whether to overwrite it or not
 	 * @throws IOException if there is any file creation related issue
 	 * @throws InterruptedException if the package installation is interrupted
-	 * @throws MambaInstallException if there is any error with the Mamba installation
 	 */
-	protected void installApposePackage(String envName, boolean force) throws IOException, InterruptedException, MambaInstallException {
+	protected void installApposePackage(String envName, boolean force) throws IOException, InterruptedException {
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to SAM without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'APPOSE' PYTHON PACKAGE");
 		String zipResourcePath = "appose-python.zip";
-        String outputDirectory = mamba.getEnvsDir() + File.separator + envName;
+		String outputDirectory = "";
+        // TODO String outputDirectory = mamba.getEnvsDir() + File.separator + envName;
         try (
             	InputStream zipInputStream = SamEnvManagerAbstract.class.getClassLoader().getResourceAsStream(zipResourcePath);
             	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
@@ -188,7 +185,7 @@ public abstract class SamEnvManagerAbstract {
     			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'APPOSE' PYTHON PACKAGE INSTALLATION");
     			throw e;
     		}
-        mamba.pipInstallIn(envName, new String[] {mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
+        // TODO mamba.pipInstallIn(envName, new String[] {mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
 		thread.interrupt();
 		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- 'APPOSE' PYTHON PACKAGE INSATLLED");
 	}
@@ -200,15 +197,14 @@ public abstract class SamEnvManagerAbstract {
 	 * @throws InterruptedException if the installation is interrupted
 	 * @throws ArchiveException if there is any error decompressing the micromamba installer files
 	 * @throws URISyntaxException if there is any error with the url that points to the micromamba instance to download
-	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installMambaPython() throws IOException, InterruptedException, 
-	ArchiveException, URISyntaxException, MambaInstallException{
+	ArchiveException, URISyntaxException {
 		if (checkMambaInstalled()) return;
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING MICROMAMBA");
 		try {
 			mamba.installMicromamba();
-		} catch (IOException | InterruptedException | ArchiveException | URISyntaxException e) {
+		} catch (IOException | InterruptedException | URISyntaxException e) {
 			thread.interrupt();
 			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED MICROMAMBA INSTALLATION");
 			throw e;
@@ -231,7 +227,8 @@ public abstract class SamEnvManagerAbstract {
 	 * @return progress made downloading Micromamba
 	 */
 	public double getMambaInstallationProcess() {
-		return this.mamba.getMicromambaDownloadProgress();
+		// TODO return this.mamba.getMicromambaDownloadProgress();
+		return 0.0;
 	}
 	
 	public String getEnvCreationProgress() {

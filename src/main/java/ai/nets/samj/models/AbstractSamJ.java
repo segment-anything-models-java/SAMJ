@@ -618,7 +618,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	public List<Mask> processBatchOfPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		List<Mask> polys = processBatchOfPrompts(pointsList, null, null, returnAll);
-		debugPrinter.printText("processBatchOfPoints() obtained " + polys.size() + " polygons");
+		// TODO remove debugPrinter.printText("processBatchOfPoints() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	
@@ -782,7 +782,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		//printScript(script, "Points and negative points inference");
 		List<Mask> polys = processAndRetrieveContours(inputs);
 		recalculatePolys(polys, encodeCoords);
-		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
+		// TODO remove debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	
@@ -855,7 +855,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		//printScript(script, "Rectangle inference");
 		List<Mask> polys = processAndRetrieveContours(inputs);
 		recalculatePolys(polys, encodeCoords);
-		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
+		// TODO remove debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	
@@ -902,7 +902,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	List<Mask> processMask(RandomAccessibleInterval<T> rai, boolean returnAll) 
 				throws IOException, RuntimeException, InterruptedException {
 		List<Mask> polys = processBatchOfPrompts(null, null, rai, returnAll);
-		debugPrinter.printText("processMask() obtained " + polys.size() + " polygons");
+		// TODO remove debugPrinter.printText("processMask() obtained " + polys.size() + " polygons");
 		return polys;
 	}
 	

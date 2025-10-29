@@ -150,11 +150,11 @@ public class ImgLib2Utils {
 	public static <T extends RealType<T> & NativeType<T>>
 	RandomAccessibleInterval<UnsignedByteType> convertViewToRGB(final RandomAccessibleInterval<T> inImg, DebugTextPrinter debugPrinter) {
 		if (Util.getTypeFromInterval(inImg) instanceof UnsignedByteType) {
-			debugPrinter.printText("IMAGE IS RGB, returning directly itself");
+			// TODO remove debugPrinter.printText("IMAGE IS RGB, returning directly itself");
 			return Cast.unchecked(inImg);
 		}
 		final double[] minMax = new double[2];
-		debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ RGB, returning Converted view");
+		// TODO remove debugPrinter.printText("MIN VALUE="+minMax[0]+", MAX VALUE="+minMax[1]+", IMAGE IS _NOT_ RGB, returning Converted view");
 		getMinMaxPixelValue(Views.iterable(inImg), minMax);
 		return convertViewToRGB(inImg, minMax);
 	}

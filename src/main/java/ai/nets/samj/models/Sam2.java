@@ -431,12 +431,12 @@ public class Sam2 extends AbstractSamJ {
 
 	@Override
 	public String persistEncodingScript(String encodingName) {
-		return "encodings_map['" + encodingName + "'] = predictor.features";
+		return "encodings_map['" + encodingName + "'] = predictor._features";
 	}
 
 	@Override
 	public String selectEncodingScript(String encodingName) {
-		return "predictor.features = encodings_map['" + encodingName + "']";		
+		return "predictor._features = encodings_map['" + encodingName + "']";		
 	}
 
 	@Override

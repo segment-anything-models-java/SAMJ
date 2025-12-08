@@ -3,6 +3,7 @@ package ai.nets.samj.gui;
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.EfficientSAM;
 import ai.nets.samj.communication.model.EfficientViTSAML2;
+import ai.nets.samj.communication.model.MedSAM;
 import ai.nets.samj.communication.model.SAM2Large;
 import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
@@ -91,6 +92,7 @@ public class MainGUI extends JFrame {
         DEFAULT_MODEL_LIST.add(new SAM2Large());
         DEFAULT_MODEL_LIST.add(new EfficientSAM());
         DEFAULT_MODEL_LIST.add(new EfficientViTSAML2());
+        DEFAULT_MODEL_LIST.add(new MedSAM());
     }
 
     public MainGUI(ConsumerInterface consumer) {

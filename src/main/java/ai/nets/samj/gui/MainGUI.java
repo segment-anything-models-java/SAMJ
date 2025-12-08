@@ -15,6 +15,7 @@ import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
 import ai.nets.samj.utils.Constants;
+import ai.nets.samj.utils.HardwareProfiler;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.IntegerType;
@@ -187,6 +188,14 @@ public class MainGUI extends JFrame {
 
         this.setTwoThirdsEnabled(false);
     	go.setEnabled(false);
+
+        // Set the recommended model as default based on hardware capabilities
+        // This must happen after all GUI components are initialized
+        SAMModel recommendedModel = HardwareProfiler.recommendModel(this.modelList);
+        if (recommendedModel != null) {
+            cmbModels.setSelectedModel(recommendedModel);
+        }
+
         new Thread(() -> {
             if (this.cmbModels.getSelectedModel().isInstalled() && cmbImages.getSelectedObject() != null)
             	SwingUtilities.invokeLater(() -> go.setEnabled(true));

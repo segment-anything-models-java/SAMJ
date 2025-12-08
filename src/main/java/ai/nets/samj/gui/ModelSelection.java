@@ -58,6 +58,15 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements ItemLi
 		return null;
 	}
 
+	protected void setSelectedModel(SAMModel model) {
+		for (int i = 0; i < this.models.size(); i++) {
+			if (this.models.get(i).getName().equals(model.getName())) {
+				cmbBox.setSelectedIndex(i);
+				break;
+			}
+		}
+	}
+
 	protected JButton getButton() {
 		return this.btn;
 	}

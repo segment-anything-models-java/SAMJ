@@ -41,6 +41,8 @@ import org.apposed.appose.Environment;
 import org.apposed.appose.Service;
 import org.apposed.appose.Service.Task;
 import org.apposed.appose.Service.TaskStatus;
+import org.apposed.appose.TaskException;
+
 import io.bioimage.modelrunner.system.PlatformDetection;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import net.imglib2.RandomAccessibleInterval;
@@ -289,11 +291,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @param rai
 	 * 	image (n-dimensional array) that is going to be encoded as a {@link RandomAccessibleInterval}
 	 * @throws IOException if any of the files to run a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public <T extends RealType<T> & NativeType<T>>
-	void setImage(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
+	void setImage(RandomAccessibleInterval<T> rai) throws IOException, InterruptedException, TaskException {
 		setImageOfInterest(rai);
 		if (img.dimensionsAsLongArray()[0] * img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
 				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
@@ -311,13 +313,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException("Task canceled");
+				throw new TaskException("Task canceled", task);
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			this.shma.close();
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch (IOException | InterruptedException | TaskException e) {
 			try {
 				this.shma.close();
 			} catch (IOException e1) {
@@ -327,11 +329,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 	}
 	
-	private void reencodeCrop() throws IOException, InterruptedException, RuntimeException {
+	private void reencodeCrop() throws IOException, InterruptedException, TaskException {
 		reencodeCrop(null);
 	}
 	
-	private void reencodeCrop(long[] cropSize) throws IOException, InterruptedException, RuntimeException {
+	private void reencodeCrop(long[] cropSize) throws IOException, InterruptedException, TaskException {
 		this.script = "";
 		sendCropAsNp(cropSize);
 		createEncodeImageScript();
@@ -340,13 +342,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException("Task canceled");
+				throw new TaskException("Task canceled", task);
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			this.shma.close();
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch (IOException | InterruptedException | TaskException e) {
 			try {
 				this.shma.close();
 			} catch (IOException e1) {
@@ -390,7 +392,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	@SuppressWarnings("unchecked")
 	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs, BatchCallback callback) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws TaskException, InterruptedException {
 		Map<String, Object> results = null;
 		List<Mask> totalPolys = new ArrayList<Mask>();
 		try {
@@ -419,22 +421,22 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	        });
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException("Task canceled");
+				throw new TaskException("Task canceled", task);
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status != TaskStatus.COMPLETE)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.outputs.get("contours_x") == null)
-				throw new RuntimeException("No 'contours_x' output found");
+				throw new TaskException("No 'contours_x' output found", task);
 			else if (task.outputs.get("contours_y") == null)
-				throw new RuntimeException("No 'contours_y' output found");
+				throw new TaskException("No 'contours_y' output found", task);
 			else if (task.outputs.get("rle") == null)
-				throw new RuntimeException("No 'rle' outputs found");
+				throw new TaskException("No 'rle' outputs found", task);
 			callback.updateProgress(nRois[0]);
 			results = task.outputs;
-		} catch (InterruptedException | RuntimeException e) {
+		} catch (InterruptedException | TaskException e) {
 			throw e;
 		}
 		List<Mask> polys = defineMask((List<List<Number>>)results.get("contours_x"), 
@@ -461,27 +463,27 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	@SuppressWarnings("unchecked")
 	private List<Mask> processAndRetrieveContours(HashMap<String, Object> inputs) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws TaskException, InterruptedException {
 		Map<String, Object> results = null;
 		try {
 			Task task = python.task(script, inputs);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException("Task canceled");
+				throw new TaskException("Task canceled", task);
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status != TaskStatus.COMPLETE)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.outputs.get("contours_x") == null)
-				throw new RuntimeException("No 'contours_x' output found");
+				throw new TaskException("No 'contours_x' output found", task);
 			else if (task.outputs.get("contours_y") == null)
-				throw new RuntimeException("No 'outputs_y' ouptut found");
+				throw new TaskException("No 'outputs_y' ouptut found", task);
 			else if (task.outputs.get("rle") == null)
-				throw new RuntimeException("No 'rle' outputs found");
+				throw new TaskException("No 'rle' outputs found", task);
 			results = task.outputs;
-		} catch (InterruptedException | RuntimeException e) {
+		} catch (InterruptedException | TaskException e) {
 			throw e;
 		}
 
@@ -501,14 +503,14 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai, BatchCallback callback) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		return processBatchOfPrompts(points, rects, rai, true, callback);
 	}
 	
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> pointsList, List<Rectangle> rects, 
 			RandomAccessibleInterval<T> rai, boolean returnAll, BatchCallback callback) 
-					throws IOException, RuntimeException, InterruptedException {
+					throws IOException, InterruptedException, TaskException {
 		if ((pointsList == null || pointsList.size() == 0) && (rects == null || rects.size() == 0) && (rai == null))
 			return new ArrayList<Mask>();
 		checkPrompts(pointsList, rects, rai);
@@ -541,7 +543,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			List<Mask> polys = processAndRetrieveContours(inputs, callback);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (IOException | InterruptedException ex) {
 			if (maskShma != null)
 				maskShma.close();
 			throw ex;
@@ -550,13 +552,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		return processBatchOfPrompts(points, rects, rai, true);
 	}
 	
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> pointsList, List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		if ((pointsList == null || pointsList.size() == 0) && (rects == null || rects.size() == 0) && (rai == null))
 			return new ArrayList<Mask>();
 		checkPrompts(pointsList, rects, rai);
@@ -583,7 +585,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			recalculatePolys(polys, encodeCoords);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (IOException | InterruptedException ex) {
 			if (maskShma != null)
 				maskShma.close();
 			throw ex;
@@ -612,12 +614,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 	}
 	
-	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, RuntimeException, InterruptedException {
+	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, InterruptedException, TaskException {
 		return processBatchOfPoints(points, true);
 	}
 	
 	public List<Mask> processBatchOfPoints(List<int[]> pointsList, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		List<Mask> polys = processBatchOfPrompts(pointsList, null, null, returnAll);
 		debugPrinter.printText("processBatchOfPoints() obtained " + polys.size() + " polygons");
 		return polys;
@@ -633,11 +635,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	of length 2, first position is x-axis, second y-axis
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public List<Mask> processPoints(List<int[]> pointsList)
-			throws IOException, RuntimeException, InterruptedException{
+			throws IOException, InterruptedException, TaskException{
 		return processPoints(pointsList, true);
 	}
 	
@@ -653,11 +655,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException  if teh appose task fails
 	 */
 	public List<Mask> processPoints(List<int[]> pointsList, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException{
+			throws IOException, InterruptedException, TaskException{
 		Rectangle rect = new Rectangle();
 		rect.x = -1;
 		rect.y = -1;
@@ -667,7 +669,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 
 	public List<Mask> processPoints(List<int[]> pointsList, Rectangle encodingArea, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		Objects.requireNonNull(encodingArea, "Second argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
@@ -687,11 +689,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	the list of points that does not point to the instance of interest, but the background
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public List<Mask> processPoints(List<int[]> pointsList, List<int[]> pointsNegList)
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		Rectangle rect = new Rectangle();
 		rect.x = (int) this.encodeCoords[0];
 		rect.y = (int) this.encodeCoords[1];
@@ -702,7 +704,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	public List<Mask> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
 			Rectangle zoomedArea)
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		return processPoints(pointsList, pointsNegList, zoomedArea, true);
 	}
 	
@@ -721,11 +723,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public List<Mask> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		Rectangle rect = new Rectangle();
 		rect.x = (int) this.encodeCoords[0];
 		rect.y = (int) this.encodeCoords[1];
@@ -752,12 +754,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws TaskException if the appose task fails
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
 			Rectangle encodingArea, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
@@ -811,11 +813,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	the bounding box that serves as the prompt for EfficientSAM
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public List<Mask> processBox(int[] boundingBox) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		return processBox(boundingBox, true);
 	}
 	
@@ -831,11 +833,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public List<Mask> processBox(int[] boundingBox, boolean returnAll)
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, InterruptedException, TaskException {
 		if (!this.imageSmall || this.encodeCoords[0] != 0 || this.encodeCoords[1] != 0 
 				|| targetDims[0] != img.dimensionsAsLongArray()[0] || targetDims[1] != img.dimensionsAsLongArray()[1]) {
 			if (needsMoreResolution(boundingBox)) {
@@ -873,12 +875,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	mask used as the prompt
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processMask(RandomAccessibleInterval<T> img) 
-				throws IOException, RuntimeException, InterruptedException {
+				throws IOException, InterruptedException, TaskException {
 		return processMask(img, true);
 	}
 	
@@ -896,12 +898,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
 	 */
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processMask(RandomAccessibleInterval<T> rai, boolean returnAll) 
-				throws IOException, RuntimeException, InterruptedException {
+				throws IOException, InterruptedException, TaskException {
 		List<Mask> polys = processBatchOfPrompts(null, null, rai, returnAll);
 		debugPrinter.printText("processMask() obtained " + polys.size() + " polygons");
 		return polys;
@@ -946,10 +948,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @param rect
 	 * @throws IOException
 	 * @throws InterruptedException
-	 * @throws RuntimeException
+	 * @throws TaskException 
 	 */
 	private void evaluateReencodingNeeded(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle rect) 
-			throws IOException, InterruptedException, RuntimeException {
+			throws IOException, InterruptedException, TaskException {
 		Rectangle extendedRect = extendRect(rect, 20);
 		
 		Rectangle alreadyEncoded = getCurrentlyEncodedArea();
@@ -1198,26 +1200,26 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		});
 	}
 
-	public String persistEncoding() throws IOException, InterruptedException {
+	public String persistEncoding() throws TaskException, InterruptedException {
 		String uuid = UUID.randomUUID().toString();
 		String saveEncodings = persistEncodingScript(uuid);
 		try {
 			Task task = python.task(saveEncodings);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException("Task canceled");
+				throw new TaskException("Task canceled", task);
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException(task.error);
-		} catch (IOException | InterruptedException | RuntimeException e) {
+				throw new TaskException(task.error, task);
+		} catch (InterruptedException | TaskException e) {
 			throw e;
 		}
 		this.savedEncodings.add(uuid);
 		return uuid;
 	}
 
-	public void selectEncoding(String encodingName) throws IOException, InterruptedException {
+	public void selectEncoding(String encodingName) throws TaskException, InterruptedException {
 		if (!this.savedEncodings.contains(encodingName))
 			throw new IllegalArgumentException("No saved encoding found with name: " + encodingName);
 		String setEncoding = selectEncodingScript(encodingName);
@@ -1225,19 +1227,19 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(setEncoding);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException("Task canceled");
+				throw new TaskException("Task canceled", task);
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException(task.error);
-		} catch (IOException | InterruptedException | RuntimeException e) {
+				throw new TaskException(task.error, task);
+		} catch (TaskException | InterruptedException e) {
 			throw e;
 		}
 		
 	}
 
 
-	public void deleteEncoding(String encodingName) throws IOException, InterruptedException {
+	public void deleteEncoding(String encodingName) throws TaskException, InterruptedException {
 		if (!this.savedEncodings.contains(encodingName))
 			return;
 		String returnEncoding = deleteEncodingScript(encodingName);
@@ -1245,12 +1247,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			Task task = python.task(returnEncoding);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
-				throw new RuntimeException("Task canceled");
+				throw new TaskException("Task canceled", task);
 			else if (task.status == TaskStatus.FAILED)
-				throw new RuntimeException(task.error);
+				throw new TaskException(task.error, task);
 			else if (task.status == TaskStatus.CRASHED)
-				throw new RuntimeException(task.error);
-		} catch (IOException | InterruptedException | RuntimeException e) {
+				throw new TaskException(task.error, task);
+		} catch (TaskException | InterruptedException e) {
 			throw e;
 		}
 		this.savedEncodings.remove(encodingName);

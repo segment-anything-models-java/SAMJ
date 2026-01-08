@@ -25,8 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apposed.appose.Appose;
+import org.apposed.appose.BuildException;
 import org.apposed.appose.Service.Task;
 import org.apposed.appose.Service.TaskStatus;
+import org.apposed.appose.TaskException;
 
 import ai.nets.samj.install.EfficientSamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
@@ -91,11 +93,11 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * 
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
+	 * @throws BuildException if there is any error building the mamba env
+	 * @throws TaskException if the appose task fails
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	private EfficientSamJ(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+	private EfficientSamJ(SamEnvManagerAbstract manager) throws BuildException, InterruptedException, TaskException {
 		this(manager, (t) -> {}, false);
 	}
 
@@ -108,19 +110,19 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
+	 * @throws BuildException if there is any error building the mamba env
+	 * @throws TaskException if the appose task fails
 	 * @throws InterruptedException if the process is interrupted
 	 * 
 	 */
 	private EfficientSamJ(SamEnvManagerAbstract manager,
 	                      final DebugTextPrinter debugPrinter,
-	                      final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	                      final boolean printPythonCode) throws BuildException, InterruptedException, TaskException {
 
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
-		this.env = Appose.build(new File(manager.getModelEnv()));
+		this.env = Appose.mamba().wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		String IMPORTS_FORMATED = String.format(IMPORTS,
@@ -130,11 +132,11 @@ public class EfficientSamJ extends AbstractSamJ {
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
-			throw new RuntimeException("Task canceled");
+			throw new TaskException("Task canceled", task);
 		else if (task.status == TaskStatus.FAILED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 		else if (task.status == TaskStatus.CRASHED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 	}
 
 	/**
@@ -149,18 +151,18 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
+	 * @throws BuildException if there is any error building the mamba env
+	 * @throws TaskException if the appose task fails
 	 * @throws InterruptedException if the process is interrupted
 	 */
 	public static EfficientSamJ initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	              final boolean printPythonCode) throws BuildException, TaskException, InterruptedException {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (InterruptedException | TaskException | BuildException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -177,16 +179,16 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link EfficientSamJ} that allows running EfficientSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
+	 * @throws BuildException if there is any error building the mamba env
+	 * @throws TaskException if the appose task fails
 	 * @throws InterruptedException if the process is interrupted
 	 */
-	public static EfficientSamJ initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+	public static EfficientSamJ initializeSam(SamEnvManagerAbstract manager) throws BuildException, TaskException, InterruptedException {
 		EfficientSamJ sam = null;
 		try{
 			sam = new EfficientSamJ(manager);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (TaskException | BuildException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -330,8 +332,10 @@ public class EfficientSamJ extends AbstractSamJ {
 	 * @throws IOException nothing
 	 * @throws RuntimeException nothing
 	 * @throws InterruptedException nothing
+	 * @throws TaskException 
+	 * @throws BuildException 
 	 */
-	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
+	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException, BuildException, TaskException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
 		try (EfficientSamJ sam = initializeSam(EfficientSamEnvManager.create())) {

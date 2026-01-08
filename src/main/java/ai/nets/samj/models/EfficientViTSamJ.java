@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apposed.appose.Appose;
+import org.apposed.appose.BuildException;
+import org.apposed.appose.TaskException;
 
 import ai.nets.samj.install.EfficientViTSamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
@@ -126,11 +128,11 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param type
 	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
-	private EfficientViTSamJ(SamEnvManagerAbstract manager, String type) throws IOException, RuntimeException, InterruptedException {
+	private EfficientViTSamJ(SamEnvManagerAbstract manager, String type) throws InterruptedException, BuildException, TaskException {
 		this(manager, type, (t) -> {}, false);
 	}
 
@@ -145,14 +147,14 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 * 
 	 */
 	private EfficientViTSamJ(SamEnvManagerAbstract manager, String type,
 	                      final DebugTextPrinter debugPrinter,
-	                      final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	                      final boolean printPythonCode) throws InterruptedException, BuildException, TaskException {
 
 		if (!MODELS_DICT.keySet().contains(type))
 			throw new IllegalArgumentException("The model type should be one of hte following: " 
@@ -160,7 +162,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
-		this.env = Appose.build(new File(manager.getModelEnv()));
+		this.env = Appose.mamba().wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS,
@@ -171,11 +173,11 @@ public class EfficientViTSamJ extends AbstractSamJ {
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
-			throw new RuntimeException("Task canceled");
+			throw new TaskException("Task canceled", task);
 		else if (task.status == TaskStatus.FAILED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 		else if (task.status == TaskStatus.CRASHED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 	}
 
 	/**
@@ -193,19 +195,19 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
 	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
 	public static EfficientViTSamJ
 	initializeSam(String modelType, SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	              final boolean printPythonCode) throws InterruptedException, BuildException, TaskException {
 		EfficientViTSamJ sam = null;
 		try{
 			sam = new EfficientViTSamJ(manager, modelType, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -222,18 +224,18 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
 	public static EfficientViTSamJ
 	initializeSam(String modelType, SamEnvManagerAbstract manager) 
-				throws IOException, RuntimeException, InterruptedException {
+				throws InterruptedException, BuildException, TaskException {
 		EfficientViTSamJ sam = null;
 		try{
 			sam = new EfficientViTSamJ(manager, modelType);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (InterruptedException | BuildException | TaskException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -255,14 +257,14 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
 	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
 	public static EfficientViTSamJ
 	initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	              final boolean printPythonCode) throws InterruptedException, BuildException, TaskException {
 		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager, debugPrinter, printPythonCode);
 	}
 
@@ -277,12 +279,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link EfficientViTSamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
 	public static EfficientViTSamJ
-	initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+	initializeSam(SamEnvManagerAbstract manager) throws InterruptedException, BuildException, TaskException {
 		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager);
 	}
 
@@ -427,11 +429,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 * Tests during development
 	 * @param args
 	 * 	nothing
-	 * @throws IOException nothing
-	 * @throws RuntimeException nothing
-	 * @throws InterruptedException nothing
+	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
+	public static void main(String[] args) throws InterruptedException, BuildException, TaskException, IOException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
 		try (EfficientViTSamJ sam = initializeSam(EfficientViTSamEnvManager.create())) {

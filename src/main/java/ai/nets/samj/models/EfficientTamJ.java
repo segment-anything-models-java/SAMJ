@@ -23,15 +23,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apposed.appose.Appose;
+import org.apposed.appose.BuildException;
+import org.apposed.appose.Service.Task;
+import org.apposed.appose.Service.TaskStatus;
+import org.apposed.appose.TaskException;
+
 import ai.nets.samj.install.EfficientTamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
 import java.io.File;
 import java.io.IOException;
 
-import io.bioimage.modelrunner.apposed.appose.Environment;
-import io.bioimage.modelrunner.apposed.appose.Service.Task;
-import io.bioimage.modelrunner.apposed.appose.Service.TaskStatus;
 
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
@@ -125,11 +128,11 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param type
 	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
-	private EfficientTamJ(SamEnvManagerAbstract manager, String type) throws IOException, RuntimeException, InterruptedException {
+	private EfficientTamJ(SamEnvManagerAbstract manager, String type) throws InterruptedException, BuildException, TaskException {
 		this(manager, type, (t) -> {}, false);
 	}
 
@@ -144,35 +147,33 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 * 
 	 */
 	private EfficientTamJ(SamEnvManagerAbstract manager, String type,
 	                      final DebugTextPrinter debugPrinter,
-	                      final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	                      final boolean printPythonCode) throws InterruptedException, BuildException, TaskException {
 
 		if (!MODELS_LIST.contains(type))
 			throw new IllegalArgumentException("The model type should be one of the following: " 
 							+ MODELS_LIST);
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
-
-		this.env = new Environment() {
-			@Override public String base() { return manager.getModelEnv(); }
-			};
+		
+		this.env = Appose.mamba().wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		String libPath = manager.getModelEnv() + File.separator + EfficientTamEnvManager.EFFTAM_NAME;
 		Task task = python.task(String.format(PRE_IMPORTS, libPath));
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
-			throw new RuntimeException("Task canceled");
+			throw new TaskException("Task canceled", task);
 		else if (task.status == TaskStatus.FAILED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 		else if (task.status == TaskStatus.CRASHED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 		IMPORTS_FORMATED = String.format(IMPORTS,
 				String.format(CONFIG_STR, MODEL_TYPE_MAP.get(type)),
 				manager.getModelWeigthPath());
@@ -202,19 +203,19 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
 	 * @return an instance of {@link EfficientTamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
 	public static EfficientTamJ
 	initializeSam(String modelType, SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	              final boolean printPythonCode) throws InterruptedException,  TaskException, BuildException {
 		EfficientTamJ sam = null;
 		try{
 			sam = new EfficientTamJ(manager, modelType, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (InterruptedException | BuildException | TaskException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -231,17 +232,17 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link EfficientTamJ} that allows running EfficienTViTSAM on an image
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
 	public static EfficientTamJ initializeSam(String modelType, SamEnvManagerAbstract manager) 
-				throws IOException, RuntimeException, InterruptedException {
+				throws InterruptedException, BuildException, TaskException {
 		EfficientTamJ sam = null;
 		try{
 			sam = new EfficientTamJ(manager, modelType);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (InterruptedException | BuildException | TaskException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -263,13 +264,13 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
 	 * @return an instance of {@link EfficientTamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
 	public static EfficientTamJ initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	              final boolean printPythonCode) throws InterruptedException, TaskException, BuildException {
 		return initializeSam(EfficientTamEnvManager.DEFAULT, manager, debugPrinter, printPythonCode);
 	}
 
@@ -284,11 +285,11 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link EfficientTamJ} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is an error building the python environment
+	 * @throws TaskException if there is any error running the Appose task
 	 */
-	public static EfficientTamJ initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+	public static EfficientTamJ initializeSam(SamEnvManagerAbstract manager) throws InterruptedException, BuildException, TaskException {
 		return initializeSam(EfficientTamEnvManager.DEFAULT, manager);
 	}
 
@@ -432,8 +433,10 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * @throws IOException nothing
 	 * @throws RuntimeException nothing
 	 * @throws InterruptedException nothing
+	 * @throws TaskException 
+	 * @throws BuildException 
 	 */
-	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
+	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException, TaskException, BuildException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
 		try (EfficientTamJ sam = initializeSam(EfficientTamEnvManager.create())) {

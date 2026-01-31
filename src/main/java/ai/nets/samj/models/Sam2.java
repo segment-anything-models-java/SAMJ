@@ -29,8 +29,10 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apposed.appose.Appose;
+import org.apposed.appose.BuildException;
 import org.apposed.appose.Service.Task;
 import org.apposed.appose.Service.TaskStatus;
+import org.apposed.appose.TaskException;
 
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
@@ -116,11 +118,11 @@ public class Sam2 extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param type
 	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
 	 */
-	private Sam2(SamEnvManagerAbstract manager, String type) throws IOException, RuntimeException, InterruptedException {
+	private Sam2(SamEnvManagerAbstract manager, String type) throws BuildException, TaskException, InterruptedException {
 		this(manager, type, (t) -> {}, false);
 	}
 
@@ -135,14 +137,14 @@ public class Sam2 extends AbstractSamJ {
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
 	 * 
 	 */
 	private Sam2(SamEnvManagerAbstract manager, String type,
 	                      final DebugTextPrinter debugPrinter,
-	                      final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	                      final boolean printPythonCode) throws InterruptedException, BuildException, TaskException {
 
 		if (type.equals("base")) type = "base_plus";
 		if (!MODELS_LIST.contains(type))
@@ -151,7 +153,7 @@ public class Sam2 extends AbstractSamJ {
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
-		this.env = Appose.build(new File(manager.getModelEnv()));
+		this.env = Appose.mamba().wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());
@@ -160,11 +162,11 @@ public class Sam2 extends AbstractSamJ {
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
-			throw new RuntimeException("Task canceled");
+			throw new TaskException("Task canceled", task);
 		else if (task.status == TaskStatus.FAILED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 		else if (task.status == TaskStatus.CRASHED)
-			throw new RuntimeException(task.error);
+			throw new TaskException(task.error, task);
 	}
 
 	/**
@@ -182,19 +184,19 @@ public class Sam2 extends AbstractSamJ {
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
 	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
 	 */
 	public static Sam2
 	initializeSam(String modelType, SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	              final boolean printPythonCode) throws BuildException, InterruptedException, TaskException {
 		Sam2 sam = null;
 		try{
 			sam = new Sam2(manager, modelType, debugPrinter, printPythonCode);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (InterruptedException | BuildException | TaskException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -211,17 +213,17 @@ public class Sam2 extends AbstractSamJ {
 	 * @param manager
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
 	 */
 	public static Sam2 initializeSam(String modelType, SamEnvManagerAbstract manager) 
-				throws IOException, RuntimeException, InterruptedException {
+				throws TaskException, BuildException, InterruptedException {
 		Sam2 sam = null;
 		try{
 			sam = new Sam2(manager, modelType);
 			sam.encodeCoords = new long[] {0, 0};
-		} catch (IOException | RuntimeException | InterruptedException ex) {
+		} catch (TaskException | BuildException | InterruptedException ex) {
 			if (sam != null) sam.close();
 			throw ex;
 		}
@@ -243,13 +245,13 @@ public class Sam2 extends AbstractSamJ {
 	 * 	whether to print the Python code that is going to be executed on the Python process or not
 	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
 	 */
 	public static Sam2 initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws IOException, RuntimeException, InterruptedException {
+	              final boolean printPythonCode) throws TaskException, BuildException, InterruptedException {
 		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, debugPrinter, printPythonCode);
 	}
 
@@ -264,11 +266,11 @@ public class Sam2 extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
 	 * 	with the image already encoded
-	 * @throws IOException if any of the files to create a Python process is missing
-	 * @throws RuntimeException if there is any error running the Python code
 	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
 	 */
-	public static Sam2 initializeSam(SamEnvManagerAbstract manager) throws IOException, RuntimeException, InterruptedException {
+	public static Sam2 initializeSam(SamEnvManagerAbstract manager) throws BuildException, TaskException, InterruptedException {
 		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager);
 	}
 
@@ -412,8 +414,10 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws IOException nothing
 	 * @throws RuntimeException nothing
 	 * @throws InterruptedException nothing
+	 * @throws TaskException 
+	 * @throws BuildException 
 	 */
-	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException {
+	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException, TaskException, BuildException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
 		try (Sam2 sam = initializeSam(Sam2EnvManager.create())) {

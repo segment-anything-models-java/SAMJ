@@ -25,10 +25,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apposed.appose.BuildException;
+import org.apposed.appose.TaskException;
+
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.models.AbstractSamJ;
-import ai.nets.samj.models.EfficientTamJ;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.SAMJLogger;
 import io.bioimage.modelrunner.apposed.appose.Types;
@@ -134,9 +136,11 @@ public abstract class SAMModel {
 	 * @throws IOException if any of the files needed to run the Python script is missing 
 	 * @throws RuntimeException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if there is any error loading the model in Python with Appose
+	 * @throws BuildException if there is any error initializing Python with Appose
 	 */
 	public abstract void loadModel(final SAMJLogger useThisLoggerForIt) 
-			throws IOException, RuntimeException, InterruptedException;
+			throws InterruptedException, BuildException, TaskException;
 
 	/**
 	 * Provide also an image that will be encoded by the model encoder.
@@ -147,18 +151,19 @@ public abstract class SAMModel {
 	 * @param image
 	 * 	the image of interest for segmentation or annotation
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws TaskException if there is any error running the Python process
+	 * @throws BuildException if there is any error starting the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public <T extends RealType<T> & NativeType<T>> 
 	void setImage(final RandomAccessibleInterval<T> image) 
-			throws IOException, RuntimeException, InterruptedException{
+			throws BuildException, TaskException, InterruptedException, IOException {
 		Objects.requireNonNull(image, "The image cannot be null.");
 		if (this.samj == null)
 			this.loadModel(null);;
 		try {
 			this.samj.setImage(Cast.unchecked(image));
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch (InterruptedException | TaskException | IOException e) {
 			log.error(this.fullName + " experienced an error: " + e.getMessage());
 			throw e;
 		}
@@ -204,19 +209,19 @@ public abstract class SAMModel {
 		this.onlyBiggest = onlyBiggest;
 	}
 
-	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, RuntimeException, InterruptedException {
+	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, InterruptedException, TaskException {
 		return samj.processBatchOfPoints(points, !onlyBiggest);
 	}
 
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, TaskException, InterruptedException {
 		return samj.processBatchOfPrompts(points, rects, rai, !onlyBiggest);
 	}
 
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai, BatchCallback callback) 
-			throws IOException, RuntimeException, InterruptedException {
+			throws IOException, TaskException, InterruptedException {
 		return samj.processBatchOfPrompts(points, rects, rai, !onlyBiggest, callback);
 	}
 
@@ -228,12 +233,12 @@ public abstract class SAMModel {
 	 * 	list of points that makes reference to something that is not the instance of interest. This
 	 * 	points make reference to the background
 	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
-	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws TaskException if there is any error running Python in Appose
+	 * @throws IOException if there is any error with the shared memory
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D) 
-			throws IOException, InterruptedException, RuntimeException {
+			throws TaskException, InterruptedException, IOException {
 		try {
 			List<int[]> list = listOfPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
@@ -241,7 +246,7 @@ public abstract class SAMModel {
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			if (negList.size() == 0) return samj.processPoints(list, !onlyBiggest);
 			else return samj.processPoints(list, negList, !onlyBiggest);
-		} catch (IOException | RuntimeException | InterruptedException e) {
+		} catch (InterruptedException | IOException e) {
 			log.error(this.getName()+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
 		}
@@ -259,11 +264,11 @@ public abstract class SAMModel {
 	 * 	rectangle that specifies the area that is being zoomed in.It will be the area encoded.
 	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws TaskException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D,
-			Rectangle zoomedRectangle) throws IOException, RuntimeException, InterruptedException {
+			Rectangle zoomedRectangle) throws IOException, TaskException, InterruptedException {
 		try {
 			List<int[]> list = listOfPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
@@ -271,7 +276,7 @@ public abstract class SAMModel {
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			if (negList.size() == 0) return samj.processPoints(list, zoomedRectangle, !onlyBiggest);
 			else return samj.processPoints(list, negList, zoomedRectangle, !onlyBiggest);
-		} catch (IOException | RuntimeException | InterruptedException e) {
+		} catch (IOException | InterruptedException | TaskException e) {
 			log.error(getName()+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
 		}
@@ -283,11 +288,11 @@ public abstract class SAMModel {
 	 * 	a bounding box around the instance of interest
 	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws TaskException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> fetch2dSegmentation(Interval boundingBox2D) 
-			throws IOException, InterruptedException, RuntimeException {
+			throws IOException, InterruptedException, TaskException {
 		try {
 			//order to processBox() should be: x0,y0, x1,y1
 			final int bbox[] = {
@@ -297,7 +302,7 @@ public abstract class SAMModel {
 				(int)boundingBox2D.max(1)
 			};
 			return samj.processBox(bbox, !onlyBiggest);
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch (IOException | InterruptedException | TaskException e) {
 			log.error(getName()+", providing empty result because of some trouble: "+Types.stackTrace(e));
 			throw e;
 		}
@@ -311,14 +316,14 @@ public abstract class SAMModel {
 	 * 	the mask as a {@link RandomAccessibleInterval} 
 	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws RuntimeException if there is any error running the Python process
+	 * @throws TaskException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public <T extends RealType<T> & NativeType<T>> List<Mask> fetch2dSegmentationFromMask(RandomAccessibleInterval<T> rai) 
-			throws IOException, InterruptedException, RuntimeException {
+			throws IOException, InterruptedException, TaskException {
 		try {
 			return samj.processMask(rai, !onlyBiggest);
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch (IOException | InterruptedException | TaskException e) {
 			log.error(getName()+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
 		}
@@ -356,13 +361,13 @@ public abstract class SAMModel {
 	 * re-encoding
 	 * 
 	 * @return the name given to the encoded area
-	 * @throws IOException if it is not possible to maintain it
+	 * @throws TaskException if there is any error running the Python code with Appose
 	 * @throws InterruptedException if the connection with Python is lost
 	 */
-	public String persistEncoding() throws IOException, InterruptedException {
+	public String persistEncoding() throws TaskException, InterruptedException {
 		try {
 			return samj.persistEncoding();
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch (InterruptedException | TaskException e) {
 			log.error(getName()+", unable to persist the encoding: "+e.getMessage());
 			throw e;
 		}
@@ -374,13 +379,13 @@ public abstract class SAMModel {
 	 * without having to reencode
 	 * @param encodingName
 	 * 	the unique name given to the encoded area that we want
-	 * @throws IOException if there is no encoded area by the wanted name
+	 * @throws TaskException if there is any error running the Python code with Appose
 	 * @throws InterruptedException if the connection with Python is interrupted abruptly
 	 */
-	public void selectEncoding(String encodingName) throws IOException, InterruptedException {
+	public void selectEncoding(String encodingName) throws TaskException, InterruptedException {
 		try {
 			samj.selectEncoding(encodingName);
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch ( InterruptedException | TaskException e) {
 			log.error(getName()+", unable to fetch the encoding named '" + encodingName + "': "+e.getMessage());
 			throw e;
 		}
@@ -390,13 +395,13 @@ public abstract class SAMModel {
 	 * Deelte from memory the encoding selected
 	 * @param encodingName
 	 * 	the name of the name that we want to delete
-	 * @throws IOException if the name provided does not correspond to an encoding
+	 * @throws TaskException if there is any error running the Python code wit Appose
 	 * @throws InterruptedException if the connection with Python is lost
 	 */
-	public void deleteEncoding(String encodingName) throws IOException, InterruptedException {
+	public void deleteEncoding(String encodingName) throws TaskException, InterruptedException {
 		try {
 			samj.deleteEncoding(encodingName);
-		} catch (IOException | InterruptedException | RuntimeException e) {
+		} catch (TaskException | InterruptedException e) {
 			log.error(getName()+", unable to delete the encoding named '" + encodingName + "': "+e.getMessage());
 			throw e;
 		}

@@ -19,15 +19,11 @@
  */
 package ai.nets.samj.communication.model;
 
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.util.Cast;
-
-import java.io.IOException;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apposed.appose.BuildException;
+import org.apposed.appose.TaskException;
 
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.Sam2;
@@ -104,7 +100,7 @@ public class SAM2Tiny extends SAMModel {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void loadModel(final SAMJLogger useThisLoggerForIt) throws IOException, InterruptedException, RuntimeException {
+	public void loadModel(final SAMJLogger useThisLoggerForIt) throws InterruptedException, TaskException, BuildException {
 		if (useThisLoggerForIt != null) 
 			this.log = useThisLoggerForIt;
 		AbstractSamJ.DebugTextPrinter filteringLogger = text -> {

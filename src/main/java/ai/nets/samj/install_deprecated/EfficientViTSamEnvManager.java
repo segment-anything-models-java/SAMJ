@@ -43,7 +43,7 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
-import ai.nets.samj.gui.tools.Files;
+import ai.nets.samj.gui.tools.FileUtils;
 import ai.nets.samj.models.EfficientViTSamJ;
 import org.apposed.appose.mamba.Mamba;
 import io.bioimage.modelrunner.download.FileDownloader;
@@ -511,8 +511,8 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 	@Override
 	public void uninstall() {
 		if (new File(this.getModelWeightsPath()).getParentFile().list().length != 1)
-			Files.deleteFolder(new File(this.getModelWeightsPath()));
+			FileUtils.deleteFolder(new File(this.getModelWeightsPath()));
 		else
-			Files.deleteFolder(new File(this.getModelEnv()));
+			FileUtils.deleteFolder(new File(this.getModelEnv()));
 	}
 }

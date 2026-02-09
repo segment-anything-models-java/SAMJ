@@ -19,15 +19,19 @@
  */
 package ai.nets.samj.install;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -37,12 +41,13 @@ import java.util.stream.Collectors;
 import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.utils.Lists;
 
-import ai.nets.samj.gui.tools.Files;
+import ai.nets.samj.gui.tools.FileUtils;
 import ai.nets.samj.models.Sam2;
 
 import org.apposed.appose.Appose;
-import org.apposed.appose.mamba.Mamba;
+import org.apposed.appose.BuildException;
 import io.bioimage.modelrunner.download.FileDownloader;
 
 /*
@@ -92,6 +97,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * URL to download the SAM2 model 
 	 */
 	final static private String SAM2_1_FNAME = "sam2.1_hiera_%s.pt";
+	/**
+	 * List of supported CUDA versions
+	 */
+	final static private ArrayList<String> COMPAT_CUDAS = new ArrayList<>(Arrays.asList("12.1", "12.4", "11.8"));
 	
 	private Sam2EnvManager(String modelType) {
 		List<String> modelTypes = SAM2_1_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
@@ -281,14 +290,34 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * 
 	 * @throws IOException if there is any file error installing any of the requirements
 	 * @throws InterruptedException if the installation is interrupted
+	 * @throws BuildException if there is any error building the environment
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installSAMDeps(boolean force) throws IOException, InterruptedException {
+	public void installSAMDeps(boolean force) throws IOException, InterruptedException, BuildException {
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to install Python without first installing Mamba. ");
 		if (this.checkSAMDepsInstalled() && !force)
 			return;
-		Appose.pixi().file("").build();
+		byte[] bytes;
+		try (InputStream is = getClass().getResourceAsStream("pixi.toml");
+			     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+			    byte[] buffer = new byte[8192];
+			    int len;
+			    while ((len = is.read(buffer)) != -1) {
+			        baos.write(buffer, 0, len);
+			    }
+
+			    bytes = baos.toByteArray();
+			}
+		String content = new String(bytes, StandardCharsets.UTF_8);
+		String version = "";
+		for (String cv : COMPAT_CUDAS) {
+			if (GpuCompatibility.canInstallCudaInEnv(content)) {
+				version = cv;
+				break;
+			}
+		}
+		Appose.pixi().content(String.format(content, version.replace(".", ""), version.replace(".", ""))).build();
         installApposePackage(SAM2_ENV_NAME);
 	}
 	
@@ -361,8 +390,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	@Override
 	public void uninstall() {
 		if (new File(this.getModelWeigthPath()).getParentFile().list().length != 1)
-			Files.deleteFolder(new File(this.getModelWeigthPath()));
+			FileUtils.deleteFolder(new File(this.getModelWeigthPath()));
 		else
-			Files.deleteFolder(new File(this.getModelEnv()));
+			FileUtils.deleteFolder(new File(this.getModelEnv()));
 	}
 }

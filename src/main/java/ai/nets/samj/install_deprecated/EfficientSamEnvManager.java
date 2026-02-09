@@ -38,7 +38,7 @@ import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
-import ai.nets.samj.gui.tools.Files;
+import ai.nets.samj.gui.tools.FileUtils;
 import org.apposed.appose.mamba.Mamba;
 
 /*
@@ -423,6 +423,6 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 
 	@Override
 	public void uninstall() {
-		Files.deleteFolder(new File(this.getModelEnv()));
+		FileUtils.deleteFolder(new File(this.getModelEnv()));
 	}
 }

@@ -29,7 +29,7 @@ import javax.swing.filechooser.FileSystemView;
  * graphical user interface
  * @author Daniel Sage
  */
-public class Files {
+public class FileUtils {
 
 	/**
 	 * 

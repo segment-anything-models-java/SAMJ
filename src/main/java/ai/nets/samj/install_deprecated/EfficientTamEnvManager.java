@@ -40,7 +40,7 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 
-import ai.nets.samj.gui.tools.Files;
+import ai.nets.samj.gui.tools.FileUtils;
 import ai.nets.samj.models.EfficientTamJ;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
@@ -496,8 +496,8 @@ public class EfficientTamEnvManager extends SamEnvManagerAbstract {
 	@Override
 	public void uninstall() {
 		if (new File(this.getModelWeigthPath()).getParentFile().list().length != 1)
-			Files.deleteFolder(new File(this.getModelWeigthPath()));
+			FileUtils.deleteFolder(new File(this.getModelWeigthPath()));
 		else
-			Files.deleteFolder(new File(this.getModelEnv()));
+			FileUtils.deleteFolder(new File(this.getModelEnv()));
 	}
 }

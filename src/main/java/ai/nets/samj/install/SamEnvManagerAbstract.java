@@ -35,6 +35,7 @@ import java.util.zip.ZipInputStream;
 import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
+import org.apposed.appose.BuildException;
 import org.apposed.appose.builder.PixiBuilder;
 
 
@@ -87,7 +88,7 @@ public abstract class SamEnvManagerAbstract {
 	
 	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException;
 
-	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException;
+	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException, BuildException;
 
 	public abstract boolean checkModelWeightsInstalled();
 	

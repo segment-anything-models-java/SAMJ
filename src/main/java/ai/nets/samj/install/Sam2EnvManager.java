@@ -256,6 +256,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 												+ Sam2.getListOfSupportedVariants());
 		if (!force && this.checkModelWeightsInstalled())
 			return;
+		this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING SAM2 WEIGHTS");
         try {
     		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();

@@ -30,7 +30,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -43,8 +42,7 @@ import org.apposed.appose.BuildException;
 
 import ai.nets.samj.gui.tools.FileUtils;
 import ai.nets.samj.models.EfficientTamJ;
-import io.bioimage.modelrunner.apposed.appose.Mamba;
-import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
+import ai.nets.samj.models.Sam2;
 import io.bioimage.modelrunner.apposed.appose.Types;
 import io.bioimage.modelrunner.download.FileDownloader;
 
@@ -205,10 +203,40 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 	}
 	
 	private void downloadWeights() throws IOException, InterruptedException {
+		if (!Sam2.getListOfSupportedVariants().contains(modelType))
+			throw new IllegalArgumentException("The provided model is not one of the supported EfficientTAM models: " 
+												+ EfficientTamJ.getListOfSupportedVariants());
+        try {
+    		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, modelType))).toFile();
+    		file.getParentFile().mkdirs();
+    		URL url = FileDownloader.redirectedURL(new URL(String.format(EFFTAM_URL, modelType)));
+    		Thread parentThread = Thread.currentThread();
+    		FileDownloader fd = new FileDownloader(url.toString(), file, false);
+    		long size = fd.getOnlineFileSize();
+    		Consumer<Double> dConsumer = (d) -> {
+    			d = (double) (Math.round(d * 1000) / 10);
+    			if (d < 0 || d > 100) this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: UNKNOWN%");
+        		else this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EfficientTAM WEIGHTS DOWNLOAD: " + d + "%");
+    		};
+    		fd.setPartialProgressConsumer(dConsumer);
+    		fd.download(parentThread);    		    		
+        	if (size != file.length())
+        		throw new IOException("Model EfficientTAM" + modelType + " was not correctly downloaded");
+        } catch (IOException ex) {
+            this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EfficientTAM WEIGHTS INSTALLATION");
+            throw ex;
+        } catch (URISyntaxException e1) {
+        	this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EfficientTAM WEIGHTS INSTALLATION");
+            throw new IOException("Unable to find the download URL for EfficientTAM " + modelType + ": " + String.format(EFFTAM_URL, modelType));
+		} catch (ExecutionException e) {
+            this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EfficientTAM WEIGHTS INSTALLATION");
+            throw new RuntimeException(e);
+		}
+        this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EfficientTAM WEIGHTS INSTALLED");
 	}
 	
 	private void extractWeights() throws InterruptedException, IOException {
-		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTTAM WEIGHTS");
+		this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTTAM WEIGHTS");
 		String zipResourcePath = "efficienttam_ti.zip";
         String outputDirectory = Paths.get(path, "envs", SAM2_ENV_NAME, EFFTAM_NAME, "weights").toFile().getAbsolutePath();
         try (
@@ -224,7 +252,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
                 }
             	entryFile.getParentFile().mkdirs();
                 try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
-                	if (Thread.interrupted()) throw new InterruptedException("EfficientTAM download interrupted");
+                	if (Thread.interrupted()) throw new InterruptedException("EfficientTAM installation interrupted");
                     byte[] buffer = new byte[1024];
                     int bytesRead;
                     while ((bytesRead = zipInput.read(buffer)) != -1) {
@@ -233,12 +261,10 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
                 }
             }
         } catch (IOException ex) {
-            thread.interrupt();
-            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EFFICIENTTAM WEIGHTS INSTALLATION");
+        	this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EFFICIENTTAM WEIGHTS INSTALLATION");
             throw ex;
         }
-        thread.interrupt();
-        passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTTAM WEIGHTS INSTALLED");
+        this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- EFFICIENTTAM WEIGHTS INSTALLED");
 	}
 	
 	/**

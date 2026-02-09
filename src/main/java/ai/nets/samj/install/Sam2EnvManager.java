@@ -40,6 +40,8 @@ import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.gui.tools.Files;
 import ai.nets.samj.models.Sam2;
+
+import org.apposed.appose.Appose;
 import org.apposed.appose.mamba.Mamba;
 import io.bioimage.modelrunner.download.FileDownloader;
 
@@ -284,33 +286,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	public void installSAMDeps(boolean force) throws IOException, InterruptedException {
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to install Python without first installing Mamba. ");
-		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- CREATING THE SAM2 PYTHON ENVIRONMENT WITH ITS DEPENDENCIES");
-		String[] pythonArgs = new String[] {"-c", "conda-forge", "python=3.11", "-c", "pytorch"};
-		String[] args = new String[pythonArgs.length + INSTALL_CONDA_DEPS.size()];
-		int c = 0;
-		for (String ss : pythonArgs) args[c ++] = ss;
-		for (String ss : INSTALL_CONDA_DEPS) args[c ++] = ss;
-		if (!this.checkSAMDepsInstalled() || force) {
-			try {
-				// TODO mamba.create(SAM2_ENV_NAME, true, args);
-			} catch (Exception e) {
-	            thread.interrupt();
-	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 PYTHON ENVIRONMENT CREATION");
-				throw e;
-			}
-			ArrayList<String> pipInstall = new ArrayList<String>();
-			for (String ss : new String[] {"-m", "pip", "install"}) pipInstall.add(ss);
-			for (String ss : INSTALL_PIP_DEPS) pipInstall.add(ss);
-			try {
-				// TODO Mamba.runPythonIn(Paths.get(path,  "envs", SAM2_ENV_NAME).toFile(), pipInstall.stream().toArray( String[]::new ));
-			} catch (Exception e) {
-	            thread.interrupt();
-	            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED PYTHON ENVIRONMENT CREATION WHEN INSTALLING PIP DEPENDENCIES");
-				throw e;
-			}
-		}
-        thread.interrupt();
-        passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 PYTHON ENVIRONMENT CREATED");
+		if (this.checkSAMDepsInstalled() && !force)
+			return;
+		Appose.pixi().file("").build();
         installApposePackage(SAM2_ENV_NAME);
 	}
 	

@@ -138,26 +138,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @return an instance of {@link Sam2EnvManager}
 	 */
 	public static Sam2EnvManager create(String path, String modelType) {
-		return create(path, modelType == null ? DEFAULT_SAM2 : modelType, (ss) -> {});
-	}
-	
-	/**
-	 * Creates an instance of {@link Sam2EnvManager} that uses a micromamba installed at the argument
-	 * provided by 'path'.
-	 * Micromamba does not need to be installed as the code will install it automatically.
-	 * @param path
-	 * 	the path where the corresponding micromamba shuold be installed
-	 * @param modelType
-	 * 	which of the possible SAM2 wants to be used. The possible variants are the keys of the following map: {@link #SAM2_BYTE_SIZES_MAP}
-	 * @param consumer
-	 * 	an specific consumer where info about the installation is going to be communicated
-	 * @return an instance of {@link Sam2EnvManager}
-	 */
-	public static Sam2EnvManager create(String path, String modelType, Consumer<String> consumer) {
-		Sam2EnvManager installer = new Sam2EnvManager(modelType);
-		installer.path = path;
-		installer.consumer = consumer;
-		return installer;
+		return create(path, modelType == null ? DEFAULT_SAM2 : modelType);
 	}
 	
 	/**
@@ -168,18 +149,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 */
 	public static Sam2EnvManager create() {
 		return create(DEFAULT_DIR, null);
-	}
-	
-	/**
-	 * Creates an instance of {@link Sam2EnvManager} that uses a micromamba installed at the default
-	 * directory {@link #DEFAULT_DIR}.
-	 * Micromamba does not need to be installed as the code will install it automatically.
-	 * @param consumer
-	 * 	an specific consumer where info about the installation is going to be communicated
-	 * @return an instance of {@link Sam2EnvManager}
-	 */
-	public static Sam2EnvManager create(Consumer<String> consumer) {
-		return create(DEFAULT_DIR, null, consumer);
 	}
 	
 	/**
@@ -255,8 +224,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
     		long size = fd.getOnlineFileSize();
     		Consumer<Double> dConsumer = (d) -> {
     			d = (double) (Math.round(d * 1000) / 10);
-    			if (d < 0 || d > 100) passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: UNKNOWN%");
-        		else passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: " + d + "%");
+    			if (d < 0 || d > 100) this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: UNKNOWN%");
+        		else this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS DOWNLOAD: " + d + "%");
     		};
     		fd.setPartialProgressConsumer(dConsumer);
     		fd.download(parentThread);    		    		
@@ -264,18 +233,18 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
         		throw new IOException("Model SAM2" + modelType + " was not correctly downloaded");
         } catch (IOException ex) {
             thread.interrupt();
-            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
+            this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
             throw ex;
         } catch (URISyntaxException e1) {
-            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
+        	this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
             throw new IOException("Unable to find the download URL for SAM2 " + modelType + ": " + String.format(SAM2_1_URL, modelType));
 		} catch (ExecutionException e) {
             thread.interrupt();
-            passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
+            this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
             throw new RuntimeException(e);
 		}
         thread.interrupt();
-        passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS INSTALLED");
+        this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS INSTALLED");
 	}
 	
 	/**
@@ -316,9 +285,12 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    );
 
 	    pixi = Appose.pixi().content(renderedPixi);
-	    pixi.subscribeOutput(consumer);
-	    pixi.subscribeError(consumer);
-	    pixi.subscribeProgress(null);
+	    if (this.outConsumer != null)
+	    	pixi.subscribeOutput(this.outConsumer);
+	    if (this.errConsumer != null)
+	    	pixi.subscribeError(this.errConsumer);
+	    if (this.pixiConsumer != null)
+	    	pixi.subscribeProgress(this.pixiConsumer);
 	    pixi.build();
 	    installSAM2Wheel();
 	}
@@ -385,12 +357,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the model installation is interrupted
 	 * @throws ArchiveException if there is any error decompressing the micromamba installer
 	 * @throws URISyntaxException if there is any error with the URL to the micromamba installer download page
+	 * @throws BuildException if there is any error building the environment
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installEverything() throws IOException, InterruptedException, 
-													ArchiveException, URISyntaxException {
-		if (!this.checkMambaInstalled()) this.installMambaPython();
-		
+	public void installEverything() throws IOException, InterruptedException, BuildException {		
 		if (!this.checkSAMDepsInstalled()) this.installSAMDeps();
 		
 		if (!this.checkModelWeightsInstalled()) this.installModelWeigths();
@@ -431,9 +401,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	}
 
 	@Override
-	public boolean checkEverythingInstalled() {
-		if (!this.checkMambaInstalled()) return false;
-		
+	public boolean checkEverythingInstalled() {		
 		if (!this.checkSAMDepsInstalled()) return false;
 		
 		if (!this.checkModelWeightsInstalled()) return false;

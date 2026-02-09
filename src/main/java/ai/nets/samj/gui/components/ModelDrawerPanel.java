@@ -1,3 +1,22 @@
+/*-
+ * #%L
+ * Library to call models of the family of SAM (Segment Anything Model) from Java
+ * %%
+ * Copyright (C) 2024 SAMJ developers.
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
 package ai.nets.samj.gui.components;
 
 import java.awt.BorderLayout;
@@ -10,9 +29,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,17 +38,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
-
-import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.HTMLPane;
 
+import org.apposed.appose.BuildException;
 import org.apposed.appose.Builder.ProgressConsumer;
-import org.apposed.appose.mamba.Mamba;
 
 /**
  * TODO improve the way the installation is logged
@@ -51,6 +62,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     private JButton install = new JButton("Install");
     private JButton uninstall = new JButton("Uninstall");
     HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF", 200, 200);
+    private HtmlLogger logger = new HtmlLogger(html);
     
     private SAMModel model;
     private final List<ModelDrawerPanelListener> listeners;
@@ -60,14 +72,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     private Thread installedThread;
     private Thread loadingAnimationThread;
     private volatile boolean isLoading = false;
-	/**
-	 * Parameter used in the HTML panel during installation to know when to update
-	 */
-    private int waitingIter = 0;
-    
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
-
-	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 	
 	
 	private ModelDrawerPanel(int hSize, ModelDrawerPanelListener listener) {
@@ -154,13 +159,13 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     }
     
     private void setInfo() {
-		html.clear();
+		logger.clear();
 	    startLoadingAnimation("Loading info");
 		infoThread =new Thread(() -> {
 			String description = model.getDescription();
 			stopLoadingAnimation();
 			SwingUtilities.invokeLater(() -> {
-				html.clear();
+				logger.clear();
 				html.append("p", description);
 			});
 		});
@@ -188,19 +193,21 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		SwingUtilities.invokeLater(() -> install.setEnabled(false));
 		modelInstallThread = new Thread(() ->{
 			try {
-				this.html.clear();
+				this.logger.clear();
 				ProgressConsumer progress = (title, current, maximum) -> {
 				    double pct = (maximum <= 0) ? 0.0 : (100.0 * current / maximum);
-				    System.out.printf("%s: %d/%d (%.1f%%)%n", title, current, maximum, pct);
+				    logger.log("Downloading Pixi: " + pct + "%", Color.blue);
 				};
-				this.model.getInstallationManger().setConsumer(str -> addHtml(str));
+				this.model.getInstallationManger().setOutputConsumer(str -> logger.log(str, Color.black));
+				this.model.getInstallationManger().setErrorConsumer(str -> logger.log(str, Color.green));
+				this.model.getInstallationManger().setProgressConsumer(progress);
 				this.model.getInstallationManger().installEverything();
 				SwingUtilities.invokeLater(() -> {
 					this.setInfo();
 			    	setButtons();
 					listeners.forEach(l -> l.setGUIEnabled(true));
 				});
-			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException e) {
+			} catch (IOException | InterruptedException | BuildException e) {
 				e.printStackTrace();
 				SwingUtilities.invokeLater(() -> {
 					this.setInfo();
@@ -211,92 +218,6 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		});
 		modelInstallThread.start();
 	}
-
-    /**
-     * Add a String to the html pane in the correct format
-     * @param html
-     * 	the String to be converted into HTML and added to the HTML panel
-     */
-    public void addHtml(String html) {
-        if (html == null) return;
-        if (html.trim().isEmpty()) {
-        	html = manageEmptyMessage(html);
-        } else {
-        	waitingIter = 0;
-        }
-        String nContent = formatHTML(html);
-        
-        SwingUtilities.invokeLater(() -> {
-            try {
-                HTMLDocument doc = (HTMLDocument) this.html.getDocument();
-                HTMLEditorKit editorKit = (HTMLEditorKit) this.html.getEditorKit();
-            	editorKit.insertHTML(doc, doc.getLength(), nContent, 0, 0, null);
-            	this.html.setCaretPosition(doc.getLength());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-    
-    /**
-     * Check if a message is empty, thus no information is comming. If the message is not empty, nothing is done.
-     * If it is, the html panel is updated so a changing installation in progress message appears
-     * @param html
-     * 	the message sent by the installation thread
-     * @return the message to be print in the html panel
-     */
-    private String manageEmptyMessage(String html) {
-    	String working = "Working, this might take several minutes";
-    	if (html.trim().isEmpty() && waitingIter == 0) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " .";
-        	waitingIter += 1;
-        } else if (html.trim().isEmpty() && waitingIter % 3 == 1) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " . .";
-        	int len = html.length() - (" .").length() + System.lineSeparator().length();
-        	SwingUtilities.invokeLater(() -> {
-        		HTMLDocument doc = (HTMLDocument) this.html.getDocument();
-        		try {doc.remove(doc.getLength() - len, len);} catch (BadLocationException e) {}
-        	});
-        	waitingIter += 1;
-        } else if (html.trim().isEmpty() && waitingIter % 3 == 2) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " . . .";
-        	int len = html.length() - (" .").length() + System.lineSeparator().length();
-        	SwingUtilities.invokeLater(() -> {
-        		HTMLDocument doc = (HTMLDocument) this.html.getDocument();
-        		try {doc.remove(doc.getLength() - len, len);} catch (BadLocationException e) {}
-        	});
-        	waitingIter += 1;
-        } else if (html.trim().isEmpty() && waitingIter % 3 == 0) {
-        	html = LocalDateTime.now().format(DATE_FORMAT).toString() + " -- " + working + " .";
-        	int len = html.length() + (" . .").length() + System.lineSeparator().length();
-        	SwingUtilities.invokeLater(() -> {
-        		HTMLDocument doc = (HTMLDocument) this.html.getDocument();
-        		try {doc.remove(doc.getLength() - len, len);} catch (BadLocationException e) {}
-        	});
-        	waitingIter += 1;
-        }
-    	return html;
-    }
-    
-    /**
-     * Convert the input String into the correct HTML string for the HTML panel
-     * @param html
-     * 	the input Stirng to be formatted
-     * @return the String formatted into the correct HTML string
-     */
-    private static String formatHTML(String html) {
-	    html = html.replace(System.lineSeparator(), "<br>")
-	            .replace("    ", "&emsp;")
-	            .replace("  ", "&ensp;")
-	            .replace(" ", "&nbsp;");
-	
-	    if (html.startsWith(Mamba.ERR_STREAM_UUUID)) {
-	    	html = "<span style=\"color: red;\">" + html.replace(Mamba.ERR_STREAM_UUUID, "") + "</span>";
-	    } else {
-	    	html = "<span style=\"color: black;\">" + html + "</span>";
-	    }
-	    return html;
-    }
 	
 	private void uninstallModel() {
 		SwingUtilities.invokeLater(() -> listeners.forEach(l -> l.setGUIEnabled(false)));
@@ -326,7 +247,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	            String displayMessage = String.format("%s -- %s%s", currentTime, message, dots[dotCount % dots.length]);
 	            dotCount++;
 	            SwingUtilities.invokeLater(() -> {
-	                html.clear();
+	                logger.clear();
 	                html.append("p", displayMessage);
 	            });
 	            try {

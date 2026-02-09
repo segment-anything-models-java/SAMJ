@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +34,6 @@ import java.util.function.Consumer;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
-import org.apache.commons.compress.archivers.ArchiveException;
 import org.apposed.appose.BuildException;
 import org.apposed.appose.Builder.ProgressConsumer;
 import org.apposed.appose.Environment;
@@ -103,7 +101,7 @@ public abstract class SamEnvManagerAbstract {
 	
 	public abstract void installModelWeigths(boolean force) throws IOException, InterruptedException;
 	
-	public abstract void installEverything() throws IOException, InterruptedException, ArchiveException, URISyntaxException;
+	public abstract void installEverything() throws IOException, InterruptedException, BuildException;
 	
 	public abstract String getModelWeigthsName();
 	

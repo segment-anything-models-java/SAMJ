@@ -35,7 +35,6 @@ import java.util.zip.ZipInputStream;
 import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
-import org.apposed.appose.builder.PixiBuilder;
 
 
 /*
@@ -50,7 +49,7 @@ public abstract class SamEnvManagerAbstract {
 	/**
 	 * {@link Mamba} instance used to create the environments
 	 */
-	protected PixiBuilder pixi;
+	protected Mamba mamba;
 	/**
 	 * Consumer used to keep providing info in the case of several threads working
 	 */

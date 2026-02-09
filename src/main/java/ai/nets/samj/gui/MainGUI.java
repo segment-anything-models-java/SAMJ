@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apposed.appose.TaskException;
+
 public class MainGUI extends JFrame {
 
     protected static final long serialVersionUID = -797293687195076077L;
@@ -557,7 +559,7 @@ public class MainGUI extends JFrame {
     			consumer.notifyBatchSamize(this.cmbModels.getSelectedModel().getName(), 
     					rai == null ? null : consumer.getFocusedImageName() );
 				cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai, batchDrawerCallback);
-			} catch (IOException | RuntimeException | InterruptedException e) {
+			} catch (IOException | TaskException | InterruptedException e) {
 				e.printStackTrace();
 			}
     		SwingUtilities.invokeLater(() -> stopProgressBtn.setEnabled(false));

@@ -64,6 +64,39 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose=0.7.1", "torch=2.4.0", 
 			"torchvision=0.19.0", "skimage", "sam2", "pytest"});
 	/**
+	 * Dependencies that have to be installed in any SAMJ created environment using Mamba or Conda
+	 */
+	final public static List<String> INSTALL_CONDA_DEPS;
+	static {
+		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
+			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0"});
+		else 
+			INSTALL_CONDA_DEPS = Arrays.asList(new String[] {"scikit-image", "pytorch=2.4.0", "torchvision=0.19.0"});
+	}
+	/**
+	 * Dependencies for every environment that need to be installed using PIP
+	 */
+	final public static List<String> INSTALL_PIP_DEPS;
+	static {
+		if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta() && PlatformDetection.isMacOS())
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2023.2.2", "samv2==0.0.4", "pytest"});
+		else if (!PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && !PlatformDetection.isUsingRosseta())
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"mkl==2024.0.0", "samv2==0.0.4", "pytest"});
+		else 
+			INSTALL_PIP_DEPS = Arrays.asList(new String[] {"samv2==0.0.4", "pytest"});
+	}
+	/**
+	 * Byte sizes of all the SAM2 options
+	 */
+	final public static HashMap<String, Long> SAM2_BYTE_SIZES_MAP;
+	static {
+		SAM2_BYTE_SIZES_MAP = new HashMap<String, Long>();
+		SAM2_BYTE_SIZES_MAP.put("tiny", (long) 155906050);
+		SAM2_BYTE_SIZES_MAP.put("small", (long) 184309650);
+		SAM2_BYTE_SIZES_MAP.put("base_plus", (long) -1);
+		SAM2_BYTE_SIZES_MAP.put("large", (long) 897952466);
+	}
+	/**
 	 * Byte sizes of all the SAM2.1 options
 	 */
 	final public static HashMap<String, Long> SAM2_1_BYTE_SIZES_MAP;
@@ -85,6 +118,14 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	/**
 	 * URL to download the SAM2 model 
 	 */
+	final static private String SAM2_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_%s.pt";
+	/**
+	 * URL to download the SAM2 model 
+	 */
+	final static private String SAM2_FNAME = "sam2_hiera_%s.pt";
+	/**
+	 * URL to download the SAM2 model 
+	 */
 	final static private String SAM2_1_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_%s.pt";
 	/**
 	 * URL to download the SAM2 model 
@@ -92,7 +133,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	final static private String SAM2_1_FNAME = "sam2.1_hiera_%s.pt";
 	
 	private Sam2EnvManager(String modelType) {
-		List<String> modelTypes = SAM2_1_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
+		List<String> modelTypes = SAM2_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
 		if (!modelTypes.contains(modelType) && !modelType.equals("base")) {
 			throw new IllegalArgumentException("Invalid model variant chosen: '" + modelType + "'."
 					+ "The only supported variants are: " + modelTypes);
@@ -198,7 +239,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 												+ Sam2.getListOfSupportedVariants());
 		File weightsFile = Paths.get(this.getModelWeigthPath()).toFile();
 		if (!weightsFile.isFile()) return false;
-		if (weightsFile.length() != SAM2_1_BYTE_SIZES_MAP.get(modelType)) return false;
+		if (weightsFile.length() != SAM2_BYTE_SIZES_MAP.get(modelType)) return false;
 		return true;
 	}
 	
@@ -224,9 +265,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 			return;
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING SAM2 WEIGHTS (" + modelType + ")");
         try {
-    		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
+    		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();
-    		URL url = FileDownloader.redirectedURL(new URL(String.format(SAM2_1_URL, modelType)));
+    		URL url = FileDownloader.redirectedURL(new URL(String.format(SAM2_URL, modelType)));
     		Thread parentThread = Thread.currentThread();
     		FileDownloader fd = new FileDownloader(url.toString(), file, false);
     		long size = fd.getOnlineFileSize();
@@ -245,7 +286,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
             throw ex;
         } catch (URISyntaxException e1) {
             passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
-            throw new IOException("Unable to find the download URL for SAM2 " + modelType + ": " + String.format(SAM2_1_URL, modelType));
+            throw new IOException("Unable to find the download URL for SAM2 " + modelType + ": " + String.format(SAM2_URL, modelType));
 		} catch (ExecutionException e) {
             thread.interrupt();
             passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
@@ -351,9 +392,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 */
 	public String getModelWeigthsName() {
 		try {
-			return FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType));
+			return FileDownloader.getFileNameFromURLString(String.format(SAM2_URL, modelType));
 		} catch (MalformedURLException e) {
-			return String.format(SAM2_1_FNAME, modelType);
+			return String.format(SAM2_FNAME, modelType);
 		}
 	}
 
@@ -361,9 +402,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	public String getModelWeigthPath() {
 		File file;
 		try {
-			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
+			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_URL, modelType))).toFile();
 		} catch (MalformedURLException e) {
-			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format(SAM2_1_FNAME, modelType)).toFile();
+			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format(SAM2_FNAME, modelType)).toFile();
 		}
 
 		return file.getAbsolutePath();

@@ -37,7 +37,7 @@ torch = "==2.5.1"
 torchvision = "==0.20.1"
 
 [target.linux-64.pypi-options]
-index-url = "https://download.pytorch.org/whl/cu121"
+index-url = "https://download.pytorch.org/whl/cu%s"
 
 # --------------------------------------------------
 # Windows CUDA 12.1 wheels
@@ -47,7 +47,7 @@ torch = "==2.5.1"
 torchvision = "==0.20.1"
 
 [target.win-64.pypi-options]
-index-url = "https://download.pytorch.org/whl/cu121"
+index-url = "https://download.pytorch.org/whl/cu%s"
 
 
 # ==================================================

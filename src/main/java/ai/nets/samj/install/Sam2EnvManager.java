@@ -21,21 +21,16 @@ package ai.nets.samj.install;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,18 +39,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
-import org.apache.commons.compress.utils.Lists;
 
 import ai.nets.samj.gui.tools.FileUtils;
 import ai.nets.samj.models.Sam2;
 
 import org.apposed.appose.Appose;
 import org.apposed.appose.BuildException;
-import org.apposed.appose.Environment;
-import org.apposed.appose.builder.PixiBuilder;
 
 import io.bioimage.modelrunner.apposed.appose.Types;
 import io.bioimage.modelrunner.download.FileDownloader;
@@ -78,8 +69,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * Dependencies to be checked to make sure that the environment is able to load a SAM based model. 
 	 * General for every supported model.
 	 */
-	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose=0.7.1", "torch=2.4.0", 
-			"torchvision=0.19.0", "skimage", "sam2", "pytest"});
+	final public static List<String> CHECK_DEPS = Arrays.asList(new String[] {"appose", "torch=2.5.1", 
+			"torchvision=0.20.1", "skimage", "SAM-2=1.0", "pytest"});
 	/**
 	 * Byte sizes of all the SAM2.1 options
 	 */
@@ -214,7 +205,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 												+ Sam2.getListOfSupportedVariants());
 		if (!force && this.checkModelWeightsInstalled())
 			return;
-		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING SAM2 WEIGHTS (" + modelType + ")");
         try {
     		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();
@@ -232,18 +222,15 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
         	if (size != file.length())
         		throw new IOException("Model SAM2" + modelType + " was not correctly downloaded");
         } catch (IOException ex) {
-            thread.interrupt();
             this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
             throw ex;
         } catch (URISyntaxException e1) {
         	this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
             throw new IOException("Unable to find the download URL for SAM2 " + modelType + ": " + String.format(SAM2_1_URL, modelType));
 		} catch (ExecutionException e) {
-            thread.interrupt();
             this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED SAM2 WEIGHTS INSTALLATION");
             throw new RuntimeException(e);
 		}
-        thread.interrupt();
         this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- SAM2 WEIGHTS INSTALLED");
 	}
 	

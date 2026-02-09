@@ -8,6 +8,9 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 
+import org.apposed.appose.BuildException;
+import org.apposed.appose.TaskException;
+
 import ai.nets.samj.gui.components.ComboBoxButtonComp;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
@@ -62,7 +65,9 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements ItemLi
 		return this.btn;
 	}
 	
-	protected <T extends RealType<T> & NativeType<T>> void loadModel(RandomAccessibleInterval<T> rai) throws IOException, RuntimeException, InterruptedException {
+	protected <T extends RealType<T> & NativeType<T>> void loadModel(RandomAccessibleInterval<T> rai) throws InterruptedException, BuildException, TaskException, IOException {
+		if (!selected.isLoaded())
+			selected.loadModel(null);
 		selected.setImage(rai);
 	}
 	

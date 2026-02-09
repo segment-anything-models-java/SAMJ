@@ -27,7 +27,7 @@ import org.apposed.appose.TaskException;
 
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.EfficientSamJ;
-import ai.nets.samj.install.EfficientSamEnvManager;
+import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.ui.SAMJLogger;
 
 /**
@@ -60,7 +60,7 @@ public class EfficientSAM extends SAMModel {
 		this.speedRank = 5;
 		this.performanceRank = 2;
 		this.size = 105.7;
-		this.manager = EfficientSamEnvManager.create();
+		this.manager = Sam2EnvManager.create();
 	}
 
 	/**
@@ -69,7 +69,7 @@ public class EfficientSAM extends SAMModel {
 	 * 	the model manager that contains the info about where the model
 	 * 	environment and model weights are installed
 	 */
-	public EfficientSAM(EfficientSamEnvManager manager) {
+	public EfficientSAM(Sam2EnvManager manager) {
 		this.isHeavy = true;
 		this.fullName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything";
 		this.githubLink = "https://github.com/yformer/EfficientSAM";

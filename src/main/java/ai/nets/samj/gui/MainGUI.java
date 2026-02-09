@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apposed.appose.BuildException;
 import org.apposed.appose.TaskException;
 
 public class MainGUI extends JFrame {
@@ -245,7 +246,7 @@ public class MainGUI extends JFrame {
                 setInstantPromptsEnabled(this.chkInstant.isSelected() && this.isValidPrompt);
                 cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected());
                 setTwoThirdsEnabled(true);
-            } catch (IOException | RuntimeException | InterruptedException ex) {
+            } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
                 go.setEnabled(true);
                 ex.printStackTrace();
             }

@@ -30,6 +30,8 @@ import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.HTMLPane;
+
+import org.apposed.appose.Builder.ProgressConsumer;
 import org.apposed.appose.mamba.Mamba;
 
 /**
@@ -187,6 +189,10 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		modelInstallThread = new Thread(() ->{
 			try {
 				this.html.clear();
+				ProgressConsumer progress = (title, current, maximum) -> {
+				    double pct = (maximum <= 0) ? 0.0 : (100.0 * current / maximum);
+				    System.out.printf("%s: %d/%d (%.1f%%)%n", title, current, maximum, pct);
+				};
 				this.model.getInstallationManger().setConsumer(str -> addHtml(str));
 				this.model.getInstallationManger().installEverything();
 				SwingUtilities.invokeLater(() -> {

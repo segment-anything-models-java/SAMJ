@@ -62,7 +62,7 @@ public class SAM2Large extends SAMModel {
 		this.speedRank = 5;
 		this.performanceRank = 1;
 		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
-		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
 		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, ID);
 	}
 	
@@ -83,7 +83,7 @@ public class SAM2Large extends SAMModel {
 		this.speedRank = 4;
 		this.performanceRank = 1;
 		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
-		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
 		if (!manager.getModelType().equals(ID))
 			throw new IllegalArgumentException("The model type should be: " + ID + " vs manager model type: " + manager.getModelType());
 		this.manager = manager;

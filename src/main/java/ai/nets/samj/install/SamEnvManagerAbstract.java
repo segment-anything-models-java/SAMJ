@@ -20,22 +20,25 @@
 package ai.nets.samj.install;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
+import java.nio.file.StandardCopyOption;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apposed.appose.BuildException;
+import org.apposed.appose.Builder.ProgressConsumer;
+import org.apposed.appose.Environment;
 import org.apposed.appose.builder.PixiBuilder;
 
 
@@ -53,13 +56,17 @@ public abstract class SamEnvManagerAbstract {
 	 */
 	protected PixiBuilder pixi;
 	/**
-	 * Consumer used to keep providing info in the case of several threads working
+	 * Consumer to transmit information about the output
 	 */
-	protected Consumer<String> consumer;
+	protected Consumer<String> outConsumer;
 	/**
-	 * Variable used to measer time intervals
+	 * Consumer to transmit the information about errors
 	 */
-	private static long millis = System.currentTimeMillis();
+	protected Consumer<String> errConsumer;
+	/**
+	 * Consumer to transmit the information about the progress downloading pixi
+	 */
+	protected ProgressConsumer pixiConsumer;
 	/**
 	 * Relative path to the mamba executable from the appose folder
 	 */
@@ -105,54 +112,41 @@ public abstract class SamEnvManagerAbstract {
 	public abstract String getModelEnv();
 	
 	public abstract void uninstall();
+
 	
-	
-	public void setConsumer(Consumer<String> consumer) {
+	public void setOutputConsumer(Consumer<String> consumer) {
+		this.outConsumer = consumer;
 	}
 	
-	/**
-	 * Send information as Strings to the consumer
-	 * @param str
-	 * 	String that is going to be sent to the consumer
-	 */
-	protected void passToConsumer(String str) {
-		consumer.accept(str);
-		millis = System.currentTimeMillis();
+	public void setErrorConsumer(Consumer<String> consumer) {
+		this.errConsumer = consumer;
 	}
 	
-	/**
-	 * Check whether micromamba is installed or not in the directory of the {@link SamEnvManagerAbstract} instance.
-	 * @return whether micromamba is installed or not in the directory of the {@link SamEnvManagerAbstract} instance.
-	 */
-	public boolean checkMambaInstalled() {
-		File ff = new File(path + MAMBA_RELATIVE_PATH);
-		if (!ff.exists()) return false;
-		// TODO return mamba.checkMambaInstalled();
-		return true;
+	public void setProgressConsumer(ProgressConsumer consumer) {
+		this.pixiConsumer = consumer;
 	}
-	
-	/**
-	 * Method to install automatically Micromamba in the path of the corresponding {@link SamEnvManagerAbstract} instance.
-	 * 
-	 * @throws IOException if there is any file related error during the installation
-	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if there is any error decompressing the micromamba installer files
-	 * @throws URISyntaxException if there is any error with the url that points to the micromamba instance to download
-	 */
-	public void installMambaPython() throws IOException, InterruptedException, 
-	ArchiveException, URISyntaxException {
-		if (checkMambaInstalled()) return;
-		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING MICROMAMBA");
-		try {
-			mamba.installMicromamba();
-		} catch (IOException | InterruptedException | URISyntaxException e) {
-			thread.interrupt();
-			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED MICROMAMBA INSTALLATION");
-			throw e;
-		}
-		thread.interrupt();
-		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- MICROMAMBA INSTALLED");
-	}
+
+    public static void installWheel(String wheelPath, Environment env) {
+		List<String> pythonExes = Arrays.asList("python", "python3", "python.exe");
+        env.service(pythonExes, "-m", "pip", "install", "--no-deps", wheelPath);
+    }
+
+    public static void installWheelFromResource(String wheelResourcePath, Environment env)
+            throws IOException {
+
+        Path wheel = extractToTemp(wheelResourcePath, ".whl");
+        wheel.toFile().deleteOnExit();
+       installWheel(wheel.toAbsolutePath().toString(), env);
+    }
+
+    private static Path extractToTemp(String resourcePath, String suffix) throws IOException {
+        try (InputStream in = Sam2EnvManager.class.getResourceAsStream(resourcePath)) {
+            if (in == null) throw new FileNotFoundException("Resource not found: " + resourcePath);
+            Path tmp = Files.createTempFile("samj-wheel-", suffix);
+            Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
+            return tmp;
+        }
+    }
 	
 	/**
 	 * 
@@ -174,19 +168,5 @@ public abstract class SamEnvManagerAbstract {
 	
 	public String getEnvCreationProgress() {
 		return this.getEnvCreationProgress();
-	}
-	
-	protected Thread reportProgress(String startStr) {
-		Thread currentThread = Thread.currentThread();
-		Thread thread = new Thread (() -> {
-			passToConsumer(startStr);
-			while (currentThread.isAlive()) {
-				try {Thread.sleep(300);} catch (InterruptedException e) {break;}
-				if (System.currentTimeMillis() - millis > 300 && currentThread.isAlive())
-					passToConsumer("");
-			}
-		});
-		thread.start();
-		return thread;
 	}
 }

@@ -21,13 +21,17 @@ package ai.nets.samj.install;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +54,10 @@ import ai.nets.samj.models.Sam2;
 
 import org.apposed.appose.Appose;
 import org.apposed.appose.BuildException;
+import org.apposed.appose.Environment;
+import org.apposed.appose.builder.PixiBuilder;
+
+import io.bioimage.modelrunner.apposed.appose.Types;
 import io.bioimage.modelrunner.download.FileDownloader;
 
 /*
@@ -149,7 +157,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		Sam2EnvManager installer = new Sam2EnvManager(modelType);
 		installer.path = path;
 		installer.consumer = consumer;
-		installer.mamba = new Mamba(path);
 		return installer;
 	}
 	
@@ -190,7 +197,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * has been installed or not
 	 */
 	public boolean checkSAMDepsInstalled() {
-		if (!checkMambaInstalled()) return false;
 		File pythonEnv = Paths.get(this.path, "envs", SAM2_ENV_NAME).toFile();
 		if (!pythonEnv.exists()) return false;
 		
@@ -280,7 +286,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws InterruptedException if the installation is interrupted
 	 * @throws BuildException if there is any error building the environment
 	 */
-	public void installSAMDeps() throws InterruptedException, BuildException, {
+	public void installSAMDeps() throws InterruptedException, BuildException {
 		installSAMDeps(false);
 	}
 	
@@ -296,9 +302,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws BuildException if there is any error building the environment
 	 */
 	public void installSAMDeps(boolean force) throws InterruptedException, BuildException {
-	    if (!checkMambaInstalled())
-	        throw new IllegalArgumentException("Unable to install Python without first installing Mamba.");
-
 	    if (!force && checkSAMDepsInstalled())
 	        return;
 
@@ -313,12 +316,20 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    );
 
 	    pixi = Appose.pixi().content(renderedPixi);
+	    pixi.subscribeOutput(consumer);
+	    pixi.subscribeError(consumer);
+	    pixi.subscribeProgress(null);
 	    pixi.build();
-	    installWheel(SAM2_WHEEL);
+	    installSAM2Wheel();
 	}
 
-	private void installWheel(String wheel) {
-		
+	private void installSAM2Wheel() throws BuildException {
+		try {
+			installWheelFromResource("/" + SAM2_WHEEL, pixi.build());
+		} catch (IOException e) {
+			throw new BuildException("Failed to install SAM2 from wheel: " 
+									+ System.lineSeparator() + Types.stackTrace(e));
+		}	
 	}
 	
 	/**

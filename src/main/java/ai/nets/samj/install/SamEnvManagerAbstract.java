@@ -86,9 +86,9 @@ public abstract class SamEnvManagerAbstract {
 	
 	public abstract boolean checkSAMDepsInstalled();
 	
-	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException;
+	public abstract void installSAMDeps() throws InterruptedException, BuildException;
 
-	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException, BuildException;
+	public abstract void installSAMDeps(boolean force) throws InterruptedException, BuildException;
 
 	public abstract boolean checkModelWeightsInstalled();
 	
@@ -129,66 +129,6 @@ public abstract class SamEnvManagerAbstract {
 		if (!ff.exists()) return false;
 		// TODO return mamba.checkMambaInstalled();
 		return true;
-	}
-	
-	/**
-	 * TODO keep until release of stable Appose
-	 * Install the Python package to run Appose in Python
-	 * @param envName
-	 * 	environment where Appose is going to be installed
-	 * @throws IOException if there is any file creation related issue
-	 * @throws InterruptedException if the package installation is interrupted
-	 * @throws MambaInstallException if there is any error with the Mamba installation
-	 */
-	protected void installApposePackage(String envName) throws IOException, InterruptedException {
-		installApposePackage(envName, false);
-	}
-	
-	/**
-	 * TODO keep until release of stable Appose
-	 * Install the Python package to run Appose in Python
-	 * @param envName
-	 * 	environment where Appose is going to be installed
-	 * @param force
-	 * 	if the package already exists, whether to overwrite it or not
-	 * @throws IOException if there is any file creation related issue
-	 * @throws InterruptedException if the package installation is interrupted
-	 */
-	protected void installApposePackage(String envName, boolean force) throws IOException, InterruptedException {
-		if (!checkMambaInstalled())
-			throw new IllegalArgumentException("Unable to SAM without first installing Mamba. ");
-		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING 'APPOSE' PYTHON PACKAGE");
-		String zipResourcePath = "appose-python.zip";
-		String outputDirectory = "";
-        // TODO String outputDirectory = mamba.getEnvsDir() + File.separator + envName;
-        try (
-            	InputStream zipInputStream = SamEnvManagerAbstract.class.getClassLoader().getResourceAsStream(zipResourcePath);
-            	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
-            		) {
-            	ZipEntry entry;
-            	while ((entry = zipInput.getNextEntry()) != null) {
-                    File entryFile = new File(outputDirectory + File.separator + entry.getName());
-                    if (entry.isDirectory()) {
-                    	entryFile.mkdirs();
-                    	continue;
-                    }
-                	entryFile.getParentFile().mkdirs();
-                    try (OutputStream entryOutput = new FileOutputStream(entryFile)) {
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        while ((bytesRead = zipInput.read(buffer)) != -1) {
-                            entryOutput.write(buffer, 0, bytesRead);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-    			thread.interrupt();
-    			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED 'APPOSE' PYTHON PACKAGE INSTALLATION");
-    			throw e;
-    		}
-        // TODO mamba.pipInstallIn(envName, new String[] {mamba.getEnvsDir() + File.separator + envName + File.separator + APPOSE});
-		thread.interrupt();
-		passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- 'APPOSE' PYTHON PACKAGE INSATLLED");
 	}
 	
 	/**

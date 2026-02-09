@@ -34,6 +34,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -97,6 +99,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * URL to download the SAM2 model 
 	 */
 	final static private String SAM2_1_FNAME = "sam2.1_hiera_%s.pt";
+	/**
+	 * Name of the SAM2 wheel
+	 */
+	final static private String SAM2_WHEEL = "sam_2-1.0-py3-none-any.whl";
 	/**
 	 * List of supported CUDA versions
 	 */
@@ -271,12 +277,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * If Micromamba is not installed in the path of the {@link Sam2EnvManager} instance, this method
 	 * installs it.
 	 * 
-	 * @throws IOException if there is any file error installing any of the requirements
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if there is any error decompressing the micromamba installer files
-	 * @throws URISyntaxException if there is any error witht the URL to download micromamba
+	 * @throws BuildException if there is any error building the environment
 	 */
-	public void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException {
+	public void installSAMDeps() throws InterruptedException, BuildException, {
 		installSAMDeps(false);
 	}
 	
@@ -288,37 +292,76 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * 	if the environment to be created already exists, whether to overwrite it or not
 	 * 
 	 * 
-	 * @throws IOException if there is any file error installing any of the requirements
 	 * @throws InterruptedException if the installation is interrupted
 	 * @throws BuildException if there is any error building the environment
-	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installSAMDeps(boolean force) throws IOException, InterruptedException, BuildException {
-		if (!checkMambaInstalled())
-			throw new IllegalArgumentException("Unable to install Python without first installing Mamba. ");
-		if (this.checkSAMDepsInstalled() && !force)
-			return;
-		byte[] bytes;
-		try (InputStream is = getClass().getResourceAsStream("pixi.toml");
-			     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-			    byte[] buffer = new byte[8192];
-			    int len;
-			    while ((len = is.read(buffer)) != -1) {
-			        baos.write(buffer, 0, len);
-			    }
+	public void installSAMDeps(boolean force) throws InterruptedException, BuildException {
+	    if (!checkMambaInstalled())
+	        throw new IllegalArgumentException("Unable to install Python without first installing Mamba.");
 
-			    bytes = baos.toByteArray();
-			}
-		String content = new String(bytes, StandardCharsets.UTF_8);
-		String version = "";
-		for (String cv : COMPAT_CUDAS) {
-			if (GpuCompatibility.canInstallCudaInEnv(content)) {
-				version = cv;
-				break;
-			}
-		}
-		Appose.pixi().content(String.format(content, version.replace(".", ""), version.replace(".", ""))).build();
-        installApposePackage(SAM2_ENV_NAME);
+	    if (!force && checkSAMDepsInstalled())
+	        return;
+
+	    final String pixiTemplate = readClasspathResourceAsString("/pixi.toml");
+	    final String cudaVersion = pickCudaVersion(pixiTemplate);
+
+	    final String renderedPixi = String.format(
+	            Locale.ROOT,
+	            pixiTemplate,
+	            cudaVersion.replace(".", ""),
+	            cudaVersion.replace(".", "")
+	    );
+
+	    pixi = Appose.pixi().content(renderedPixi);
+	    pixi.build();
+	    installWheel(SAM2_WHEEL);
+	}
+
+	private void installWheel(String wheel) {
+		
+	}
+	
+	/**
+	 * Reads a classpath resource fully as UTF-8 text.
+	 * Wraps IO/resource errors as BuildException so callers don't need to handle IOException.
+	 */
+	private String readClasspathResourceAsString(String absoluteResourcePath) throws BuildException {
+	    Objects.requireNonNull(absoluteResourcePath, "absoluteResourcePath");
+
+	    try (InputStream is = Sam2EnvManager.class.getResourceAsStream(absoluteResourcePath)) {
+	        if (is == null) {
+	            throw new BuildException("Required resource not found on classpath: " + absoluteResourcePath);
+	        }
+	        return new String(readAllBytesJava8(is), StandardCharsets.UTF_8);
+	    } catch (IOException e) {
+	        throw new BuildException("Failed to read resource: " + absoluteResourcePath, e);
+	    }
+	}
+
+	/**
+	 * Java 8-compatible InputStream -> byte[].
+	 */
+	private static byte[] readAllBytesJava8(InputStream is) throws IOException {
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    byte[] buffer = new byte[8192];
+	    int len;
+	    while ((len = is.read(buffer)) != -1) {
+	        baos.write(buffer, 0, len);
+	    }
+	    return baos.toByteArray();
+	}
+
+	/**
+	 * Pick the first compatible CUDA version based on your template.
+	 * Adjust this to match what GpuCompatibility actually needs.
+	 */
+	private String pickCudaVersion(String pixiTemplate) {
+	    for (String cv : COMPAT_CUDAS) {
+	        if (GpuCompatibility.canInstallCudaInEnv(cv)) {
+	            return cv;
+	        }
+	    }
+	    return COMPAT_CUDAS.get(0);
 	}
 	
 	/**

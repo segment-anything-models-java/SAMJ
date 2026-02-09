@@ -191,6 +191,13 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	private void installModel() {
 		SwingUtilities.invokeLater(() -> listeners.forEach(l -> l.setGUIEnabled(false)));
 		SwingUtilities.invokeLater(() -> install.setEnabled(false));
+		if (this.model.getInstallationManger() == null) {
+			SwingUtilities.invokeLater(() -> {
+				this.setInfo();
+		    	setButtons();
+				listeners.forEach(l -> l.setGUIEnabled(true));
+			});
+		}
 		modelInstallThread = new Thread(() ->{
 			try {
 				this.logger.clear();

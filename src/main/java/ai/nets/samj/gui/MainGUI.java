@@ -1,6 +1,7 @@
 package ai.nets.samj.gui;
 
 import ai.nets.samj.annotation.Mask;
+import ai.nets.samj.communication.model.DummyModel;
 import ai.nets.samj.communication.model.EfficientTAMSmall;
 import ai.nets.samj.communication.model.EfficientTAMTiny;
 import ai.nets.samj.communication.model.SAM2Large;
@@ -89,11 +90,15 @@ public class MainGUI extends JFrame {
 
     public static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
     static {
-        DEFAULT_MODEL_LIST.add(new SAM2Tiny());
-        DEFAULT_MODEL_LIST.add(new SAM2Small());
-        DEFAULT_MODEL_LIST.add(new SAM2Large());
-        DEFAULT_MODEL_LIST.add(new EfficientTAMTiny());
-        DEFAULT_MODEL_LIST.add(new EfficientTAMSmall());
+    	try {
+	        DEFAULT_MODEL_LIST.add(new SAM2Tiny());
+	        DEFAULT_MODEL_LIST.add(new SAM2Small());
+	        DEFAULT_MODEL_LIST.add(new SAM2Large());
+	        DEFAULT_MODEL_LIST.add(new EfficientTAMTiny());
+	        DEFAULT_MODEL_LIST.add(new EfficientTAMSmall());
+    	} catch (Exception ex) {
+	        DEFAULT_MODEL_LIST.add(new DummyModel());
+    	}
     }
 
     public MainGUI(ConsumerInterface consumer) {

@@ -115,7 +115,12 @@ public abstract class SAMModel {
 			+ "</table>" + System.lineSeparator()
 			+ "";
 	
-	public static String HTML_NOT_INSTALLED = "<br><p style=\"color: red;\">This model is not installed yet.</p>";
+	private static String HTML_NOT_INSTALLED = "<br><p style=\"color: red;\">This model is not installed yet.</p>";
+
+	
+	private static String HTML_DUMMY = "<br><p style=\"color: red;\">Error installing SAMJ. Cannot find models.<br>"
+										+ "Please reinstall SAMJ.<br>If the error persits create an issue at:<br>"
+										+ "https://github.com/segment-anything-models-java/SAMJ-IJ/issues</p>";
 	
 	/**
 	 * 
@@ -187,6 +192,7 @@ public abstract class SAMModel {
 		boolean installed = this.isInstalled();
 		description = this.isHeavy & installed ? CAUTION_STRING + description: description;
 		description = installed ? description : HTML_NOT_INSTALLED + description;
+		description = this.getInstallationManger() != null ? description : HTML_DUMMY + description; 
 		return description;
 	}
 	

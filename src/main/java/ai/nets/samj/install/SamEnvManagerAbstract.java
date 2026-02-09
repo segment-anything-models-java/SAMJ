@@ -38,6 +38,7 @@ import org.apposed.appose.BuildException;
 import org.apposed.appose.Builder.ProgressConsumer;
 import org.apposed.appose.Environment;
 import org.apposed.appose.builder.PixiBuilder;
+import org.apposed.appose.tool.Pixi;
 
 
 /*
@@ -82,9 +83,7 @@ public abstract class SamEnvManagerAbstract {
 	/**
 	 * Default directory where micromamba is installed and where all the environments are created
 	 */
-	static public String DEFAULT_DIR = new File("appose_"
-			+ ((!PlatformDetection.isMacOS() || !PlatformDetection.isUsingRosseta()) ? PlatformDetection.getArch()
-			: PlatformDetection.ARCH_ARM64 )).getAbsolutePath();
+	static public String DEFAULT_DIR = Paths.get(Pixi.BASE_PATH).toAbsolutePath().toString();
 
 	
 	public abstract boolean checkEverythingInstalled();

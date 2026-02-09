@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	/**
 	 * Name of the environment that contains the code and weigths to run SAM2 models
 	 */
-	final static public String SAM2_ENV_NAME = "sam2";
+	final static public String SAM2_ENV_NAME = "samj_env";
 	/**
 	 * Name of the folder that contains the code and weigths for SAM2 models
 	 */
@@ -107,7 +108,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 */
 	final static private ArrayList<String> COMPAT_CUDAS = new ArrayList<>(Arrays.asList("12.1", "12.4", "11.8"));
 	
-	private Sam2EnvManager(String modelType) {
+	
+	protected Sam2EnvManager(String modelType, String path) throws BuildException {
+		if (modelType == null)
+			modelType = DEFAULT_SAM2;
 		List<String> modelTypes = SAM2_1_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
 		if (!modelTypes.contains(modelType) && !modelType.equals("base")) {
 			throw new IllegalArgumentException("Invalid model variant chosen: '" + modelType + "'."
@@ -116,20 +120,66 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		if (modelType.equals("base"))
 			modelType = "base_plus";
 		this.modelType = modelType;
+	    final String pixiTemplate = readClasspathResourceAsString("/pixi.toml");
+	    final String cudaVersion = pickCudaVersion(pixiTemplate);
+
+	    final String renderedPixi = String.format(
+	            Locale.ROOT,
+	            pixiTemplate,
+	            cudaVersion.replace(".", ""),
+	            cudaVersion.replace(".", "")
+	    );
+
+	    // TODO currently not supported setting the path
+	    pixi = Appose.pixi().content(renderedPixi);
+	}
+
+    // TODO currently not supported setting the path
+	/**
+	 * Creates an instance of {@link Sam2EnvManager} that uses a micromamba installed at the argument
+	 * provided by 'path'.
+	 * Micromamba does not need to be installed as the code will install it automatically.
+	 * @param modelType
+	 * 	which of the possible SAM2 wants to be used. The possible variants are the keys of the 
+	 * following map: {@link #SAM2_BYTE_SIZES_MAP}
+	 * @param path
+	 * 	the path where the corresponding micromamba shuold be installed
+	 * @return an instance of {@link Sam2EnvManager}
+	 * @throws BuildException 
+	 */
+	private static Sam2EnvManager create(String modelType, Path path) throws BuildException {
+
+		return new Sam2EnvManager(modelType, path.toAbsolutePath().toString());
 	}
 	
 	/**
 	 * Creates an instance of {@link Sam2EnvManager} that uses a micromamba installed at the argument
 	 * provided by 'path'.
 	 * Micromamba does not need to be installed as the code will install it automatically.
+	 * @param modelType
+	 * 	which of the possible SAM2 wants to be used. The possible variants are the keys of the 
+	 * following map: {@link #SAM2_BYTE_SIZES_MAP}
+	 * @return an instance of {@link Sam2EnvManager}
+	 * @throws BuildException 
+	 */
+	public static Sam2EnvManager create(String modelType) throws BuildException {
+
+		return new Sam2EnvManager(modelType, DEFAULT_DIR);
+	}
+
+    // TODO currently not supported setting the path
+	/**
+	 * Creates an instance of {@link Sam2EnvManager} that uses a micromamba installed at the argument
+	 * provided by 'path'.
+	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @param path
 	 * 	the path where the corresponding micromamba shuold be installed
-	 * @param modelType
-	 * 	which of the possible SAM2 wants to be used. The possible variants are the keys of the following map: {@link #SAM2_BYTE_SIZES_MAP}
 	 * @return an instance of {@link Sam2EnvManager}
+	 * @throws BuildException 
 	 */
-	public static Sam2EnvManager create(String path, String modelType) {
-		return create(path, modelType == null ? DEFAULT_SAM2 : modelType);
+	private static Sam2EnvManager create(Path path) throws BuildException {
+
+		return new Sam2EnvManager(null, path.toAbsolutePath().toString());
 	}
 	
 	/**
@@ -137,9 +187,10 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * directory {@link #DEFAULT_DIR}. Uses the default model {@link #DEFAULT_SAM2}
 	 * Micromamba does not need to be installed as the code will install it automatically.
 	 * @return an instance of {@link Sam2EnvManager}
+	 * @throws BuildException 
 	 */
-	public static Sam2EnvManager create() {
-		return create(DEFAULT_DIR, null);
+	public static Sam2EnvManager create() throws BuildException {
+		return new Sam2EnvManager(null, DEFAULT_DIR);
 	}
 	
 	/**
@@ -162,7 +213,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		
 		List<String> uninstalled = new ArrayList<String>();
 		try {
-			// TODO uninstalled = mamba.checkUninstalledDependenciesInEnv(pythonEnv.getAbsolutePath(), CHECK_DEPS);
+			uninstalled = DependencyChecker.checkUninstalledDependenciesInEnv(pixi.build(), CHECK_DEPS);
 		} catch (Exception e) {
 			return false;
 		}
@@ -260,18 +311,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	public void installSAMDeps(boolean force) throws InterruptedException, BuildException {
 	    if (!force && checkSAMDepsInstalled())
 	        return;
-
-	    final String pixiTemplate = readClasspathResourceAsString("/pixi.toml");
-	    final String cudaVersion = pickCudaVersion(pixiTemplate);
-
-	    final String renderedPixi = String.format(
-	            Locale.ROOT,
-	            pixiTemplate,
-	            cudaVersion.replace(".", ""),
-	            cudaVersion.replace(".", "")
-	    );
-
-	    pixi = Appose.pixi().content(renderedPixi);
 	    if (this.outConsumer != null)
 	    	pixi.subscribeOutput(this.outConsumer);
 	    if (this.errConsumer != null)

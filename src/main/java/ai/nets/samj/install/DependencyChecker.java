@@ -1,13 +1,14 @@
 package ai.nets.samj.install;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.bioimage.modelrunner.apposed.appose.Mamba;
+import org.apposed.appose.Environment;
+import org.apposed.appose.Service;
+import org.apposed.appose.Service.Task;
+import org.apposed.appose.TaskException;
+
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
-import io.bioimage.modelrunner.system.PlatformDetection;
 
 public class DependencyChecker {
 	
@@ -27,8 +28,8 @@ public class DependencyChecker {
 	 * 	An example list: "numpy", "numba&gt;=0.43.1", "torch==1.6", "torch&gt;=1.6, &lt;2.0"
 	 * @return true if the packages are installed or false otherwise
 	 */
-	public static boolean checkAllDependenciesInEnv(String envName, List<String> dependencies) throws MambaInstallException {
-		return checkUninstalledDependenciesInEnv(envName, dependencies).size() == 0;
+	public static boolean checkAllDependenciesInEnv(Environment env, List<String> dependencies) throws MambaInstallException {
+		return checkUninstalledDependenciesInEnv(env, dependencies).size() == 0;
 	}
 	
 	/**
@@ -45,14 +46,10 @@ public class DependencyChecker {
 	 * 	An example list: "numpy", "numba&gt;=0.43.1", "torch==1.6", "torch&gt;=1.6, &lt;2.0"
 	 * @return true if the packages are installed or false otherwise
 	 */
-	public static List<String>  checkUninstalledDependenciesInEnv(String envName, List<String> dependencies) {
-		File envFile = new File(this.envsdir, envName);
-		File envFile2 = new File(envName);
-		if (!envFile.isDirectory() && !envFile2.isDirectory())
-			return dependencies;
+	public static List<String>  checkUninstalledDependenciesInEnv(Environment env, List<String> dependencies) {
 		List<String> uninstalled = dependencies.stream().filter(dep -> {
 			try {
-				return !checkDependencyInEnv(envName, dep);
+				return !checkDependencyInEnv(env, dep);
 			} catch (Exception ex) {
 				return true;
 			}
@@ -74,7 +71,7 @@ public class DependencyChecker {
 	 * 	An example list: "numpy", "numba&gt;=0.43.1", "torch==1.6", "torch&gt;=1.6, &lt;2.0"
 	 * @return true if the package is installed or false otherwise
 	 */
-	public static boolean checkDependencyInEnv(String envName, String dependency) {
+	public static boolean checkDependencyInEnv(Environment env, String dependency) {
 		if (dependency.contains("=<"))
 			throw new IllegalArgumentException("=< is not valid, use <=");
 		else if (dependency.contains("=>"))
@@ -85,7 +82,7 @@ public class DependencyChecker {
 		
 		if (dependency.contains("==")) {
 			int ind = dependency.indexOf("==");
-			return checkDependencyInEnv(envName, dependency.substring(0, ind).trim(), dependency.substring(ind + 2).trim());
+			return checkDependencyInEnv(env, dependency.substring(0, ind).trim(), dependency.substring(ind + 2).trim());
 		} else if (dependency.contains(">=") && dependency.contains("<=") && dependency.contains(",")) {
 			int commaInd = dependency.indexOf(",");
 			int highInd = dependency.indexOf(">=");
@@ -97,7 +94,7 @@ public class DependencyChecker {
 			if (maxV.equals("") || minV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch>=2.0.0, torch<=2.5.0'.");
-			return checkDependencyInEnv(envName, packName, minV, maxV, false);
+			return checkDependencyInEnv(env, packName, minV, maxV, false);
 		} else if (dependency.contains(">=") && dependency.contains("<") && dependency.contains(",")) {
 			int commaInd = dependency.indexOf(",");
 			int highInd = dependency.indexOf(">=");
@@ -109,7 +106,7 @@ public class DependencyChecker {
 			if (maxV.equals("") || minV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch>=2.0.0, torch<2.5.0'.");
-			return checkDependencyInEnv(envName, packName, minV, null, false) && checkDependencyInEnv(envName, packName, null, maxV, true);
+			return checkDependencyInEnv(env, packName, minV, null, false) && checkDependencyInEnv(env, packName, null, maxV, true);
 		} else if (dependency.contains(">") && dependency.contains("<=") && dependency.contains(",")) {
 			int commaInd = dependency.indexOf(",");
 			int highInd = dependency.indexOf(">");
@@ -121,7 +118,7 @@ public class DependencyChecker {
 			if (maxV.equals("") || minV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch>2.0.0, torch<=2.5.0'.");
-			return checkDependencyInEnv(envName, packName, minV, null, true) && checkDependencyInEnv(envName, packName, null, maxV, false);
+			return checkDependencyInEnv(env, packName, minV, null, true) && checkDependencyInEnv(env, packName, null, maxV, false);
 		} else if (dependency.contains(">") && dependency.contains("<") && dependency.contains(",")) {
 			int commaInd = dependency.indexOf(",");
 			int highInd = dependency.indexOf(">");
@@ -133,40 +130,40 @@ public class DependencyChecker {
 			if (maxV.equals("") || minV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch>2.0.0, torch<2.5.0'.");
-			return checkDependencyInEnv(envName, packName, minV, maxV, true);
+			return checkDependencyInEnv(env, packName, minV, maxV, true);
 		} else if (dependency.contains(">=")) {
 			int ind = dependency.indexOf(">=");
 			String maxV = dependency.substring(ind + 2).trim();
 			if (maxV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch>=2.0.0'.");
-			return checkDependencyInEnv(envName, dependency.substring(0, ind).trim(), maxV, null, false);
+			return checkDependencyInEnv(env, dependency.substring(0, ind).trim(), maxV, null, false);
 		} else if (dependency.contains(">")) {
 			int ind = dependency.indexOf(">");
 			String maxV = dependency.substring(ind + 1).trim();
 			if (maxV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch>2.0.0'.");
-			return checkDependencyInEnv(envName, dependency.substring(0, ind).trim(), maxV, null, true);
+			return checkDependencyInEnv(env, dependency.substring(0, ind).trim(), maxV, null, true);
 		} else if (dependency.contains("<=")) {
 			int ind = dependency.indexOf("<=");
 			String maxV = dependency.substring(ind + 2).trim();
 			if (maxV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch<=2.0.0'.");
-			return checkDependencyInEnv(envName, dependency.substring(0, ind).trim(), null, maxV, false);
+			return checkDependencyInEnv(env, dependency.substring(0, ind).trim(), null, maxV, false);
 		} else if (dependency.contains("<")) {
 			int ind = dependency.indexOf("<");
 			String maxV = dependency.substring(ind + 1).trim();
 			if (maxV.equals(""))
 				throw new IllegalArgumentException("Conditions must always begin with either '<' or '>' signs and then "
 						+ "the version number. For example: 'torch<2.0.0'.");
-			return checkDependencyInEnv(envName, dependency.substring(0, ind).trim(), null, maxV, true);
+			return checkDependencyInEnv(env, dependency.substring(0, ind).trim(), null, maxV, true);
 		} else if (dependency.contains("=")) {
 			int ind = dependency.indexOf("=");
-			return checkDependencyInEnv(envName, dependency.substring(0, ind).trim(), dependency.substring(ind + 1).trim());
+			return checkDependencyInEnv(env, dependency.substring(0, ind).trim(), dependency.substring(ind + 1).trim());
 		}else {
-			return checkDependencyInEnv(envName, dependency, null);
+			return checkDependencyInEnv(env, dependency, null);
 		}
 	}
 	
@@ -184,8 +181,8 @@ public class DependencyChecker {
 	 * 	the specific version of the package that needs to be installed. For example:, "0.43.1", "1.6", "2.0"
 	 * @return true if the package is installed or false otherwise
 	 */
-	public static boolean checkDependencyInEnv(String envDir, String dependency, String version) throws MambaInstallException {
-		return checkDependencyInEnv(envDir, dependency, version, version, true);
+	public static boolean checkDependencyInEnv(Environment env, String dependency, String version) {
+		return checkDependencyInEnv(env, dependency, version, version, true);
 	}
 	
 	/**
@@ -215,8 +212,8 @@ public class DependencyChecker {
 	 * 	If there is no maximum version requirement for the package of interest, set this argument to null.
 	 * @return true if the package is installed or false otherwise
 	 */
-	public static boolean checkDependencyInEnv(String envDir, String dependency, String minversion, String maxversion) {
-		return checkDependencyInEnv(envDir, dependency, minversion, maxversion, true);
+	public static boolean checkDependencyInEnv(Environment env, String dependency, String minversion, String maxversion) {
+		return checkDependencyInEnv(env, dependency, minversion, maxversion, true);
 	}
 	
 	/**
@@ -243,15 +240,9 @@ public class DependencyChecker {
 	 * 	Whether the minversion and maxversion shuld be strictly smaller and bigger or not
 	 * @return true if the package is installed or false otherwise
 	 */
-	public static boolean checkDependencyInEnv(String envDir, String dependency, String minversion, 
+	public static boolean checkDependencyInEnv(Environment env, String dependency, String minversion, 
 			String maxversion, boolean strictlyBiggerOrSmaller) {
-		File envFile = new File(this.envsdir, envDir);
-		File envFile2 = new File(envDir);
-		if (!envFile.isDirectory() && !envFile2.isDirectory())
-			return false;
-		else if (!envFile.isDirectory())
-			envFile = envFile2;
-		if (dependency.trim().equals("python")) return checkPythonInstallation(envDir, minversion, maxversion, strictlyBiggerOrSmaller);
+		if (dependency.trim().equals("python")) return checkPythonInstallation(env, minversion, maxversion, strictlyBiggerOrSmaller);
 		String checkDepCode;
 		if (minversion != null && maxversion != null && minversion.equals(maxversion)) {
 			checkDepCode = "import importlib.util, sys; "
@@ -297,9 +288,10 @@ public class DependencyChecker {
 			checkDepCode = String.format(checkDepCode, resolveAliases(dependency), minversion, maxversion, dependency,
 					strictlyBiggerOrSmaller ? ">" : ">=", strictlyBiggerOrSmaller ? "<" : "<=");
 		}
-		try {
-			runPythonIn(envFile, "-c", checkDepCode);
-		} catch (RuntimeException | IOException | InterruptedException e) {
+		try (Service python = env.python()){
+			Task task = python.task(checkDepCode);
+			task.waitFor();
+		} catch (InterruptedException | TaskException e) {
 			return false;
 		}
 		return true;
@@ -319,13 +311,7 @@ public class DependencyChecker {
 		return dep.replace("-", "_");
 	}
 	
-	private static boolean checkPythonInstallation(String envDir, String minversion, String maxversion, boolean strictlyBiggerOrSmaller) throws MambaInstallException {
-		File envFile = new File(this.envsdir, envDir);
-		File envFile2 = new File(envDir);
-		if (!envFile.isDirectory() && !envFile2.isDirectory())
-			return false;
-		else if (!envFile.isDirectory())
-			envFile = envFile2;
+	private static boolean checkPythonInstallation(Environment env, String minversion, String maxversion, boolean strictlyBiggerOrSmaller) {
 		String checkDepCode;
 		if (minversion != null && maxversion != null && minversion.equals(maxversion)) {
 			checkDepCode = "import sys; import platform; from packaging import version as vv; desired_version = '%s'; "
@@ -352,9 +338,11 @@ public class DependencyChecker {
 					+ "and vv.parse(platform.python_version()).minor %s vv.parse(max_v).minor else sys.exit(1)";
 			checkDepCode = String.format(checkDepCode, minversion, maxversion, strictlyBiggerOrSmaller ? ">" : ">=", strictlyBiggerOrSmaller ? "<" : ">=");
 		}
-		try {
-			runPythonIn(envFile, "-c", checkDepCode);
-		} catch (RuntimeException | IOException | InterruptedException e) {
+
+		try (Service python = env.python()){
+			Task task = python.task(checkDepCode);
+			task.waitFor();
+		} catch (InterruptedException | TaskException e) {
 			return false;
 		}
 		return true;

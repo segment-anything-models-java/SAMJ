@@ -1,0 +1,56 @@
+[project]
+name = "samj-env"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64", "win-64", "linux-64"]
+
+# -----------------------
+# Conda deps (non-torch)
+# -----------------------
+[dependencies]
+scikit-image = "*"
+
+# -----------------------
+# Common pip deps
+# -----------------------
+[pypi-dependencies]
+pytest = "*"
+appose = "*"
+sam-2 = "==1.0"
+
+# -----------------------
+# macOS (no CUDA index)
+# -----------------------
+[target.osx-arm64.pypi-dependencies]
+torch = "==2.5.1"
+torchvision = "==0.20.1"
+
+[target.osx-64.pypi-dependencies]
+torch = "==2.5.1"
+torchvision = "==0.20.1"
+
+# -----------------------
+# Linux CUDA 12.1
+# -----------------------
+[target.linux-64.pypi-dependencies]
+torch = "==2.5.1"
+torchvision = "==0.20.1"
+
+[target.linux-64.pypi-options]
+index-url = "https://download.pytorch.org/whl/cu121"
+
+# -----------------------
+# Windows CUDA 12.1
+# -----------------------
+[target.win-64.pypi-dependencies]
+torch = "==2.5.1"
+torchvision = "==0.20.1"
+
+[target.win-64.pypi-options]
+index-url = "https://download.pytorch.org/whl/cu121"
+
+
+# -----------------------
+# Optional convenience tasks
+# -----------------------
+[tasks]
+test = "pytest -q"

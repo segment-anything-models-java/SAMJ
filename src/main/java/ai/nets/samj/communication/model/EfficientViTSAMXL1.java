@@ -27,7 +27,7 @@ import org.apposed.appose.TaskException;
 
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.EfficientViTSamJ;
-import ai.nets.samj.install.EfficientViTSamEnvManager;
+import ai.nets.samj.install.Sam2EnvManager;
 import ai.nets.samj.ui.SAMJLogger;
 
 /**
@@ -51,8 +51,9 @@ public class EfficientViTSAMXL1 extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @throws BuildException if there is any error building the pixi env
 	 */
-	public EfficientViTSAMXL1() {
+	public EfficientViTSAMXL1() throws BuildException {
 		this.isHeavy = false;
 		this.fullName = "EfficientViT-SAM smallest version (XL1)";
 		this.githubLink = "https://github.com/mit-han-lab/efficientvit";
@@ -62,7 +63,7 @@ public class EfficientViTSAMXL1 extends SAMModel {
 		this.speedRank = 3;
 		this.performanceRank = 3;
 		this.size = 814;
-		this.manager = EfficientViTSamEnvManager.create(EfficientViTSamEnvManager.DEFAULT_DIR, "xl1");
+		this.manager = Sam2EnvManager.create("xl1");
 	}
 
 	/**
@@ -71,7 +72,7 @@ public class EfficientViTSAMXL1 extends SAMModel {
 	 * 	the model manager that contains the info about where the model
 	 * 	environment and model weights are installed
 	 */
-	public EfficientViTSAMXL1(EfficientViTSamEnvManager manager) {
+	public EfficientViTSAMXL1(Sam2EnvManager manager) {
 		this.isHeavy = false;
 		this.fullName = "EfficientViT-SAM smallest version (XL1)";
 		this.githubLink = "https://github.com/mit-han-lab/efficientvit";

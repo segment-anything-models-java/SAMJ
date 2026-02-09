@@ -50,8 +50,9 @@ public class SAM2Tiny extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @throws BuildException if there is any error retrieving the environment
 	 */
-	public SAM2Tiny() {
+	public SAM2Tiny() throws BuildException {
 		this.isHeavy = false;
 		this.fullName = "SAM-2: Segment Anything Model 2 (Tiny)";
 		this.githubLink = "https://github.com/facebookresearch/segment-anything-2";
@@ -61,8 +62,8 @@ public class SAM2Tiny extends SAMModel {
 		this.speedRank = 3;
 		this.performanceRank = 3;
 		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
-		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
-		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, ID);
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.manager = Sam2EnvManager.create(ID);
 	}
 	
 
@@ -82,7 +83,7 @@ public class SAM2Tiny extends SAMModel {
 		this.speedRank = 2;
 		this.performanceRank = 4;
 		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
-		this.size = Math.round(10 * Sam2EnvManager.SAM2_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
+		this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
 		if (!manager.getModelType().equals(ID))
 			throw new IllegalArgumentException("The model type should be: " + ID + " vs manager model type: " + manager.getModelType());
 		this.manager = manager;

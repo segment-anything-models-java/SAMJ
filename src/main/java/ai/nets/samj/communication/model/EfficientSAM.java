@@ -49,8 +49,9 @@ public class EfficientSAM extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @throws BuildException if there is any error creating the Pixi env
 	 */
-	public EfficientSAM() {
+	public EfficientSAM() throws BuildException {
 		this.isHeavy = true;
 		this.fullName = "EfficientSAM: Leveraged Masked Image Pretraining for Efficient Segment Anything";
 		this.githubLink = "https://github.com/yformer/EfficientSAM";

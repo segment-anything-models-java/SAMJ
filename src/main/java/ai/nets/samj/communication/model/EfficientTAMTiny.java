@@ -50,8 +50,9 @@ public class EfficientTAMTiny extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @throws BuildException if there is any error building the pixi env
 	 */
-	public EfficientTAMTiny() {
+	public EfficientTAMTiny() throws BuildException {
 		this.isHeavy = false;
 		this.fullName = FULL_NAME;
 		this.githubLink = "https://github.com/yformer/EfficientTAM";
@@ -61,7 +62,7 @@ public class EfficientTAMTiny extends SAMModel {
 		this.speedRank = 1;
 		this.performanceRank = 5;
 		this.size = Math.round(10 * EfficientTamEnvManager.EFFTAM_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
-		this.manager = EfficientTamEnvManager.create(EfficientTamEnvManager.DEFAULT_DIR, ID);
+		this.manager = EfficientTamEnvManager.create(ID);
 	}
 	
 

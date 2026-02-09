@@ -51,8 +51,9 @@ public class SAM2Large extends SAMModel {
 
 	/**
 	 * Create an instance of the model that loads the model and encodes an image
+	 * @throws BuildException if there is any error building the Pixi env
 	 */
-	public SAM2Large() {
+	public SAM2Large() throws BuildException {
 		this.isHeavy = true;
 		this.fullName = "SAM-2: Segment Anything Model 2 (Large)";
 		this.githubLink = "https://github.com/facebookresearch/segment-anything-2";
@@ -63,7 +64,7 @@ public class SAM2Large extends SAMModel {
 		this.performanceRank = 1;
 		//this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
 		this.size = Math.round(10 * Sam2EnvManager.SAM2_1_BYTE_SIZES_MAP.get(ID) / ((double) ( 1024 * 1024))) / 10.0;
-		this.manager = Sam2EnvManager.create(Sam2EnvManager.DEFAULT_DIR, ID);
+		this.manager = Sam2EnvManager.create(ID);
 	}
 	
 

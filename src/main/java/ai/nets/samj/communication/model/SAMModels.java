@@ -21,6 +21,8 @@ package ai.nets.samj.communication.model;
 
 import java.util.ArrayList;
 
+import org.apposed.appose.BuildException;
+
 /**
  * A static list of SAM networks available in this installation.
  */
@@ -30,8 +32,9 @@ public class SAMModels extends ArrayList<SAMModel> {
 
 	/**
 	 * A list where each of the components is a {@link SAMModel}
+	 * @throws BuildException if there is any error retrieving the Pixi envs
 	 */
-	public  SAMModels() {
+	public  SAMModels() throws BuildException {
 		super();
 		add(new SAM2Tiny());
 		add(new SAM2Small());

@@ -191,8 +191,10 @@ public abstract class SAMModel {
 				"" + speedRank, "" + performanceRank, githubLink, githubName, paperLink, paperName);
 		boolean installed = this.isInstalled();
 		description = this.isHeavy & installed ? CAUTION_STRING + description: description;
-		description = installed ? description : HTML_NOT_INSTALLED + description;
-		description = this.getInstallationManger() != null ? description : HTML_DUMMY + description; 
+		if (!installed && this.getInstallationManger() != null)
+			description = HTML_NOT_INSTALLED + description;
+		else if (!installed)
+			description = HTML_DUMMY + description; 
 		return description;
 	}
 	

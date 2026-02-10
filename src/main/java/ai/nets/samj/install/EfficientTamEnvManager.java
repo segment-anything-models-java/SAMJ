@@ -83,7 +83,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 	final static private String EFFTAM_WHEEL = "efficient_track_anything-1.0-py3-none-any.whl";
 	
 	private EfficientTamEnvManager(String modelType, String path) throws BuildException {
-		super(DEFAULT_DIR, null);
+		super(Sam2EnvManager.DEFAULT_SAM2, path);
 		List<String> modelTypes = EFFTAM_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
 		if (!modelTypes.contains(modelType) && !modelType.equals("base")) {
 			throw new IllegalArgumentException("Invalid model variant chosen: '" + modelType + "'."

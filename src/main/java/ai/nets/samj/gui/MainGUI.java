@@ -10,6 +10,7 @@ import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
+import ai.nets.samj.gui.components.ImageDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
@@ -40,7 +41,8 @@ public class MainGUI extends JFrame {
 
     protected static final long serialVersionUID = -797293687195076077L;
 
-    protected boolean isDrawerOpen = false;
+    protected boolean isModelDrawerOpen = false;
+    protected boolean isImageDrawerOpen = false;
     protected final List<SAMModel> modelList;
     protected ImageSelectionListener imageListener;
     protected ModelSelectionListener modelListener;
@@ -64,11 +66,9 @@ public class MainGUI extends JFrame {
     protected JProgressBar batchProgress = new JProgressBar();
     protected ResizableButton stopProgressBtn = new ResizableButton("■", 10, 2, 2);
     protected final ModelSelection cmbModels;
-    // TODO add information tab to cmbImages, same as cmbModels
-    // TODO changes to just a combobox on december 2024
-    // TODO private final ImageSelection cmbImages;
     protected final ImageSelectionOnlyComboBox cmbImages;
-    protected ModelDrawerPanel drawerPanel;
+    protected ModelDrawerPanel modelDrawerPanel;
+    protected ImageDrawerPanel imageDrawerPanel;
     protected JPanel cardPanel;
     protected JPanel cardPanel1_2;
     protected JPanel cardPanel2_2;
@@ -131,11 +131,13 @@ public class MainGUI extends JFrame {
 
         
 
-        drawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
+        modelDrawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
+        imageDrawerPanel = ImageDrawerPanel.create(DRAWER_HORIZONTAL_SIZE);
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        cmbModels.getButton().addActionListener(e -> toggleDrawer());
+        cmbModels.getButton().addActionListener(e -> toggleModelDrawer());
+        cmbImages.getButton().addActionListener(e -> toggleImageDrawer());
         go.addActionListener(e -> loadModel());
         export.addActionListener(e -> consumer.exportImageLabeling());
         chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected() && this.isValidPrompt));
@@ -176,7 +178,7 @@ public class MainGUI extends JFrame {
 
         // Add the mainPanel and drawerPanel using BorderLayout
         add(mainPanel, BorderLayout.CENTER);
-        add(drawerPanel, BorderLayout.EAST);
+        add(modelDrawerPanel, BorderLayout.EAST);
 
         // Set the initial size of the frame
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE); // Width x Height
@@ -191,13 +193,17 @@ public class MainGUI extends JFrame {
         });
 
         // Initially hide the drawerPanel
-        drawerPanel.setVisible(false);
+        modelDrawerPanel.setVisible(false);
+        imageDrawerPanel.setVisible(false);
 
         this.setTwoThirdsEnabled(false);
     	go.setEnabled(false);
         new Thread(() -> {
-            if (this.cmbModels.getSelectedModel().isInstalled() && cmbImages.getSelectedObject() != null)
+        	boolean installed = this.cmbModels.getSelectedModel().isInstalled();
+            if (installed && cmbImages.getSelectedObject() != null)
             	SwingUtilities.invokeLater(() -> go.setEnabled(true));
+            else if (!installed)
+            	toggleModelDrawer();
         }).start();
         // Make the frame visible
         makeVisibleOnInstantiation();
@@ -261,7 +267,7 @@ public class MainGUI extends JFrame {
 
     protected void close() {
         cmbModels.unLoadModel();
-        this.drawerPanel.interruptThreads();
+        this.modelDrawerPanel.interruptThreads();
     }
 
     // Method to create the title panel
@@ -525,18 +531,34 @@ public class MainGUI extends JFrame {
         return thirdComponent;
     }
 
-    protected void toggleDrawer() {
-        if (drawerPanel.isVisible()) {
-            drawerPanel.setVisible(false);
+    protected void toggleModelDrawer() {
+        if (modelDrawerPanel.isVisible()) {
+            modelDrawerPanel.setVisible(false);
             this.cmbModels.getButton().setText("▶");
-            setSize(getWidth() - drawerPanel.getPreferredSize().width, getHeight());
+            setSize(getWidth() - modelDrawerPanel.getPreferredSize().width, getHeight());
         } else {
-            drawerPanel.setVisible(true);
-            drawerPanel.setSelectedModel(this.cmbModels.getSelectedModel());
+            modelDrawerPanel.setVisible(true);
+            modelDrawerPanel.setSelectedModel(this.cmbModels.getSelectedModel());
             this.cmbModels.getButton().setText("◀");
-            setSize(getWidth() + drawerPanel.getPreferredSize().width, getHeight());
+            setSize(getWidth() + modelDrawerPanel.getPreferredSize().width, getHeight());
         }
-        isDrawerOpen = !isDrawerOpen;
+        isModelDrawerOpen = !isModelDrawerOpen;
+        revalidate();
+        repaint();
+    }
+
+    protected void toggleImageDrawer() {
+        if (imageDrawerPanel.isVisible()) {
+        	imageDrawerPanel.setVisible(false);
+            this.cmbImages.getButton().setText("▶");
+            setSize(getWidth() - imageDrawerPanel.getPreferredSize().width, getHeight());
+        } else {
+        	imageDrawerPanel.setVisible(true);
+        	imageDrawerPanel.setSelectedModel(this.cmbImages.getSelectedModel());
+            this.cmbImages.getButton().setText("◀");
+            setSize(getWidth() + imageDrawerPanel.getPreferredSize().width, getHeight());
+        }
+        isImageDrawerOpen = !isImageDrawerOpen;
         revalidate();
         repaint();
     }
@@ -603,8 +625,8 @@ public class MainGUI extends JFrame {
 
 			@Override
 			public void changeDrawerPanel() {
-				if (drawerPanel.isVisible())
-					drawerPanel.setSelectedModel(cmbModels.getSelectedModel());
+				if (modelDrawerPanel.isVisible())
+					modelDrawerPanel.setSelectedModel(cmbModels.getSelectedModel());
 				
 			}
 			
@@ -615,8 +637,11 @@ public class MainGUI extends JFrame {
                 go.setEnabled(false);
                 go.showAnimation(true);
                 new Thread(() -> {
-                    go.setEnabled(cmbModels.getSelectedModel().isInstalled());
+                	boolean installed = cmbModels.getSelectedModel().isInstalled();
+                    go.setEnabled(installed);
                     go.showAnimation(false);
+                    if (!installed && !MainGUI.this.isModelDrawerOpen)
+                    	toggleModelDrawer();
                 }).start();
 			}
         };

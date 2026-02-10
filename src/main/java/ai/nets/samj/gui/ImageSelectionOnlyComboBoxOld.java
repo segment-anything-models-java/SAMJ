@@ -3,19 +3,18 @@ package ai.nets.samj.gui;
 import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-import ai.nets.samj.gui.components.ComboBoxButtonComp;
+import ai.nets.samj.gui.components.ComboBoxComp;
 import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.ui.ConsumerInterface;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-public class ImageSelectionOnlyComboBox extends ComboBoxButtonComp<ComboBoxItem> implements PopupMenuListener {
+public class ImageSelectionOnlyComboBoxOld extends ComboBoxComp<ComboBoxItem> implements PopupMenuListener {
 
 	private final ConsumerInterface consumer;
 	private final ImageSelection.ImageSelectionListener listener;
@@ -24,7 +23,7 @@ public class ImageSelectionOnlyComboBox extends ComboBoxButtonComp<ComboBoxItem>
 
 	private static final long serialVersionUID = 2478618937640492286L;
 
-	private ImageSelectionOnlyComboBox(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
+	private ImageSelectionOnlyComboBoxOld(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
 		super(new JComboBox<ComboBoxItem>());
 		this.consumer = consumer;
 		this.listener = listener;
@@ -33,13 +32,9 @@ public class ImageSelectionOnlyComboBox extends ComboBoxButtonComp<ComboBoxItem>
 			this.cmbBox.addItem(item);
 		cmbBox.addPopupMenuListener(this);
 	}
-
-	protected JButton getButton() {
-		return this.btn;
-	}
 	
-	protected static ImageSelectionOnlyComboBox create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
-		return new ImageSelectionOnlyComboBox(consumer, listener);
+	protected static ImageSelectionOnlyComboBoxOld create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
+		return new ImageSelectionOnlyComboBoxOld(consumer, listener);
 	}
 	
 	protected Object getSelectedObject() {

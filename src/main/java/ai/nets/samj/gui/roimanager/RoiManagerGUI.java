@@ -53,13 +53,19 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
 		panel.setLayout(new GridLayout(nButtons, 1, 5, 0));
 		addButton("Add");
 		addButton("Delete");
-		addButton("Simplify");
-		addButton("Complicate");
+		addButton("Points");
 		addButton("Dilate");
 		addButton("Erode");
-		addButton("Merge");
-		addButton("Export mask");
-		addButton("Export LMD");
+		addButton("IJManager");
+		addButton("YOLO");
+		addButton("IJ");
+		addButton("GeoJson");
+		/*
+		addButton("Open in IJ ROI");
+		addButton("Export IJ ROI");
+		addButton("Export YOLO");
+		addButton("Export GeoJSON");
+		*/
 		panel.add(showAllCheckbox);
 		panel.add(labelsCheckbox);
 		add("East", panel);

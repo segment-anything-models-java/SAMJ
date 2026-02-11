@@ -9,7 +9,8 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.proteovir.roimanager.utils.StraightSkeletonOffset.Point;
+import ai.nets.samj.gui.roimanager.utils.StraightSkeletonOffset.Point;
+
 
 /**
  * Utility class for dilating (expanding) or eroding (contracting) a polygon

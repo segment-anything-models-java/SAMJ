@@ -3,8 +3,9 @@ package ai.nets.samj.gui.roimanager.commands;
 import java.util.Arrays;
 import java.util.List;
 
-import org.proteovir.roimanager.RoiManager;
-import org.proteovir.utils.Mask;
+import ai.nets.samj.annotation.Mask;
+import ai.nets.samj.gui.roimanager.RoiManager;
+
 
 
 public class AddRoiCommand implements Command {

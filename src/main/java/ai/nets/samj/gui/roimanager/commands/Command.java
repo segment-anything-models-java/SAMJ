@@ -2,7 +2,8 @@ package ai.nets.samj.gui.roimanager.commands;
 
 import java.util.List;
 
-import org.proteovir.utils.Mask;
+import ai.nets.samj.annotation.Mask;
+
 
 
 

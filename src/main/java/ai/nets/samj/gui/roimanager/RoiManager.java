@@ -19,11 +19,12 @@ import javax.swing.JButton;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.proteovir.roimanager.commands.Command;
-import org.proteovir.roimanager.commands.DeleteRoiCommand;
-import org.proteovir.roimanager.commands.ModifyRoiCommand;
-import org.proteovir.roimanager.utils.PolygonUtils;
-import org.proteovir.utils.Mask;
+import ai.nets.samj.annotation.Mask;
+import ai.nets.samj.gui.roimanager.commands.Command;
+import ai.nets.samj.gui.roimanager.commands.DeleteRoiCommand;
+import ai.nets.samj.gui.roimanager.commands.ModifyRoiCommand;
+import ai.nets.samj.gui.roimanager.utils.PolygonUtils;
+
 
 
 public class RoiManager extends RoiManagerGUI implements MouseWheelListener, ListSelectionListener, MouseListener, ActionListener, ItemListener {

@@ -1,5 +1,6 @@
 package ai.nets.samj.gui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
@@ -15,7 +16,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-public class ImageSelectionOnlyComboBox extends ComboBoxButtonComp<ComboBoxItem> implements PopupMenuListener {
+public class ImageSelectionCombo extends ComboBoxButtonComp<ComboBoxItem> implements PopupMenuListener {
 
 	private final ConsumerInterface consumer;
 	private final ImageSelection.ImageSelectionListener listener;
@@ -24,11 +25,11 @@ public class ImageSelectionOnlyComboBox extends ComboBoxButtonComp<ComboBoxItem>
 
 	private static final long serialVersionUID = 2478618937640492286L;
 
-	private ImageSelectionOnlyComboBox(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
+	private ImageSelectionCombo(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
 		super(new JComboBox<ComboBoxItem>());
 		this.consumer = consumer;
 		this.listener = listener;
-		List<ComboBoxItem> listImages = this.consumer.getListOfOpenImages();
+		List<ComboBoxItem> listImages = new ArrayList<>(); //this.consumer.getListOfOpenImages();
 		for(ComboBoxItem item : listImages)
 			this.cmbBox.addItem(item);
 		cmbBox.addPopupMenuListener(this);
@@ -38,8 +39,8 @@ public class ImageSelectionOnlyComboBox extends ComboBoxButtonComp<ComboBoxItem>
 		return this.btn;
 	}
 	
-	protected static ImageSelectionOnlyComboBox create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
-		return new ImageSelectionOnlyComboBox(consumer, listener);
+	protected static ImageSelectionCombo create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
+		return new ImageSelectionCombo(consumer, listener);
 	}
 	
 	protected Object getSelectedObject() {

@@ -89,6 +89,8 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
 			+ "device = 'cpu'" + System.lineSeparator()
+			+ "if torch.cuda.is_available():" + System.lineSeparator()
+			+ "  device = 'gpu'" + System.lineSeparator()
 			+ ((!IS_APPLE_SILICON || true) ? "" // TODO Add a button so the user can decide whether to use accelerators or not (I tried enabling by default and some models might be out of memory)
 					: "from torch.backends import mps" + System.lineSeparator()
 					+ "if mps.is_built() and mps.is_available():" + System.lineSeparator()

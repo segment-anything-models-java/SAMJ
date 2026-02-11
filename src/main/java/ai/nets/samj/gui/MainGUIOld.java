@@ -37,7 +37,7 @@ import java.util.List;
 import org.apposed.appose.BuildException;
 import org.apposed.appose.TaskException;
 
-public class MainGUI extends JFrame {
+public class MainGUIOld extends JFrame {
 
     protected static final long serialVersionUID = -797293687195076077L;
 
@@ -53,7 +53,7 @@ public class MainGUI extends JFrame {
     protected ConsumerInterface consumer;
     protected boolean isValidPrompt = true;
 
-    protected JCheckBox chkRoiManager = new JCheckBox("Add to RoiManager", true);
+    protected JCheckBox propagate3D = new JCheckBox("Propagate in 3D/time", false);
     protected JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
     protected JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
     protected LoadingButton go = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation_samj.gif", 20);;
@@ -66,12 +66,13 @@ public class MainGUI extends JFrame {
     protected JProgressBar batchProgress = new JProgressBar();
     protected ResizableButton stopProgressBtn = new ResizableButton("■", 10, 2, 2);
     protected final ModelSelection cmbModels;
-    protected final ImageSelectionOnlyComboBox cmbImages;
+    protected final ImageSelectionCombo cmbImages;
     protected ModelDrawerPanel modelDrawerPanel;
     protected ImageDrawerPanel imageDrawerPanel;
     protected JPanel cardPanel;
     protected JPanel cardPanel1_2;
     protected JPanel cardPanel2_2;
+    protected JPanel drawerContainer;
 
     protected static double HEADER_VERTICAL_RATIO = 0.1;
 
@@ -101,16 +102,16 @@ public class MainGUI extends JFrame {
     	}
     }
 
-    public MainGUI(ConsumerInterface consumer) {
+    public MainGUIOld(ConsumerInterface consumer) {
         this(null, consumer);
     }
 
-    public MainGUI(List<SAMModel> modelList, ConsumerInterface consumer) {
+    public MainGUIOld(List<SAMModel> modelList, ConsumerInterface consumer) {
         super(Constants.JAR_NAME + "-" + Constants.SAMJ_VERSION);
 
         createListeners();
         this.consumer = consumer;
-        cmbImages = ImageSelectionOnlyComboBox.create(this.consumer, imageListener);
+        cmbImages = ImageSelectionCombo.create(this.consumer, imageListener);
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
         else this.modelList = modelList;
         cmbModels = ModelSelection.create(this.modelList, modelListener);
@@ -132,7 +133,7 @@ public class MainGUI extends JFrame {
         
 
         modelDrawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
-        imageDrawerPanel = ImageDrawerPanel.create(DRAWER_HORIZONTAL_SIZE);
+        imageDrawerPanel = ImageDrawerPanel.create();
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -141,7 +142,8 @@ public class MainGUI extends JFrame {
         go.addActionListener(e -> loadModel());
         export.addActionListener(e -> consumer.exportImageLabeling());
         chkInstant.addActionListener(e -> setInstantPromptsEnabled(this.chkInstant.isSelected() && this.isValidPrompt));
-        chkRoiManager.addActionListener(e -> consumer.enableAddingToRoiManager(chkRoiManager.isSelected()));
+        // TODO what do we do with this, now they are always added consumer.enableAddingToRoiManager(true);
+        propagate3D.addActionListener(e -> System.err.println("DO SOMETHING"));// TODO);
         retunLargest.addActionListener(e -> cmbModels.getSelectedModel().setReturnOnlyBiggest(retunLargest.isSelected()));
         btnBatchSAMize.addActionListener(e -> batchSAMize());
         stopProgressBtn.addActionListener(e -> {
@@ -178,7 +180,12 @@ public class MainGUI extends JFrame {
 
         // Add the mainPanel and drawerPanel using BorderLayout
         add(mainPanel, BorderLayout.CENTER);
-        add(modelDrawerPanel, BorderLayout.EAST);
+        drawerContainer = new JPanel(new CardLayout());
+        drawerContainer.add(modelDrawerPanel, "MODEL");
+        drawerContainer.add(imageDrawerPanel, "IMAGE");
+        drawerContainer.setVisible(false);
+
+        add(drawerContainer, BorderLayout.EAST);
 
         // Set the initial size of the frame
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE); // Width x Height
@@ -222,7 +229,6 @@ public class MainGUI extends JFrame {
 
     protected void setInstantPromptsEnabled(boolean enabled) {
         if (enabled) {
-        	consumer.enableAddingToRoiManager(this.chkRoiManager.isSelected());
             consumer.activateListeners();
         } else {
             consumer.deactivateListeners();
@@ -232,7 +238,7 @@ public class MainGUI extends JFrame {
     protected void setTwoThirdsEnabled(boolean enabled) {
         this.chkInstant.setEnabled(enabled);
         this.retunLargest.setEnabled(enabled);
-        this.chkRoiManager.setEnabled(enabled);
+        this.propagate3D.setEnabled(enabled);
         this.btnBatchSAMize.setEnabled(enabled);
         this.export.setEnabled(enabled);
         this.radioButton1.setEnabled(enabled);
@@ -251,7 +257,6 @@ public class MainGUI extends JFrame {
             try {
                 // TODO try removing Cast
                 cmbModels.loadModel(Cast.unchecked(cmbImages.getSelectedRai()));
-            	consumer.enableAddingToRoiManager(this.chkRoiManager.isSelected());
                 consumer.setFocusedImage(cmbImages.getSelectedObject());
                 consumer.setModel(cmbModels.getSelectedModel());
                 setInstantPromptsEnabled(this.chkInstant.isSelected() && this.isValidPrompt);
@@ -517,7 +522,7 @@ public class MainGUI extends JFrame {
 
         // First checkbox
         gbc.gridy = 0;
-        thirdComponent.add(chkRoiManager, gbc);
+        thirdComponent.add(this.propagate3D, gbc);
 
         // Second checkbox
         gbc.gridy = 1;
@@ -532,33 +537,53 @@ public class MainGUI extends JFrame {
     }
 
     protected void toggleModelDrawer() {
-        if (modelDrawerPanel.isVisible()) {
-            modelDrawerPanel.setVisible(false);
-            this.cmbModels.getButton().setText("▶");
-            setSize(getWidth() - modelDrawerPanel.getPreferredSize().width, getHeight());
+        CardLayout cl = (CardLayout) drawerContainer.getLayout();
+
+        if (drawerContainer.isVisible() && isModelDrawerOpen) {
+            drawerContainer.setVisible(false);
+            cmbModels.getButton().setText("▶");
+            setSize(getWidth() - DRAWER_HORIZONTAL_SIZE, getHeight());
+            isModelDrawerOpen = false;
+        } else if (drawerContainer.isVisible()) {
+            cl.show(drawerContainer, "MODEL");
+            cmbModels.getButton().setText("◀");
+            cmbImages.getButton().setText("▶");
+            isImageDrawerOpen = false;
+            modelDrawerPanel.setSelectedModel(cmbModels.getSelectedModel());
+            isModelDrawerOpen = true;
         } else {
-            modelDrawerPanel.setVisible(true);
-            modelDrawerPanel.setSelectedModel(this.cmbModels.getSelectedModel());
-            this.cmbModels.getButton().setText("◀");
-            setSize(getWidth() + modelDrawerPanel.getPreferredSize().width, getHeight());
+            drawerContainer.setVisible(true);
+            cl.show(drawerContainer, "MODEL");
+            cmbModels.getButton().setText("◀");
+            setSize(getWidth() + DRAWER_HORIZONTAL_SIZE, getHeight());
+            modelDrawerPanel.setSelectedModel(cmbModels.getSelectedModel());
+            isModelDrawerOpen = true;
         }
-        isModelDrawerOpen = !isModelDrawerOpen;
         revalidate();
         repaint();
     }
 
     protected void toggleImageDrawer() {
-        if (imageDrawerPanel.isVisible()) {
-        	imageDrawerPanel.setVisible(false);
-            this.cmbImages.getButton().setText("▶");
-            setSize(getWidth() - imageDrawerPanel.getPreferredSize().width, getHeight());
+        CardLayout cl = (CardLayout) drawerContainer.getLayout();
+
+        if (drawerContainer.isVisible() && isImageDrawerOpen) {
+            drawerContainer.setVisible(false);
+            cmbImages.getButton().setText("▶");
+            setSize(getWidth() - DRAWER_HORIZONTAL_SIZE, getHeight());
+            isImageDrawerOpen = false;
+        } else if (drawerContainer.isVisible()) {
+            cl.show(drawerContainer, "IMAGE");
+            cmbImages.getButton().setText("◀");
+            cmbModels.getButton().setText("▶");
+            isImageDrawerOpen = true;
+            isModelDrawerOpen = false;
         } else {
-        	imageDrawerPanel.setVisible(true);
-        	imageDrawerPanel.setSelectedModel(this.cmbImages.getSelectedModel());
-            this.cmbImages.getButton().setText("◀");
-            setSize(getWidth() + imageDrawerPanel.getPreferredSize().width, getHeight());
+            drawerContainer.setVisible(true);
+            cl.show(drawerContainer, "IMAGE");
+            cmbImages.getButton().setText("◀");
+            setSize(getWidth() + DRAWER_HORIZONTAL_SIZE, getHeight());
+            isImageDrawerOpen = true;
         }
-        isImageDrawerOpen = !isImageDrawerOpen;
         revalidate();
         repaint();
     }
@@ -608,7 +633,7 @@ public class MainGUI extends JFrame {
                 consumer.deactivateListeners();
                 consumer.deselectImage();
             	setTwoThirdsEnabled(false);
-            	if (MainGUI.this.cmbImages.getSelectedObject() == null) {
+            	if (MainGUIOld.this.cmbImages.getSelectedObject() == null) {
             		go.setEnabled(false);
             		return;
             	}
@@ -640,7 +665,7 @@ public class MainGUI extends JFrame {
                 	boolean installed = cmbModels.getSelectedModel().isInstalled();
                     go.setEnabled(installed);
                     go.showAnimation(false);
-                    if (!installed && !MainGUI.this.isModelDrawerOpen)
+                    if (!installed && !MainGUIOld.this.isModelDrawerOpen)
                     	toggleModelDrawer();
                 }).start();
 			}
@@ -707,14 +732,14 @@ public class MainGUI extends JFrame {
 		        	lyt.show(cardPanel1_2, INVISIBLE_STR);
 		        	isValidPrompt = true;
 		        	if (cmbModels.getSelectedModel().isLoaded())
-		        		MainGUI.this.chkInstant.setEnabled(true);
+		        		MainGUIOld.this.chkInstant.setEnabled(true);
 				} else if (!isValid && isValidPrompt) {
 					CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
 		        	lyt.show(cardPanel1_2, VISIBLE_STR);
 		        	isValidPrompt = false;
-		        	MainGUI.this.chkInstant.setSelected(false);
-		        	MainGUI.this.chkInstant.setEnabled(false);
-		        	MainGUI.this.setInstantPromptsEnabled(false);;
+		        	MainGUIOld.this.chkInstant.setSelected(false);
+		        	MainGUIOld.this.chkInstant.setEnabled(false);
+		        	MainGUIOld.this.setInstantPromptsEnabled(false);;
 				}
 			}
         	
@@ -722,6 +747,6 @@ public class MainGUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MainGUI(null, null));
+        SwingUtilities.invokeLater(() -> new MainGUIOld(null, null));
     }
 }

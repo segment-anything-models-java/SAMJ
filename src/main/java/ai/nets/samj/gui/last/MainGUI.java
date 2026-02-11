@@ -62,6 +62,7 @@ public class MainGUI extends JPanel {
     protected JRadioButton radioButton2;
     protected JProgressBar batchProgress = new JProgressBar();
     protected JButton stopProgressBtn = new JButton("■");
+    protected TitleGUI titleGui;
     protected final ModelSelection cmbModels;
     protected final ImageSelectionCombo cmbImages;
     protected ModelDrawerPanel modelDrawerPanel;
@@ -96,6 +97,7 @@ public class MainGUI extends JPanel {
         modelDrawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
         imageDrawerPanel = ImageDrawerPanel.create();
 
+        titleGui = new TitleGUI();
         drawerContainer = new JPanel(new CardLayout());
         drawerContainer.add(modelDrawerPanel, "MODEL");
         drawerContainer.add(imageDrawerPanel, "IMAGE");
@@ -103,6 +105,7 @@ public class MainGUI extends JPanel {
 
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE);
 
+        add(titleGui);
         add(propagate3D);
         add(retunLargest);
         add(chkInstant);
@@ -124,7 +127,6 @@ public class MainGUI extends JPanel {
 
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE);
 
-        // Initially hide the drawerPanel
         modelDrawerPanel.setVisible(false);
         imageDrawerPanel.setVisible(false);
 
@@ -136,6 +138,23 @@ public class MainGUI extends JPanel {
         int rawW = getWidth();
         int rawH = getHeight();
         int inset = 2;
+    }
+    
+    // Method to create the title panel
+    protected JPanel createTitlePanel() {
+        JPanel titlePanel = new JPanel();
+        titlePanel.setBackground(Color.LIGHT_GRAY);
+        int height = (int) (HEADER_VERTICAL_RATIO * MAIN_VERTICAL_SIZE);
+        titlePanel.setPreferredSize(new Dimension(0, height)); // Fixed height
+        String text = "<html><div style='text-align: center; font-size: 15px;'>"
+                + "<span style='color: black;'>SAM</span>" + "<span style='color: red;'>J</span>";
+        JLabel titleLabel = new JLabel(text, SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+
+        titlePanel.setLayout(new BorderLayout());
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
+
+        return titlePanel;
     }
 
     protected void setTwoThirdsEnabled(boolean enabled) {

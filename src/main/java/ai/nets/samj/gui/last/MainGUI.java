@@ -63,6 +63,7 @@ public class MainGUI extends JPanel {
     protected JButton stopProgressBtn = new JButton("■");
     protected TitleGUI titleGui;
     protected SelectionPanel selectionPanel;
+    protected DrawersPanel drawersPanel;
 
     protected static double HEADER_VERTICAL_RATIO = 0.1;
 
@@ -86,10 +87,15 @@ public class MainGUI extends JPanel {
 
         titleGui = new TitleGUI();
         selectionPanel = new SelectionPanel();
+        drawersPanel = new DrawersPanel();
 
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE);
 
         add(titleGui);
+        add(selectionPanel);
+        add(drawersPanel);
+        
+        
         add(propagate3D);
         add(retunLargest);
         add(chkInstant);
@@ -101,17 +107,9 @@ public class MainGUI extends JPanel {
         add(radioButton2);
         add(batchProgress);
         add(stopProgressBtn);
-        add(cmbImages);
-        add(cmbModels);
-        add(cardPanel);
-        add(cardPanel1_2);
-        add(cardPanel2_2);
-        add(drawerContainer);
 
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE);
 
-        modelDrawerPanel.setVisible(false);
-        imageDrawerPanel.setVisible(false);
 
         this.setTwoThirdsEnabled(false);
     }

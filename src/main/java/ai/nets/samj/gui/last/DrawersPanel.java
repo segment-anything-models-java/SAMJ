@@ -32,8 +32,6 @@ public class DrawersPanel extends JPanel {
     protected JPanel cardPanel1_2;
     
     protected JPanel cardPanel2_2;
-    
-    protected JPanel drawerContainer;
 
 	/**
 	 * Name of the folder where the icon images for the dialog buttons are within the resources folder
@@ -41,14 +39,18 @@ public class DrawersPanel extends JPanel {
 	protected static final String RESOURCES_FOLDER = "icons_samj/";
 
 	public DrawersPanel() {
-		setLayout(null);
+		setLayout(new CardLayout());
         modelDrawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
         imageDrawerPanel = ImageDrawerPanel.create();
-        drawerContainer = new JPanel(new CardLayout());
         drawerContainer.add(modelDrawerPanel, "MODEL");
         drawerContainer.add(imageDrawerPanel, "IMAGE");
         drawerContainer.setVisible(false);
+
+        modelDrawerPanel.setVisible(false);
+        imageDrawerPanel.setVisible(false);
     }
+	
+	public void setModelDrawerListener()
 	
 	public void setModels(List<SAMModel> models) {
 		cmbModels.setModels(models);

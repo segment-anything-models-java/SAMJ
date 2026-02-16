@@ -51,12 +51,10 @@ public class MainGUI extends JPanel {
     
 
     protected JCheckBox propagate3D = new JCheckBox("Propagate in 3D/time", false);
-    protected JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
     protected JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
     protected JButton btnBatchSAMize = new JButton("Batch SAMize");
     protected JButton close = new JButton("Close");
     protected JButton help = new JButton("Help");
-    protected JButton export = new JButton("Export...");
     protected JRadioButton radioButton1;
     protected JRadioButton radioButton2;
     protected JProgressBar batchProgress = new JProgressBar();
@@ -97,12 +95,10 @@ public class MainGUI extends JPanel {
         
         
         add(propagate3D);
-        add(retunLargest);
         add(chkInstant);
         add(btnBatchSAMize);
         add(close);
         add(help);
-        add(export);
         add(radioButton1);
         add(radioButton2);
         add(batchProgress);
@@ -126,7 +122,6 @@ public class MainGUI extends JPanel {
         int x = 0;
         this.titleGui.setBounds(0, 0, w, h);
         y += h;
-        this.cmbModels.setBounds(0, 0, w, h);
     }
     
     // Method to create the title panel

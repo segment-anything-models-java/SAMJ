@@ -53,7 +53,6 @@ public class MainGUI extends JPanel {
     protected JCheckBox propagate3D = new JCheckBox("Propagate in 3D/time", false);
     protected JCheckBox retunLargest = new JCheckBox("Only return largest ROI", true);
     protected JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
-    protected LoadingButton go = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation_samj.gif", 20);;
     protected JButton btnBatchSAMize = new JButton("Batch SAMize");
     protected JButton close = new JButton("Close");
     protected JButton help = new JButton("Help");
@@ -63,45 +62,30 @@ public class MainGUI extends JPanel {
     protected JProgressBar batchProgress = new JProgressBar();
     protected JButton stopProgressBtn = new JButton("■");
     protected TitleGUI titleGui;
-    protected final ModelSelection cmbModels;
-    protected final ImageSelectionCombo cmbImages;
-    protected ModelDrawerPanel modelDrawerPanel;
-    protected ImageDrawerPanel imageDrawerPanel;
-    protected JPanel cardPanel;
-    protected JPanel cardPanel1_2;
-    protected JPanel cardPanel2_2;
-    protected JPanel drawerContainer;
+    protected SelectionPanel selectionPanel;
 
     protected static double HEADER_VERTICAL_RATIO = 0.1;
 
     protected static int MAIN_VERTICAL_SIZE = 400;
     protected static int MAIN_HORIZONTAL_SIZE = 250;
     protected static int DRAWER_HORIZONTAL_SIZE = 450;
+    
+    protected static final double TITLE_HRATIO = 0.2;
 
     protected static String MANUAL_STR = "Manual";
     protected static String PRESET_STR = "Preset prompts";
     protected static String VISIBLE_STR = "visible";
     protected static String INVISIBLE_STR = "invisible";
-	/**
-	 * Name of the folder where the icon images for the dialog buttons are within the resources folder
-	 */
-	protected static final String RESOURCES_FOLDER = "icons_samj/";
 
     public MainGUI() {
         setLayout(null);
 
-        cmbImages = ImageSelectionCombo.create(this.consumer, imageListener);
-        cmbModels = ModelSelection.create(this.modelList, modelListener);
+
         
 
-        modelDrawerPanel = ModelDrawerPanel.create(DRAWER_HORIZONTAL_SIZE, this.modelDrawerListener);
-        imageDrawerPanel = ImageDrawerPanel.create();
 
         titleGui = new TitleGUI();
-        drawerContainer = new JPanel(new CardLayout());
-        drawerContainer.add(modelDrawerPanel, "MODEL");
-        drawerContainer.add(imageDrawerPanel, "IMAGE");
-        drawerContainer.setVisible(false);
+        selectionPanel = new SelectionPanel();
 
         setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE);
 
@@ -109,7 +93,6 @@ public class MainGUI extends JPanel {
         add(propagate3D);
         add(retunLargest);
         add(chkInstant);
-        add(go);
         add(btnBatchSAMize);
         add(close);
         add(help);
@@ -134,10 +117,18 @@ public class MainGUI extends JPanel {
     }
     
     @Override
-    private void doLayout() {
+    public void doLayout() {
         int rawW = getWidth();
         int rawH = getHeight();
         int inset = 2;
+        
+        int w = Math.max(2, rawW);
+        int h = (int) Math.max(2, rawH * TITLE_HRATIO);
+        int y = 0;
+        int x = 0;
+        this.titleGui.setBounds(0, 0, w, h);
+        y += h;
+        this.cmbModels.setBounds(0, 0, w, h);
     }
     
     // Method to create the title panel

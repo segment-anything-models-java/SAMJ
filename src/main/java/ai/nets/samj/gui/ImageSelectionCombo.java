@@ -18,8 +18,8 @@ import net.imglib2.type.numeric.RealType;
 
 public class ImageSelectionCombo extends ComboBoxButtonComp<ComboBoxItem> implements PopupMenuListener {
 
-	private final ConsumerInterface consumer;
-	private final ImageSelection.ImageSelectionListener listener;
+	private ConsumerInterface consumer;
+	private ImageSelection.ImageSelectionListener listener;
 	
 	private ComboBoxItem selected;
 
@@ -34,13 +34,25 @@ public class ImageSelectionCombo extends ComboBoxButtonComp<ComboBoxItem> implem
 			this.cmbBox.addItem(item);
 		cmbBox.addPopupMenuListener(this);
 	}
+	
+	public void setConsumer(ConsumerInterface consumer) {
+		this.consumer = consumer;
+	}
+	
+	public void setListener(ImageSelection.ImageSelectionListener listener) {
+		this.listener = listener;
+	}
 
 	protected JButton getButton() {
 		return this.btn;
 	}
 	
-	protected static ImageSelectionCombo create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
+	public static ImageSelectionCombo create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
 		return new ImageSelectionCombo(consumer, listener);
+	}
+	
+	public static ImageSelectionCombo create() {
+		return new ImageSelectionCombo(null, null);
 	}
 	
 	protected Object getSelectedObject() {

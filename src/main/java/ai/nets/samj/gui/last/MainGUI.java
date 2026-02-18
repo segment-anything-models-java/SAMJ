@@ -1,80 +1,31 @@
 package ai.nets.samj.gui.last;
 
-import ai.nets.samj.annotation.Mask;
-import ai.nets.samj.communication.model.DummyModel;
-import ai.nets.samj.communication.model.EfficientTAMSmall;
-import ai.nets.samj.communication.model.EfficientTAMTiny;
-import ai.nets.samj.communication.model.SAM2Large;
-import ai.nets.samj.communication.model.SAM2Small;
-import ai.nets.samj.communication.model.SAM2Tiny;
-import ai.nets.samj.communication.model.SAMModel;
-import ai.nets.samj.gui.CustomInsetsJLabel;
-import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
-import ai.nets.samj.gui.ImageSelectionCombo;
-import ai.nets.samj.gui.JSwitchButton;
-import ai.nets.samj.gui.LoadingButton;
-import ai.nets.samj.gui.ModelSelection;
-import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
-import ai.nets.samj.gui.components.ImageDrawerPanel;
-import ai.nets.samj.gui.components.ModelDrawerPanel;
-import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
-import ai.nets.samj.models.AbstractSamJ.BatchCallback;
-import ai.nets.samj.ui.ConsumerInterface;
-import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
-import ai.nets.samj.utils.Constants;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.IntegerType;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.util.Cast;
-import net.imglib2.util.Util;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apposed.appose.BuildException;
-import org.apposed.appose.TaskException;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public class MainGUI extends JPanel {
-
-    protected static final long serialVersionUID = -797293687195076077L;
-
-    protected boolean isModelDrawerOpen = false;
-    protected boolean isImageDrawerOpen = false;
     
 
-    protected JCheckBox propagate3D = new JCheckBox("Propagate in 3D/time", false);
-    protected JSwitchButton chkInstant = new JSwitchButton("LIVE", "OFF");
-    protected JButton btnBatchSAMize = new JButton("Batch SAMize");
-    protected JButton close = new JButton("Close");
+    private static final long serialVersionUID = 5067309009579235529L;
+    
+	protected JButton close = new JButton("Close");
     protected JButton help = new JButton("Help");
-    protected JRadioButton radioButton1;
-    protected JRadioButton radioButton2;
-    protected JProgressBar batchProgress = new JProgressBar();
-    protected JButton stopProgressBtn = new JButton("■");
     protected TitleGUI titleGui;
     protected SelectionPanel selectionPanel;
+    protected CenterPanel centerPanel;
     protected DrawersPanel drawersPanel;
+    protected BottomPanel bottomPanel;
 
-    protected static double HEADER_VERTICAL_RATIO = 0.1;
-
-    protected static int MAIN_VERTICAL_SIZE = 400;
-    protected static int MAIN_HORIZONTAL_SIZE = 250;
-    protected static int DRAWER_HORIZONTAL_SIZE = 450;
     
-    protected static final double TITLE_HRATIO = 0.2;
+    // Tune these
+    private static final double TITLE_H_PCT      = 0.10;
+    private static final double SELECTION_H_PCT  = 0.25;
+    private static final double CENTER_H_PCT     = 0.45;
+    private static final double BOTTOM_H_PCT     = 0.15;
+   // The last row is whatever height is left (typically ~0.10)
 
-    protected static String MANUAL_STR = "Manual";
-    protected static String PRESET_STR = "Preset prompts";
-    protected static String VISIBLE_STR = "visible";
-    protected static String INVISIBLE_STR = "invisible";
+   private static final int BUTTONS_GAP_PX = 4;
 
     public MainGUI() {
         setLayout(null);
@@ -85,128 +36,88 @@ public class MainGUI extends JPanel {
 
         titleGui = new TitleGUI();
         selectionPanel = new SelectionPanel();
-        drawersPanel = new DrawersPanel();
+        centerPanel = new CenterPanel();
+        //drawersPanel = new DrawersPanel();
+        bottomPanel = new BottomPanel();
 
-        setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE);
 
         add(titleGui);
         add(selectionPanel);
-        add(drawersPanel);
-        
-        
-        add(propagate3D);
-        add(chkInstant);
-        add(btnBatchSAMize);
+        add(centerPanel);
+        //add(drawersPanel);
+        add(bottomPanel);
         add(close);
         add(help);
-        add(radioButton1);
-        add(radioButton2);
-        add(batchProgress);
-        add(stopProgressBtn);
 
-        setSize(MAIN_HORIZONTAL_SIZE, MAIN_VERTICAL_SIZE);
 
 
         this.setTwoThirdsEnabled(false);
     }
-    
+
     @Override
     public void doLayout() {
-        int rawW = getWidth();
-        int rawH = getHeight();
-        int inset = 2;
+        final int gap = BUTTONS_GAP_PX;
+        final int wTit = getWidth();
+        final int w = Math.max(0, getWidth() - gap * 2);
+        final int h = getHeight();
         
-        int w = Math.max(2, rawW);
-        int h = (int) Math.max(2, rawH * TITLE_HRATIO);
+        final int hTitle     = (int) Math.round(h * TITLE_H_PCT);
+        final int hSelection = Math.max(0, - gap * 2 + (int) Math.round(h * SELECTION_H_PCT));
+        final int hCenter    = Math.max(0, - gap * 2 + (int) Math.round(h * CENTER_H_PCT));
+        final int hBottom    = Math.max(0, - gap * 2 + (int) Math.round(h * BOTTOM_H_PCT));
+
         int y = 0;
-        int x = 0;
-        this.titleGui.setBounds(0, 0, w, h);
-        y += h;
-    }
-    
-    // Method to create the title panel
-    protected JPanel createTitlePanel() {
-        JPanel titlePanel = new JPanel();
-        titlePanel.setBackground(Color.LIGHT_GRAY);
-        int height = (int) (HEADER_VERTICAL_RATIO * MAIN_VERTICAL_SIZE);
-        titlePanel.setPreferredSize(new Dimension(0, height)); // Fixed height
-        String text = "<html><div style='text-align: center; font-size: 15px;'>"
-                + "<span style='color: black;'>SAM</span>" + "<span style='color: red;'>J</span>";
-        JLabel titleLabel = new JLabel(text, SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
 
-        titlePanel.setLayout(new BorderLayout());
-        titlePanel.add(titleLabel, BorderLayout.CENTER);
+        // Row 1
+        titleGui.setBounds(0, y, wTit, hTitle);
+        y += hTitle + gap;
 
-        return titlePanel;
+        // Row 2
+        selectionPanel.setBounds(gap, y, w, hSelection);
+        y += hSelection + gap;
+
+        // Row 3
+        centerPanel.setBounds(gap, y, w, hCenter);
+        //drawersPanel.setBounds(0, y, w, hCenter); // overlay same row
+        y += hCenter + gap;
+
+        // Row 4
+        bottomPanel.setBounds(gap, y, w, hBottom);
+        y += hBottom + gap;
+
+        // Row 5 (remaining)
+        int hButtons = h - y - gap * 2;
+        if (hButtons < 0) hButtons = 0;
+
+        int W = w / 2;
+
+        close.setBounds(gap, y, W, hButtons);
+        help.setBounds(gap + W, y, W, hButtons);
     }
 
     protected void setTwoThirdsEnabled(boolean enabled) {
-        this.chkInstant.setEnabled(enabled);
-        this.retunLargest.setEnabled(enabled);
-        this.propagate3D.setEnabled(enabled);
-        this.btnBatchSAMize.setEnabled(enabled);
-        this.export.setEnabled(enabled);
-        this.radioButton1.setEnabled(enabled);
-        this.radioButton2.setEnabled(enabled);
-        this.batchProgress.setEnabled(enabled);
-        if (!enabled)
-        	this.stopProgressBtn.setEnabled(enabled);
     }
 
     protected void toggleModelDrawer() {
-        CardLayout cl = (CardLayout) drawerContainer.getLayout();
-
-        if (drawerContainer.isVisible() && isModelDrawerOpen) {
-            drawerContainer.setVisible(false);
-            cmbModels.getButton().setText("▶");
-            setSize(getWidth() - DRAWER_HORIZONTAL_SIZE, getHeight());
-            isModelDrawerOpen = false;
-        } else if (drawerContainer.isVisible()) {
-            cl.show(drawerContainer, "MODEL");
-            cmbModels.getButton().setText("◀");
-            cmbImages.getButton().setText("▶");
-            isImageDrawerOpen = false;
-            modelDrawerPanel.setSelectedModel(cmbModels.getSelectedModel());
-            isModelDrawerOpen = true;
-        } else {
-            drawerContainer.setVisible(true);
-            cl.show(drawerContainer, "MODEL");
-            cmbModels.getButton().setText("◀");
-            setSize(getWidth() + DRAWER_HORIZONTAL_SIZE, getHeight());
-            modelDrawerPanel.setSelectedModel(cmbModels.getSelectedModel());
-            isModelDrawerOpen = true;
-        }
-        revalidate();
-        repaint();
     }
 
     protected void toggleImageDrawer() {
-        CardLayout cl = (CardLayout) drawerContainer.getLayout();
-
-        if (drawerContainer.isVisible() && isImageDrawerOpen) {
-            drawerContainer.setVisible(false);
-            cmbImages.getButton().setText("▶");
-            setSize(getWidth() - DRAWER_HORIZONTAL_SIZE, getHeight());
-            isImageDrawerOpen = false;
-        } else if (drawerContainer.isVisible()) {
-            cl.show(drawerContainer, "IMAGE");
-            cmbImages.getButton().setText("◀");
-            cmbModels.getButton().setText("▶");
-            isImageDrawerOpen = true;
-            isModelDrawerOpen = false;
-        } else {
-            drawerContainer.setVisible(true);
-            cl.show(drawerContainer, "IMAGE");
-            cmbImages.getButton().setText("◀");
-            setSize(getWidth() + DRAWER_HORIZONTAL_SIZE, getHeight());
-            isImageDrawerOpen = true;
-        }
-        revalidate();
-        repaint();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MainGUI(null, null));
+        SwingUtilities.invokeLater(() -> {
+            javax.swing.JFrame frame = new javax.swing.JFrame("MainGUI");
+            frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+
+            MainGUI gui = new MainGUI();
+            frame.setContentPane(gui);
+
+            // Pick one:
+            frame.setSize(250, 400);          // fixed size for quick testing
+            // frame.pack();                  // use if your components have preferred sizes
+
+            frame.setLocationRelativeTo(null); // center on screen
+            frame.setVisible(true);
+        });
     }
 }

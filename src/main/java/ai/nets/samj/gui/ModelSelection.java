@@ -3,6 +3,8 @@ package ai.nets.samj.gui;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -15,15 +17,16 @@ import ai.nets.samj.gui.components.ComboBoxButtonComp;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import ai.nets.samj.communication.model.DummyModel;
 import ai.nets.samj.communication.model.SAMModel;
 
 public class ModelSelection extends ComboBoxButtonComp<String> implements ItemListener {
 	
 	private SAMModel selected;
 	
-	private final ModelSelectionListener listener;
+	private ModelSelectionListener listener;
 	
-	private final List<SAMModel> models;
+	private List<SAMModel> models;
 
 
 	private static final long serialVersionUID = 2478618937640492286L;
@@ -32,6 +35,8 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements ItemLi
 		super(new JComboBox<String>());
 		this.listener = listener;
 		this.models = models;
+		if (models == null)
+			models = new ArrayList<>(Collections.singletonList(new DummyModel()));
 		for (SAMModel model : models) {
 			this.cmbBox.addItem(model.getName());
 		}
@@ -39,8 +44,20 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements ItemLi
 		selected = models.get(cmbBox.getSelectedIndex());
 	}
 	
-	protected static ModelSelection create(List<SAMModel> models, ModelSelectionListener listener) {
+	public void setModels(List<SAMModel> models) {
+		this.models = models;
+	}
+	
+	public void setListener(ModelSelectionListener listener) {
+		this.listener = listener;
+	}
+	
+	public static ModelSelection create(List<SAMModel> models, ModelSelectionListener listener) {
 		return new ModelSelection(models, listener);
+	}
+	
+	public static ModelSelection create() {
+		return new ModelSelection(null, null);
 	}
 	
 	protected SAMModel getSelectedModel() {

@@ -21,6 +21,8 @@ public class CenterPanelSwitch extends JPanel {
 		setLayout(null);
 	    propagate3D = new JCheckBox("Propagate in 3D/time", false);
 	    chkInstant = new JSwitchButton("LIVE", "OFF");
+	    add(chkInstant);
+	    add(propagate3D);
     }
     
 	@Override

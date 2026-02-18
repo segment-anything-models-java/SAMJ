@@ -13,7 +13,7 @@ public class MainGUI extends JPanel {
     protected JButton help = new JButton("Help");
     protected TitleGUI titleGui;
     protected SelectionPanel selectionPanel;
-    protected CenterPanel centerPanel;
+    protected Center centerPanel;
     protected DrawersPanel drawersPanel;
     protected BottomPanel bottomPanel;
 
@@ -36,7 +36,7 @@ public class MainGUI extends JPanel {
 
         titleGui = new TitleGUI();
         selectionPanel = new SelectionPanel();
-        centerPanel = new CenterPanel();
+        centerPanel = new Center();
         //drawersPanel = new DrawersPanel();
         bottomPanel = new BottomPanel();
 

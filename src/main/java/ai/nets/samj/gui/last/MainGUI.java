@@ -20,7 +20,6 @@ public class MainGUI extends JPanel {
     protected final NoDrawerMainGUI content = new NoDrawerMainGUI();
     protected final DrawersPanel drawersPanel = new DrawersPanel();
 
-    private boolean modelsOpen = false, imagesOpen = false, drawerShown = false;
     private int pinnedLeftW = -1, drawerW = 0;
 
     public MainGUI() {
@@ -33,7 +32,6 @@ public class MainGUI extends JPanel {
         titleGui = content.titleGui; selectionPanel = content.selectionPanel;
         centerPanel = content.centerPanel; bottomPanel = content.bottomPanel;
 
-        // IMPORTANT: start truly closed
         drawersPanel.setVisible(false);
         drawersPanel.setModelsOpen(false);
         drawersPanel.setImagesOpen(false);
@@ -45,7 +43,7 @@ public class MainGUI extends JPanel {
 
     @Override public void doLayout() {
         int h = getHeight();
-        if (!drawerShown) {
+        if (!drawersPanel.isOpen()) {
             content.setBounds(0, 0, getWidth(), h);
             drawersPanel.setBounds(getWidth(), 0, 0, h);
             return;
@@ -66,55 +64,48 @@ public class MainGUI extends JPanel {
 
     private int computeDrawerW(int leftW) { return Math.max(MIN_DRAWER_SIZE, leftW / 2); }
 
-    private void syncDrawer() {
-        boolean wantShown = modelsOpen || imagesOpen;
-
-        if (wantShown && !drawerShown) {
-            pinnedLeftW = getWidth() > 0 ? getWidth() : 600;
-            drawerW = computeDrawerW(pinnedLeftW);
-            drawerShown = true;
-
-            drawersPanel.setVisible(true);
-
-            // grow now (window exists when toggling from UI)
-            SwingUtilities.invokeLater(() -> resizeWindowBy(drawerW));
-
-            revalidate();
-            repaint();
-            return;
-        }
-
-        if (!wantShown && drawerShown) {
-            final int shrink = drawerW;   // <<< capture BEFORE resetting
-            drawerShown = false;
-
-            drawersPanel.setVisible(false);
-
-            pinnedLeftW = -1;
-            drawerW = 0;
-
-            // shrink now using captured value
-            SwingUtilities.invokeLater(() -> resizeWindowBy(-shrink));
-
-            revalidate();
-            repaint();
-        }
-    }
-
-    protected void toggleModelDrawer() { setModelDrawerOpen(!modelsOpen); }
-    protected void toggleImageDrawer() { setImageDrawerOpen(!imagesOpen); }
+    protected void toggleModelDrawer() { setModelDrawerOpen(!drawersPanel.isModelsOpen()); }
+    protected void toggleImageDrawer() { setImageDrawerOpen(!drawersPanel.isImagesOpen()); }
 
     public void setModelDrawerOpen(boolean open) {
-        if (modelsOpen == open) return;
-        modelsOpen = open;
-        drawersPanel.setModelsOpen(open);
-        syncDrawer();
+        if (drawersPanel.isModelsOpen() == open) 
+        	return;
+    	boolean wasOpened = drawersPanel.isOpen();
+    	drawersPanel.setModelsOpen(open);
+        if (open) {
+        	if (wasOpened)
+        		return;
+            pinnedLeftW = getWidth() > 0 ? getWidth() : 600;
+            drawerW = computeDrawerW(pinnedLeftW);
+            SwingUtilities.invokeLater(() -> resizeWindowBy(drawerW));
+        } else {
+	        final int shrink = drawerW;   // <<< capture BEFORE resetting
+	        pinnedLeftW = -1;
+	        drawerW = 0;
+	        SwingUtilities.invokeLater(() -> resizeWindowBy(-shrink));
+        }
+        revalidate();
+        repaint();
     }
 
     public void setImageDrawerOpen(boolean open) {
-        if (imagesOpen == open) return;
-        imagesOpen = open;
-        drawersPanel.setImagesOpen(open);
-        syncDrawer();
+        if (drawersPanel.isImagesOpen() == open) 
+        	return;
+    	boolean wasOpened = drawersPanel.isOpen();
+    	drawersPanel.setImagesOpen(open);
+        if (open) {
+        	if (wasOpened)
+        		return;
+            pinnedLeftW = getWidth() > 0 ? getWidth() : 600;
+            drawerW = computeDrawerW(pinnedLeftW);
+            SwingUtilities.invokeLater(() -> resizeWindowBy(drawerW));
+        } else {
+	        final int shrink = drawerW;   // <<< capture BEFORE resetting
+	        pinnedLeftW = -1;
+	        drawerW = 0;
+	        SwingUtilities.invokeLater(() -> resizeWindowBy(-shrink));
+        }
+        revalidate();
+        repaint();
     }
 }

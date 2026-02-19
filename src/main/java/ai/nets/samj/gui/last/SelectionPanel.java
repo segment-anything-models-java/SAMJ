@@ -8,18 +8,16 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import ai.nets.samj.communication.model.SAMModel;
-import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
-import ai.nets.samj.gui.ImageSelectionCombo;
+import ai.nets.samj.gui.last.ImageSelection.ImageSelectionListener;
+import ai.nets.samj.gui.last.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.gui.LoadingButton;
-import ai.nets.samj.gui.ModelSelection;
-import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.ui.ConsumerInterface;
 
 public class SelectionPanel extends JPanel {
 
 	protected ModelSelection cmbModels;
 	
-	protected ImageSelectionCombo cmbImages;
+	protected ImageSelection cmbImages;
 
     protected LoadingButton go;
     
@@ -35,7 +33,7 @@ public class SelectionPanel extends JPanel {
 	public SelectionPanel() {
 		setLayout(null);
 		setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        cmbImages = ImageSelectionCombo.create();
+        cmbImages = ImageSelection.create();
         cmbModels = ModelSelection.create();
         go = new LoadingButton("Go!", RESOURCES_FOLDER, "loading_animation_samj.gif", 20);
         add(cmbImages);
@@ -67,7 +65,7 @@ public class SelectionPanel extends JPanel {
 		return this.cmbModels;
 	}
 	
-	public ImageSelectionCombo getImageSelection() {
+	public ImageSelection getImageSelection() {
 		return this.cmbImages;
 	}
     

@@ -1,164 +1,120 @@
 package ai.nets.samj.gui.last;
 
-import javax.swing.JButton;
+import java.awt.Window;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 public class MainGUI extends JPanel {
-    
+    private static final long serialVersionUID = 1L;
 
-    private static final long serialVersionUID = 5067309009579235529L;
-    
-	protected JButton close = new JButton("Close");
-    protected JButton help = new JButton("Help");
+    private static final int MIN_DRAWER_SIZE = 450;
+
+    // keep compatibility with "Main extends MainGUI"
+    protected javax.swing.JButton close;
+    protected javax.swing.JButton help;
     protected TitleGUI titleGui;
     protected SelectionPanel selectionPanel;
     protected Center centerPanel;
-    protected DrawersPanel drawersPanel;
     protected BottomPanel bottomPanel;
 
-    
-    // Tune these
-    private static final double TITLE_H_PCT      = 0.10;
-    private static final double SELECTION_H_PCT  = 0.25;
-    private static final double CENTER_H_PCT     = 0.45;
-    private static final double BOTTOM_H_PCT     = 0.15;
-   // The last row is whatever height is left (typically ~0.10)
-    private static final int MIN_DRAWER_SIZE = 450;
+    protected final NoDrawerMainGUI content = new NoDrawerMainGUI();
+    protected final DrawersPanel drawersPanel = new DrawersPanel();
 
-   private static final int BUTTONS_GAP_PX = 4;
+    private boolean modelsOpen = false, imagesOpen = false, drawerShown = false;
+    private int pinnedLeftW = -1, drawerW = 0;
 
     public MainGUI() {
         setLayout(null);
-
-        titleGui = new TitleGUI();
-        selectionPanel = new SelectionPanel();
-        centerPanel = new Center();
-        drawersPanel = new DrawersPanel();
-        bottomPanel = new BottomPanel();
-
-        add(titleGui);
-        add(selectionPanel);
-        add(centerPanel);
+        add(content);
         add(drawersPanel);
-        add(bottomPanel);
-        add(close);
-        add(help);
 
-        drawersPanel.setVisible(true);
+        // proxy fields
+        close = content.close; help = content.help;
+        titleGui = content.titleGui; selectionPanel = content.selectionPanel;
+        centerPanel = content.centerPanel; bottomPanel = content.bottomPanel;
 
-        this.setTwoThirdsEnabled(false);
+        // IMPORTANT: start truly closed
+        drawersPanel.setVisible(false);
+        drawersPanel.setModelsOpen(false);
+        drawersPanel.setImagesOpen(false);
+
+        setTwoThirdsEnabled(false);
     }
 
-    @Override
-    public void doLayout() {
-        final int gap = BUTTONS_GAP_PX;
-        int wTit = getWidth();
-        int wDrawer = 0;
-        if (drawersPanel.isOpen()) {
-        	wDrawer = Math.max(MIN_DRAWER_SIZE, wTit / 2);
-        	wTit -= wDrawer;
+    protected void setTwoThirdsEnabled(boolean enabled) {}
+
+    @Override public void doLayout() {
+        int h = getHeight();
+        if (!drawerShown) {
+            content.setBounds(0, 0, getWidth(), h);
+            drawersPanel.setBounds(getWidth(), 0, 0, h);
+            return;
         }
-        final int w = Math.max(0, wTit - gap * 2);
-        final int h = getHeight();
-        
-        final int hTitle     = (int) Math.round(h * TITLE_H_PCT);
-        final int hSelection = Math.max(0, - gap * 2 + (int) Math.round(h * SELECTION_H_PCT));
-        final int hCenter    = Math.max(0, - gap * 2 + (int) Math.round(h * CENTER_H_PCT));
-        final int hBottom    = Math.max(0, - gap * 2 + (int) Math.round(h * BOTTOM_H_PCT));
-
-        int y = 0;
-        
-        drawersPanel.setBounds(wTit, 0, wDrawer, getHeight());
-
-        // Row 1
-        titleGui.setBounds(0, y, wTit, hTitle);
-        y += hTitle + gap;
-
-        // Row 2
-        selectionPanel.setBounds(gap, y, w, hSelection);
-        y += hSelection + gap;
-
-        // Row 3
-        centerPanel.setBounds(gap, y, w, hCenter);
-        //drawersPanel.setBounds(0, y, w, hCenter); // overlay same row
-        y += hCenter + gap;
-
-        // Row 4
-        bottomPanel.setBounds(gap, y, w, hBottom);
-        y += hBottom + gap;
-
-        // Row 5 (remaining)
-        int hButtons = h - y - gap * 2;
-        if (hButtons < 0) hButtons = 0;
-
-        int W = w / 2;
-
-        close.setBounds(gap, y, W, hButtons);
-        help.setBounds(gap + W, y, W, hButtons);
+        int leftW = pinnedLeftW > 0 ? pinnedLeftW : getWidth();
+        content.setBounds(0, 0, leftW, h);
+        drawersPanel.setBounds(leftW, 0, Math.max(0, getWidth() - leftW), h);
     }
 
-    protected void setTwoThirdsEnabled(boolean enabled) {
+    private Window window() { return SwingUtilities.getWindowAncestor(this); }
+
+    private void resizeWindowBy(int dx) {
+        Window w = window();
+        if (w == null || dx == 0) return;
+        w.setSize(w.getWidth() + dx, w.getHeight());
+        w.validate();
     }
 
-    protected void toggleModelDrawer() {
-    	setModelDrawerOpen(!drawersPanel.isModelsOpen());
+    private int computeDrawerW(int leftW) { return Math.max(MIN_DRAWER_SIZE, leftW / 2); }
+
+    private void syncDrawer() {
+        boolean wantShown = modelsOpen || imagesOpen;
+
+        if (wantShown && !drawerShown) {
+            pinnedLeftW = getWidth() > 0 ? getWidth() : 600;
+            drawerW = computeDrawerW(pinnedLeftW);
+            drawerShown = true;
+
+            drawersPanel.setVisible(true);
+
+            // grow now (window exists when toggling from UI)
+            SwingUtilities.invokeLater(() -> resizeWindowBy(drawerW));
+
+            revalidate();
+            repaint();
+            return;
+        }
+
+        if (!wantShown && drawerShown) {
+            final int shrink = drawerW;   // <<< capture BEFORE resetting
+            drawerShown = false;
+
+            drawersPanel.setVisible(false);
+
+            pinnedLeftW = -1;
+            drawerW = 0;
+
+            // shrink now using captured value
+            SwingUtilities.invokeLater(() -> resizeWindowBy(-shrink));
+
+            revalidate();
+            repaint();
+        }
     }
 
-    protected void toggleImageDrawer() {
-    	setImageDrawerOpen(!drawersPanel.isImagesOpen());
-    }
-    
-    public void prepareDrawer(boolean open) {
-    	if (open && !drawersPanel.isOpen()) {
-    		int extraWidth = Math.max(MIN_DRAWER_SIZE, getWidth());
-    		this.setSize(getWidth() + extraWidth, getHeight());
-    	} else if (!open && drawersPanel.isOpen()) {
-    		int extraWidth = Math.max(MIN_DRAWER_SIZE, getWidth() / 2);
-    		this.setSize(getWidth() - extraWidth, getHeight());
-    	}
-    }
-    
+    protected void toggleModelDrawer() { setModelDrawerOpen(!modelsOpen); }
+    protected void toggleImageDrawer() { setImageDrawerOpen(!imagesOpen); }
+
     public void setModelDrawerOpen(boolean open) {
-    	if (drawersPanel.isModelsOpen() && open)
-    		return;
-    	else if (!drawersPanel.isModelsOpen() && !open)
-    		return;
-    	prepareDrawer(open);
-    	drawersPanel.setModelsOpen(open);
-
-        // trigger a new layout pass
-        revalidate();
-        repaint();
+        if (modelsOpen == open) return;
+        modelsOpen = open;
+        drawersPanel.setModelsOpen(open);
+        syncDrawer();
     }
-    
+
     public void setImageDrawerOpen(boolean open) {
-    	if (drawersPanel.isImagesOpen() && open)
-    		return;
-    	else if (!drawersPanel.isImagesOpen() && !open)
-    		return;
-    	prepareDrawer(open);
-    	drawersPanel.setImagesOpen(open);
-
-        // trigger a new layout pass
-        revalidate();
-        repaint();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            javax.swing.JFrame frame = new javax.swing.JFrame("MainGUI");
-            frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-
-            MainGUI gui = new MainGUI();
-            frame.setContentPane(gui);
-
-            // Pick one:
-            frame.setSize(250, 400);          // fixed size for quick testing
-            // frame.pack();                  // use if your components have preferred sizes
-
-            frame.setLocationRelativeTo(null); // center on screen
-            frame.setVisible(true);
-        });
+        if (imagesOpen == open) return;
+        imagesOpen = open;
+        drawersPanel.setImagesOpen(open);
+        syncDrawer();
     }
 }

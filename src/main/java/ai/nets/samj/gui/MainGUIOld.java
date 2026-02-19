@@ -9,10 +9,12 @@ import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
-import ai.nets.samj.gui.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.gui.components.ImageDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel;
 import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
+import ai.nets.samj.gui.last.ImageSelection;
+import ai.nets.samj.gui.last.ModelSelection;
+import ai.nets.samj.gui.last.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
@@ -66,7 +68,7 @@ public class MainGUIOld extends JFrame {
     protected JProgressBar batchProgress = new JProgressBar();
     protected ResizableButton stopProgressBtn = new ResizableButton("■", 10, 2, 2);
     protected final ModelSelection cmbModels;
-    protected final ImageSelectionCombo cmbImages;
+    protected final ImageSelection cmbImages;
     protected ModelDrawerPanel modelDrawerPanel;
     protected ImageDrawerPanel imageDrawerPanel;
     protected JPanel cardPanel;
@@ -111,7 +113,7 @@ public class MainGUIOld extends JFrame {
 
         createListeners();
         this.consumer = consumer;
-        cmbImages = ImageSelectionCombo.create(this.consumer, imageListener);
+        cmbImages = ImageSelection.create(this.consumer, imageListener);
         if (modelList == null) this.modelList = DEFAULT_MODEL_LIST;
         else this.modelList = modelList;
         cmbModels = ModelSelection.create(this.modelList, modelListener);

@@ -1,4 +1,4 @@
-package ai.nets.samj.gui;
+package ai.nets.samj.gui.last;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-public class ImageSelectionCombo extends ComboBoxButtonComp<ComboBoxItem> implements PopupMenuListener {
+public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements PopupMenuListener {
 
 	private ConsumerInterface consumer;
 	private ImageSelection.ImageSelectionListener listener;
@@ -25,7 +25,7 @@ public class ImageSelectionCombo extends ComboBoxButtonComp<ComboBoxItem> implem
 
 	private static final long serialVersionUID = 2478618937640492286L;
 
-	private ImageSelectionCombo(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
+	private ImageSelection(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
 		super(new JComboBox<ComboBoxItem>());
 		this.consumer = consumer;
 		this.listener = listener;
@@ -47,12 +47,12 @@ public class ImageSelectionCombo extends ComboBoxButtonComp<ComboBoxItem> implem
 		return this.btn;
 	}
 	
-	public static ImageSelectionCombo create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
-		return new ImageSelectionCombo(consumer, listener);
+	public static ImageSelection create(ConsumerInterface consumer, ImageSelection.ImageSelectionListener listener) {
+		return new ImageSelection(consumer, listener);
 	}
 	
-	public static ImageSelectionCombo create() {
-		return new ImageSelectionCombo(null, null);
+	public static ImageSelection create() {
+		return new ImageSelection(null, null);
 	}
 	
 	protected Object getSelectedObject() {
@@ -108,6 +108,13 @@ public class ImageSelectionCombo extends ComboBoxButtonComp<ComboBoxItem> implem
 	@Override
 	public void popupMenuCanceled(PopupMenuEvent e) {
 		
+	}
+	
+	public interface ImageSelectionListener {
+		
+	    void modelActionsOnImageChanged();
+	    
+	    void imageActionsOnImageChanged();
 	}
 
 }

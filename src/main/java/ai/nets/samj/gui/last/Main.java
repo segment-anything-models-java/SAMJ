@@ -7,6 +7,9 @@ public class Main extends MainGUI {
     private static final long serialVersionUID = -6511057540533292091L;
 
 	public Main() {
+
+		this.selectionPanel.getModelSelection().getButton().addActionListener(e -> Main.this.toggleModelDrawer());
+		this.selectionPanel.getImageSelection().getButton().addActionListener(e -> Main.this.toggleImageDrawer());
     }
 
     public static void main(String[] args) {

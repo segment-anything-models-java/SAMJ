@@ -2,13 +2,11 @@ package ai.nets.samj.gui.last;
 
 
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Font;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.border.LineBorder;
 
 public class CenterPanel extends JPanel {
 
@@ -120,7 +118,7 @@ public class CenterPanel extends JPanel {
 	        }
 	        if (p1.height <= row1H && p2.height <= row1H
 	        		&& p2.getWidth() > r2MaxW) {
-	        		while (p2.getWidth() > r2MaxW) {
+	        		while (p2.getWidth() > r2MaxW && radioButton2.getText().length() > ELLIPSIS_TEXT.length()) {
 	        			String newString = radioButton2.getText();
 	        			newString = newString.substring(0, newString.length() - 1 - ELLIPSIS_TEXT.length()) + ELLIPSIS_TEXT;
 	        	        radioButton2.setText(newString);
@@ -132,7 +130,7 @@ public class CenterPanel extends JPanel {
             }
 	        if (p1.height <= row1H && p2.height <= row1H
 	        		&& p1.getWidth() > r1MaxW) {
-	        		while (p1.getWidth() > r1MaxW) {
+	        		while (p1.getWidth() > r1MaxW && radioButton1.getText().length() > ELLIPSIS_TEXT.length()) {
 	        			String newString = radioButton1.getText();
 	        			newString = newString.substring(0, newString.length() - 1 - ELLIPSIS_TEXT.length()) + ELLIPSIS_TEXT;
 	        	        radioButton1.setText(newString);

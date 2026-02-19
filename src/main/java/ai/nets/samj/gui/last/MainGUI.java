@@ -24,32 +24,28 @@ public class MainGUI extends JPanel {
     private static final double CENTER_H_PCT     = 0.45;
     private static final double BOTTOM_H_PCT     = 0.15;
    // The last row is whatever height is left (typically ~0.10)
+    private static final int MIN_DRAWER_SIZE = 450;
 
    private static final int BUTTONS_GAP_PX = 4;
 
     public MainGUI() {
         setLayout(null);
 
-
-        
-
-
         titleGui = new TitleGUI();
         selectionPanel = new SelectionPanel();
         centerPanel = new Center();
-        //drawersPanel = new DrawersPanel();
+        drawersPanel = new DrawersPanel();
         bottomPanel = new BottomPanel();
-
 
         add(titleGui);
         add(selectionPanel);
         add(centerPanel);
-        //add(drawersPanel);
+        add(drawersPanel);
         add(bottomPanel);
         add(close);
         add(help);
 
-
+        drawersPanel.setVisible(true);
 
         this.setTwoThirdsEnabled(false);
     }
@@ -57,8 +53,13 @@ public class MainGUI extends JPanel {
     @Override
     public void doLayout() {
         final int gap = BUTTONS_GAP_PX;
-        final int wTit = getWidth();
-        final int w = Math.max(0, getWidth() - gap * 2);
+        int wTit = getWidth();
+        int wDrawer = 0;
+        if (drawersPanel.isOpen()) {
+        	wDrawer = Math.max(MIN_DRAWER_SIZE, wTit / 2);
+        	wTit -= wDrawer;
+        }
+        final int w = Math.max(0, wTit - gap * 2);
         final int h = getHeight();
         
         final int hTitle     = (int) Math.round(h * TITLE_H_PCT);
@@ -67,6 +68,8 @@ public class MainGUI extends JPanel {
         final int hBottom    = Math.max(0, - gap * 2 + (int) Math.round(h * BOTTOM_H_PCT));
 
         int y = 0;
+        
+        drawersPanel.setBounds(wTit, 0, wDrawer, getHeight());
 
         // Row 1
         titleGui.setBounds(0, y, wTit, hTitle);
@@ -99,9 +102,47 @@ public class MainGUI extends JPanel {
     }
 
     protected void toggleModelDrawer() {
+    	setModelDrawerOpen(!drawersPanel.isModelsOpen());
     }
 
     protected void toggleImageDrawer() {
+    	setImageDrawerOpen(!drawersPanel.isImagesOpen());
+    }
+    
+    public void prepareDrawer(boolean open) {
+    	if (open && !drawersPanel.isOpen()) {
+    		int extraWidth = Math.max(MIN_DRAWER_SIZE, getWidth());
+    		this.setSize(getWidth() + extraWidth, getHeight());
+    	} else if (!open && drawersPanel.isOpen()) {
+    		int extraWidth = Math.max(MIN_DRAWER_SIZE, getWidth() / 2);
+    		this.setSize(getWidth() - extraWidth, getHeight());
+    	}
+    }
+    
+    public void setModelDrawerOpen(boolean open) {
+    	if (drawersPanel.isModelsOpen() && open)
+    		return;
+    	else if (!drawersPanel.isModelsOpen() && !open)
+    		return;
+    	prepareDrawer(open);
+    	drawersPanel.setModelsOpen(open);
+
+        // trigger a new layout pass
+        revalidate();
+        repaint();
+    }
+    
+    public void setImageDrawerOpen(boolean open) {
+    	if (drawersPanel.isImagesOpen() && open)
+    		return;
+    	else if (!drawersPanel.isImagesOpen() && !open)
+    		return;
+    	prepareDrawer(open);
+    	drawersPanel.setImagesOpen(open);
+
+        // trigger a new layout pass
+        revalidate();
+        repaint();
     }
 
     public static void main(String[] args) {

@@ -21,7 +21,6 @@ package ai.nets.samj.gui.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -66,7 +65,6 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     
     private SAMModel model;
     private final List<ModelDrawerPanelListener> listeners;
-    private int hSize;
     private Thread modelInstallThread;
     private Thread infoThread;
     private Thread installedThread;
@@ -75,17 +73,25 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
 	
 	
-	private ModelDrawerPanel(int hSize, ModelDrawerPanelListener listener) {
-		this.hSize = hSize;
+	private ModelDrawerPanel(ModelDrawerPanelListener listener) {
 		this.listeners = new ArrayList<>(5);
-		this.listeners.add(listener);
+		if (listener != null)
+			this.listeners.add(listener);
 		createDrawerPanel();
 		this.install.addActionListener(this);
 		this.uninstall.addActionListener(this);
 	}
 	
-	public static ModelDrawerPanel create(int hSize, ModelDrawerPanelListener listener) {
-		return new ModelDrawerPanel(hSize, listener);
+	public static ModelDrawerPanel create(ModelDrawerPanelListener listener) {
+		return new ModelDrawerPanel(listener);
+	}
+	
+	public static ModelDrawerPanel create() {
+		return new ModelDrawerPanel(null);
+	}
+	
+	public void addListener(ModelDrawerPanelListener listener) {
+		this.listeners.add(listener);
 	}
 
     private void createDrawerPanel() {
@@ -106,7 +112,6 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
         html.append("i", "Other information");
         html.append("i", "References");
         this.add(html.getPane(), BorderLayout.CENTER);
-        this.setPreferredSize(new Dimension(hSize, 0)); // Set preferred width
     }
 
 

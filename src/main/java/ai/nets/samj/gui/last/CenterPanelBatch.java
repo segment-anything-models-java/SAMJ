@@ -37,7 +37,7 @@ public class CenterPanelBatch extends JPanel {
     private static final int BUTTON_PROGRESS_Y_INSET = 2;
 
 	private static final double BUTTON_PROGRESS_HRATIO = 0.575;
-	private static final double BUTTON_OVER_PROGRESS_HRATIO = 1.75;
+	private static final double BUTTON_OVER_PROGRESS_HRATIO = 2.1;
 	private static final double BUTTON_OVER_HELP_HRATIO = 1.2;
 	private static final double WARNING_HRATIO = 0.15;
 	

@@ -10,7 +10,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.UIManager;
-import javax.swing.border.LineBorder;
 
 import ai.nets.samj.utils.Constants;
 
@@ -75,7 +74,7 @@ public class CenterPanelBatch extends JPanel {
 
         cardPanel.add(new JPanel() {private static final long serialVersionUID = 1L; { setOpaque(false); }}, NO_MSG);
         cardPanel.add(warningLabel, YES_MSG);
-        ((CardLayout) cardPanel.getLayout()).show(cardPanel, YES_MSG);
+        ((CardLayout) cardPanel.getLayout()).show(cardPanel, NO_MSG);
         
 	    propagate3D = new JCheckBox("Propagate in 3D/time", false);
 	    propagate3D.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -146,8 +145,8 @@ public class CenterPanelBatch extends JPanel {
 	    int cbMaxW = Math.max(1, (int) Math.min(getWidth() - X_INSET * 2, Math.round(getWidth() * CHCK_WRATIO)));
 	    int cbY = msgY + SMALL_Y_INSET + warningH;
 
-	    final String fullText = "Propagate in 3D/time";
-	    final String ellipsisText = "....";
+	    final String fullText = CHECK_TEXT;
+	    final String ellipsisText = ELLIPSIS_TEXT;
 
 	    java.awt.Font base = propagate3D.getFont();
 	    startSize = Math.max(MIN_FONT_SIZE, (int) Math.floor(checkH * 0.75));

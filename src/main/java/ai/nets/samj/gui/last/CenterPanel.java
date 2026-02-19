@@ -3,6 +3,7 @@ package ai.nets.samj.gui.last;
 
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Font;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
@@ -18,16 +19,18 @@ public class CenterPanel extends JPanel {
     protected JRadioButton radioButton2;
     protected CenterPanelSwitch instantCard;
     protected CenterPanelBatch batchCard;
+	protected Font radioBaseFont;
 
 
     protected static String MANUAL_STR = "Manual";
     protected static String PRESET_STR = "Preset prompts";
 
+    private static final double MANUAL_WRATIO = 0.35;
+    private static final double RADIO_HRATIO = 0.18;
     private static final int    PAD_X              = 2;      // horizontal inset from border
     private static final int    PAD_Y              = 2;      // vertical inset from border (top/bottom)
-    private static final int    GAP_Y              = 2;      // gap between row 1 and row 2
-    private static final double RADIO_TEXT_WRATIO  = 0.95;   // radio uses up to 95% of its column width
-    private static final int    MIN_FONT_SIZE      = 6;
+    private static final double RADIO_TEXT_WRATIO  = 0.98;   // radio uses up to 95% of its column width
+    private static final int    MIN_FONT_SIZE      = 8;
     private static final String ELLIPSIS_TEXT      = "...";
     
 	public CenterPanel() {
@@ -36,6 +39,10 @@ public class CenterPanel extends JPanel {
         
         radioButton1 = new JRadioButton(MANUAL_STR, true);
         radioButton2 = new JRadioButton(PRESET_STR);
+        radioBaseFont = radioButton1.getFont();
+        radioButton1.setFont(radioBaseFont.deriveFont(java.awt.Font.PLAIN, radioBaseFont.getSize2D()));
+        radioButton2.setFont(radioBaseFont.deriveFont(java.awt.Font.PLAIN, radioBaseFont.getSize2D()));
+        radioBaseFont = radioButton1.getFont();
 
         ButtonGroup radioGroup = new ButtonGroup();
         radioGroup.add(radioButton1);
@@ -55,87 +62,114 @@ public class CenterPanel extends JPanel {
 
 	@Override
 	public void doLayout() {
-	    final java.awt.Insets ins = getInsets();
 
-	    int innerW = Math.max(0, getWidth()  - ins.left - ins.right  - PAD_X * 2);
-	    int innerH = Math.max(0, getHeight() - ins.top  - ins.bottom - PAD_Y * 2);
+	    int innerW = Math.max(0, getWidth() - PAD_X * 2);
+	    int innerH = Math.max(0, getHeight() - PAD_Y * 2);
 
-	    int x0 = ins.left + PAD_X;
-	    int y0 = ins.top  + PAD_Y;
+	    int x0 = PAD_X;
+	    int y0 = PAD_Y;
 
-	    // Two rows with a 2px gap between them
-	    int contentH = Math.max(0, innerH - GAP_Y);
+	    // Two rows with a gap between them
+	    int contentH = Math.max(0, innerH - PAD_Y);
 
-	    // Give the radio row a reasonable height based on total height (and keep >= 1)
-	    int row1H = Math.max(1, (int) Math.round(contentH * 0.18));
-	    int row2H = Math.max(1, contentH - row1H);
-
-	    // If radio row is too small to render nicely, steal a bit from the card panel
+	    // Row split
+	    int row1H = Math.max(1, (int) Math.round(contentH * RADIO_HRATIO));
 	    row1H = Math.max(16, row1H);
 	    if (row1H + 1 > contentH) row1H = Math.max(1, contentH - 1);
-	    row2H = Math.max(1, contentH - row1H);
+	    int row2H = Math.max(1, contentH - row1H);
 
 	    int y1 = y0;
-	    int y2 = y1 + row1H + GAP_Y;
+	    int y2 = y1 + row1H + PAD_Y;
 
 	    // ----- Row 1: two equal columns for radio buttons -----
-	    int colW = Math.max(1, innerW / 2);
+	    int colW  = (int) Math.max(1, innerW * MANUAL_WRATIO);
 	    int col1X = x0;
 	    int col2X = x0 + colW;
 	    int col2W = Math.max(1, innerW - colW);
 
-	    // Center the radio buttons inside their columns and cap them at 95% width
 	    radioButton1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 	    radioButton2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 
 	    int r1MaxW = Math.max(1, (int) Math.round(colW  * RADIO_TEXT_WRATIO));
 	    int r2MaxW = Math.max(1, (int) Math.round(col2W * RADIO_TEXT_WRATIO));
 
-	    // Helper logic inlined: shrink font to fit; if still not fit -> "..."
-	    java.awt.Font base1 = radioButton1.getFont();
-	    java.awt.Font base2 = radioButton2.getFont();
+	    // Use ONE font size for BOTH radios (prevents different fonts)
+	    int startSize = Math.max(MIN_FONT_SIZE, (int) Math.floor(row1H * 0.75));
 
-	    int startSize = Math.max(MIN_FONT_SIZE, (int) Math.floor(row1H * 0.65));
+	    int chosenSize = MIN_FONT_SIZE;
+	    boolean fullFits = false;
 
-	    // --- radioButton1 fit ---
-	    boolean fit1 = false;
-	    String full1 = MANUAL_STR;
+	    // Find largest font size that fits BOTH full texts
 	    for (int sz = startSize; sz >= MIN_FONT_SIZE; sz--) {
-	        radioButton1.setFont(base1.deriveFont((float) sz));
-	        radioButton1.setText(full1);
-	        java.awt.Dimension pref = radioButton1.getPreferredSize();
-	        if (pref.width <= r1MaxW && pref.height <= row1H) { fit1 = true; break; }
+	        java.awt.Font f = radioBaseFont.deriveFont((float) sz);
+
+	        radioButton1.setFont(f);
+	        radioButton2.setFont(f);
+	        radioButton1.setText(MANUAL_STR);
+	        radioButton2.setText(PRESET_STR);
+
+	        java.awt.Dimension p1 = radioButton1.getPreferredSize();
+	        java.awt.Dimension p2 = radioButton2.getPreferredSize();
+
+	        if (p1.width <= r1MaxW && p1.height <= row1H &&
+	            p2.width <= r2MaxW && p2.height <= row1H) {
+	            chosenSize = sz;
+	            fullFits = true;
+	            break;
+	        }
+	        if (p1.height <= row1H && p2.height <= row1H
+	        		&& p2.getWidth() > r2MaxW) {
+	        		while (p2.getWidth() > r2MaxW) {
+	        			String newString = radioButton2.getText();
+	        			newString = newString.substring(0, newString.length() - 1 - ELLIPSIS_TEXT.length()) + ELLIPSIS_TEXT;
+	        	        radioButton2.setText(newString);
+	        	        p2 = radioButton2.getPreferredSize();
+	        		}
+		            chosenSize = sz;
+		            fullFits = true;
+		            break;
+            }
+	        if (p1.height <= row1H && p2.height <= row1H
+	        		&& p1.getWidth() > r1MaxW) {
+	        		while (p1.getWidth() > r1MaxW) {
+	        			String newString = radioButton1.getText();
+	        			newString = newString.substring(0, newString.length() - 1 - ELLIPSIS_TEXT.length()) + ELLIPSIS_TEXT;
+	        	        radioButton1.setText(newString);
+	        	        p1 = radioButton1.getPreferredSize();
+	        		}
+		            chosenSize = sz;
+		            fullFits = true;
+		            break;
+            }
 	    }
-	    if (!fit1) {
+
+	    // If full text doesn't fit, use ellipsis for BOTH (still same font size)
+	    if (!fullFits) {
 	        for (int sz = startSize; sz >= MIN_FONT_SIZE; sz--) {
-	            radioButton1.setFont(base1.deriveFont((float) sz));
+	            java.awt.Font f = radioBaseFont.deriveFont((float) sz);
+
+	            radioButton1.setFont(f);
+	            radioButton2.setFont(f);
 	            radioButton1.setText(ELLIPSIS_TEXT);
-	            java.awt.Dimension pref = radioButton1.getPreferredSize();
-	            if (pref.width <= r1MaxW && pref.height <= row1H) { fit1 = true; break; }
-	        }
-	        if (!fit1) { radioButton1.setFont(base1.deriveFont((float) MIN_FONT_SIZE)); radioButton1.setText(ELLIPSIS_TEXT); }
-	    }
-
-	    // --- radioButton2 fit ---
-	    boolean fit2 = false;
-	    String full2 = PRESET_STR;
-	    for (int sz = startSize; sz >= MIN_FONT_SIZE; sz--) {
-	        radioButton2.setFont(base2.deriveFont((float) sz));
-	        radioButton2.setText(full2);
-	        java.awt.Dimension pref = radioButton2.getPreferredSize();
-	        if (pref.width <= r2MaxW && pref.height <= row1H) { fit2 = true; break; }
-	    }
-	    if (!fit2) {
-	        for (int sz = startSize; sz >= MIN_FONT_SIZE; sz--) {
-	            radioButton2.setFont(base2.deriveFont((float) sz));
 	            radioButton2.setText(ELLIPSIS_TEXT);
-	            java.awt.Dimension pref = radioButton2.getPreferredSize();
-	            if (pref.width <= r2MaxW && pref.height <= row1H) { fit2 = true; break; }
+
+	            java.awt.Dimension p1 = radioButton1.getPreferredSize();
+	            java.awt.Dimension p2 = radioButton2.getPreferredSize();
+
+	            if (p1.width <= r1MaxW && p1.height <= row1H &&
+	                p2.width <= r2MaxW && p2.height <= row1H) {
+	                chosenSize = sz;
+	                break;
+	            }
 	        }
-	        if (!fit2) { radioButton2.setFont(base2.deriveFont((float) MIN_FONT_SIZE)); radioButton2.setText(ELLIPSIS_TEXT); }
 	    }
 
-	    // Set bounds (centered inside each column, max 95% width)
+	    // Ensure final font is applied (in case loops never ran)
+	    java.awt.Font finalFont = radioBaseFont.deriveFont((float) chosenSize);
+	    radioButton1.setFont(finalFont);
+	    radioButton2.setFont(finalFont);
+
+	    // Bounds (centered inside each column, capped at 95% width)
 	    int r1W = Math.max(1, Math.min(r1MaxW, radioButton1.getPreferredSize().width));
 	    int r2W = Math.max(1, Math.min(r2MaxW, radioButton2.getPreferredSize().width));
 
@@ -145,7 +179,7 @@ public class CenterPanel extends JPanel {
 	    radioButton1.setBounds(r1X, y1, r1W, row1H);
 	    radioButton2.setBounds(r2X, y1, r2W, row1H);
 
-	    // ----- Row 2: card panel takes all remaining space -----
+	    // ----- Row 2: card panel takes remaining space -----
 	    cardPanel.setBounds(x0, y2, Math.max(1, innerW), Math.max(1, row2H));
 	}
 }

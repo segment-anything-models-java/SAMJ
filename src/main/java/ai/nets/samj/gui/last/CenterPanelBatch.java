@@ -34,7 +34,7 @@ public class CenterPanelBatch extends JPanel {
     
     private static final int X_INSET = 2;
     private static final int SMALL_Y_INSET = 2;
-    private static final int BIG_Y_INSET = 2;
+    private static final int BIG_Y_INSET = 5;
     private static final int BUTTON_PROGRESS_Y_INSET = 2;
 
 	private static final double BUTTON_PROGRESS_HRATIO = 0.575;
@@ -98,13 +98,13 @@ public class CenterPanelBatch extends JPanel {
 	@Override
 	public void doLayout() {
 	    int contentH = Math.max(0, getHeight() - BIG_Y_INSET - 3 * SMALL_Y_INSET);
-		int buttonProgressH = (int) Math.max(0, BUTTON_PROGRESS_HRATIO * contentH);
-		int buttonH = (int) Math.max(0, (buttonProgressH - BUTTON_PROGRESS_Y_INSET) * BUTTON_OVER_PROGRESS_HRATIO / (BUTTON_OVER_PROGRESS_HRATIO + 1));
-		int progressH = (int) Math.max(0, (buttonProgressH - BUTTON_PROGRESS_Y_INSET) / (BUTTON_OVER_PROGRESS_HRATIO + 1));
-		int warningH = (int) Math.max(0, WARNING_HRATIO * contentH);
-		int checkH = (int) Math.max(0, contentH - buttonProgressH - warningH);
+		int buttonProgressH = (int) Math.round(Math.max(0, BUTTON_PROGRESS_HRATIO * contentH));
+		int buttonH = (int) Math.round(Math.max(0, (buttonProgressH - BUTTON_PROGRESS_Y_INSET) * BUTTON_OVER_PROGRESS_HRATIO / (BUTTON_OVER_PROGRESS_HRATIO + 1)));
+		int progressH = (int) Math.round(Math.max(0, (buttonProgressH - BUTTON_PROGRESS_Y_INSET) / (BUTTON_OVER_PROGRESS_HRATIO + 1)));
+		int warningH = (int) Math.round(Math.max(0, WARNING_HRATIO * contentH));
+		int checkH = Math.round(Math.max(0, contentH - buttonProgressH - warningH));
 		
-		int commonW = (int) Math.max(0, Math.min(getWidth() - X_INSET * 2, getWidth() * WRATIO));
+		int commonW = (int) Math.round(Math.max(0, Math.min(getWidth() - X_INSET * 2, getWidth() * WRATIO)));
 
 	    // ---------- Row 1: [Batch button] + [question icon label on the right] ----------
 		int y = BIG_Y_INSET;
@@ -114,7 +114,7 @@ public class CenterPanelBatch extends JPanel {
 
 	    // ---------- Row 2: [progress bar] + [stop button immediately to its right] ----------
 	    // Stop button must be square; keep it as large as the row height if possible.
-	    y += BUTTON_PROGRESS_Y_INSET + buttonH + 1;
+	    y += BUTTON_PROGRESS_Y_INSET + buttonH;
 	    batchProgress.setBounds(x, y, Math.max(0, commonW - progressH), progressH);
 	    stopProgressBtn.setBounds(x + Math.max(0, commonW - progressH), y, progressH, progressH);
 	    

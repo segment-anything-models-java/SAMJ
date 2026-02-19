@@ -22,7 +22,7 @@ public class CenterPanelBatch extends JPanel {
     protected JButton btnBatchSAMize;
     protected JProgressBar batchProgress;
     protected JButton stopProgressBtn;
-    protected JLabel questionMark;
+    protected HelpBadge questionMark;
     protected JPanel cardPanel;
     protected JLabel warningLabel;
 
@@ -39,8 +39,8 @@ public class CenterPanelBatch extends JPanel {
 
 	private static final double BUTTON_PROGRESS_HRATIO = 0.575;
 	private static final double BUTTON_OVER_PROGRESS_HRATIO = 1.75;
+	private static final double BUTTON_OVER_HELP_HRATIO = 1.2;
 	private static final double WARNING_HRATIO = 0.15;
-	private static final double CHECK_HRATIO = 1 - BUTTON_PROGRESS_HRATIO - WARNING_HRATIO;
 	
 	private static final double WRATIO = 0.95;
 
@@ -60,13 +60,7 @@ public class CenterPanelBatch extends JPanel {
         if (questionIcon == null) {
             questionIcon = UIManager.getIcon("OptionPane.informationIcon");
         }
-        questionMark = new JLabel(questionIcon);
-        questionMark.setBorder(LineBorder.createBlackLineBorder());
-        questionMark.setToolTipText(Constants.HELP_MSG);
-	    questionMark.setBorder(null);
-	    questionMark.setOpaque(false);
-	    questionMark.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-	    questionMark.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+	    questionMark = new HelpBadge(Constants.HELP_MSG);
 
 	    batchProgress = new JProgressBar();
 	    stopProgressBtn = new JButton("■");
@@ -109,8 +103,9 @@ public class CenterPanelBatch extends JPanel {
 	    // ---------- Row 1: [Batch button] + [question icon label on the right] ----------
 		int y = BIG_Y_INSET;
 		int x = Math.max(0, (getWidth() - commonW) / 2);
-	    btnBatchSAMize.setBounds(x, y, Math.max(0, commonW - buttonH), buttonH);
-	    questionMark.setBounds(x + Math.max(0, commonW - buttonH), y, buttonH, buttonH);
+		int questionH = (int) (buttonH / BUTTON_OVER_HELP_HRATIO);
+	    btnBatchSAMize.setBounds(x, y, Math.max(0, commonW - questionH), buttonH);
+	    questionMark.setBounds(x + Math.max(0, commonW - questionH), y + (buttonH - questionH) / 2, questionH, questionH);
 
 	    // ---------- Row 2: [progress bar] + [stop button immediately to its right] ----------
 	    // Stop button must be square; keep it as large as the row height if possible.

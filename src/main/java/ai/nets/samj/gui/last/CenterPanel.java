@@ -35,7 +35,7 @@ public class CenterPanel extends JPanel {
     
 	public CenterPanel() {
 		setLayout(null);
-        setBorder(new LineBorder(Color.BLACK));
+        //setBorder(new LineBorder(Color.BLACK));
         
         radioButton1 = new JRadioButton(MANUAL_STR, true);
         radioButton2 = new JRadioButton(PRESET_STR);
@@ -49,6 +49,7 @@ public class CenterPanel extends JPanel {
         radioGroup.add(radioButton2);
         
         cardPanel = new JPanel(new CardLayout());
+        //cardPanel.setBorder(LineBorder.createBlackLineBorder());
         instantCard = new CenterPanelSwitch();
         batchCard = new CenterPanelBatch();
         cardPanel.add(instantCard, MANUAL_STR);

@@ -49,7 +49,7 @@ public class CenterPanelSwitch extends JPanel {
 
         cardPanel.add(new JPanel() {private static final long serialVersionUID = 1L; { setOpaque(false); }}, NO_MSG);
         cardPanel.add(warningLabel, YES_MSG);
-        ((CardLayout) cardPanel.getLayout()).show(cardPanel, YES_MSG);
+        ((CardLayout) cardPanel.getLayout()).show(cardPanel, NO_MSG);
 	    add(chkInstant);
 	    add(cardPanel);
 	    add(propagate3D);

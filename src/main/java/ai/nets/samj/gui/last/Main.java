@@ -1,15 +1,388 @@
 package ai.nets.samj.gui.last;
 
+import java.awt.CardLayout;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import org.apposed.appose.BuildException;
+import org.apposed.appose.TaskException;
+
+import ai.nets.samj.annotation.Mask;
+import ai.nets.samj.communication.model.DummyModel;
+import ai.nets.samj.communication.model.EfficientTAMSmall;
+import ai.nets.samj.communication.model.EfficientTAMTiny;
+import ai.nets.samj.communication.model.SAM2Large;
+import ai.nets.samj.communication.model.SAM2Small;
+import ai.nets.samj.communication.model.SAM2Tiny;
+import ai.nets.samj.communication.model.SAMModel;
+import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
+import ai.nets.samj.gui.components.ComboBoxItem;
+import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
+import ai.nets.samj.gui.last.ModelSelection.ModelSelectionListener;
+import ai.nets.samj.models.AbstractSamJ.BatchCallback;
+import ai.nets.samj.ui.ConsumerInterface;
+import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.IntegerType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Cast;
+import net.imglib2.util.Util;
+
 public class Main extends MainGUI {
+	
+	private boolean isValidPrompt = false;
+
+    protected final List<SAMModel> modelList;
+    protected ImageSelectionListener imageListener;
+    protected ModelSelectionListener modelListener;
+    protected ModelDrawerPanelListener modelDrawerListener;
+    protected BatchCallback batchDrawerCallback;
+    protected ConsumerCallback consumerCallback;
+    protected ConsumerInterface consumer;
 
     private static final long serialVersionUID = -6511057540533292091L;
 
-	public Main() {
+    public static final List<SAMModel> DEFAULT_MODEL_LIST = new ArrayList<>();
+    static {
+    	try {
+	        DEFAULT_MODEL_LIST.add(new SAM2Tiny());
+	        DEFAULT_MODEL_LIST.add(new SAM2Small());
+	        DEFAULT_MODEL_LIST.add(new SAM2Large());
+	        DEFAULT_MODEL_LIST.add(new EfficientTAMTiny());
+	        DEFAULT_MODEL_LIST.add(new EfficientTAMSmall());
+    	} catch (Exception ex) {
+	        DEFAULT_MODEL_LIST.add(new DummyModel());
+    	}
+    }
+    
+    private static final ConsumerInterface DUMMY_CONSUMER = new ConsumerInterface() {
 
+		@Override
+		public List<ComboBoxItem> getListOfOpenImages() {return new ArrayList<>();}
+		@Override
+		public List<Polygon> getPolygonsFromRoiManager() {return new ArrayList<>();}
+		@Override
+		public void enableAddingToRoiManager(boolean shouldBeAdding) {}
+		@Override
+		public void exportImageLabeling() {}
+		@Override
+		public Object getFocusedImage() {return null;}
+		@Override
+		public String getFocusedImageName() {return null;}
+		@Override
+		public <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> getFocusedImageAsRai() {
+			return null;
+		}
+		@Override
+		public List<int[]> getPointRoisOnFocusImage() {return new ArrayList<>();}
+		@Override
+		public List<Rectangle> getRectRoisOnFocusImage() {return new ArrayList<>();}
+		@Override
+		public void addPolygonsFromGUI(List<Mask> masks) {}
+		@Override
+		public void activateListeners() {}
+		@Override
+		public void deactivateListeners() {}
+		@Override
+		public void setFocusedImage(Object image) {}
+		@Override
+		public void deselectImage() {}
+		@Override
+		public void deletePointRoi(int[] pp) {}
+		@Override
+		public void deleteRectRoi(Rectangle rect) {}
+		@Override
+		public boolean isValidPromptSelected() {return false;}
+		@Override
+		public void notifyBatchSamize(String modelName, String maskPrompt) {}
+    };
+
+	public Main() {
+		this(DEFAULT_MODEL_LIST, DUMMY_CONSUMER);
+	}
+
+	public Main(ConsumerInterface consumer) {
+		this(DEFAULT_MODEL_LIST, consumer);	
+	}
+
+	public Main(List<SAMModel> modelList) {
+		this(modelList, DUMMY_CONSUMER);
+	}
+
+	public Main(List<SAMModel> modelList, ConsumerInterface consumer) {
+		
+		this.modelList = modelList;
+		this.consumer = consumer;
+
+		this.selectionPanel.cmbModels.setModels(this.modelList);
+		this.selectionPanel.cmbModels.setListener(modelListener);
+		
+        this.consumer.setGuiCallback(() -> {
+            setTwoThirdsEnabled(false);
+            selectionPanel.cmbImages.updateList();
+            if (selectionPanel.cmbImages.getSelectedObject() == null)
+            	return;
+            selectionPanel.go.setEnabled(false);
+            selectionPanel.go.showAnimation(true);
+            new Thread(() -> {
+            	selectionPanel.go.setEnabled(selectionPanel.cmbModels.getSelectedModel().isInstalled());
+            	selectionPanel.go.showAnimation(false);
+            }).start();
+		});
+        this.consumer.setCallback(consumerCallback);
+        
+        this.consumerCallback.validPromptChosen(this.consumer.isValidPromptSelected());
+        
+        this.drawersPanel.modelDrawerPanel.addModelDrawerPanelListener(modelDrawerListener);
+		
+        ///*
 		this.selectionPanel.getModelSelection().getButton().addActionListener(e -> Main.this.toggleModelDrawer());
 		this.selectionPanel.getImageSelection().getButton().addActionListener(e -> Main.this.toggleImageDrawer());
+		this.selectionPanel.go.addActionListener(e -> loadModel());
+        this.bottomPanel.export.addActionListener(e -> consumer.exportImageLabeling());
+        this.centerPanel.instantCard.chkInstant.addActionListener(
+        		e -> setInstantPromptsEnabled(this.centerPanel.instantCard.chkInstant.isSelected() && this.isValidPrompt));
+		this.centerPanel.instantCard.propagate3D.addActionListener(e -> System.err.println("DO SOMETHING"));// TODO);
+        this.centerPanel.batchCard.btnBatchSAMize.addActionListener(e -> batchSAMize());
+        this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
+        this.close.addActionListener(e -> dispose());
+		this.help.addActionListener(e -> consumer.exportImageLabeling());
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                close();
+            }
+        });
+        new Thread(() -> {
+        	boolean installed = selectionPanel.cmbModels.getSelectedModel().isInstalled();
+            if (installed && selectionPanel.cmbImages.getSelectedObject() != null)
+            	SwingUtilities.invokeLater(() -> selectionPanel.go.setEnabled(true));
+            else if (!installed)
+            	toggleModelDrawer();
+        }).start();
+        
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        //*/
+	}
+
+    protected void setInstantPromptsEnabled(boolean enabled) {
+        if (enabled) {
+            consumer.activateListeners();
+        } else {
+            consumer.deactivateListeners();
+        }
+    }
+
+    protected void loadModel() {
+        SwingUtilities.invokeLater(() -> {
+        	Main.this.selectionPanel.go.setEnabled(false);
+            setTwoThirdsEnabled(false);
+        });
+        new Thread(() -> {
+            try {
+                // TODO try removing Cast
+            	Main.this.selectionPanel.cmbModels.loadModel(Cast.unchecked(Main.this.selectionPanel.cmbImages.getSelectedRai()));
+                consumer.setFocusedImage(Main.this.selectionPanel.cmbImages.getSelectedObject());
+                consumer.setModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
+                setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && this.isValidPrompt);
+                Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
+                setTwoThirdsEnabled(true);
+            } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
+            	Main.this.selectionPanel.go.setEnabled(true);
+                ex.printStackTrace();
+            }
+            selectionPanel.go.showAnimation(false);
+        }).start();
+    }
+    
+    protected < T extends RealType< T > & NativeType< T > > void batchSAMize() {
+    	RandomAccessibleInterval<T> rai;
+    	if (this.consumer.getFocusedImage() != this.selectionPanel.cmbImages.getSelectedObject())
+    		rai = this.consumer.getFocusedImageAsRai();
+    	else
+    		rai = null;
+    	List<int[]> pointPrompts = this.consumer.getPointRoisOnFocusImage();
+    	List<Rectangle> rectPrompts = this.consumer.getRectRoisOnFocusImage();
+		CardLayout lyt = (CardLayout) cardPanel2_2.getLayout();
+    	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null) {
+        	lyt.show(cardPanel2_2, VISIBLE_STR);
+    		return;
+    	} else if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(Util.getTypeFromInterval(rai) instanceof IntegerType)){
+        	lyt.show(cardPanel2_2, VISIBLE_STR);
+    		return;
+    	}
+    	lyt.show(cardPanel2_2, INVISIBLE_STR);
+    	centerPanel.batchCard.stopProgressBtn.setEnabled(true);
+    	consumer.setFocusedImage(selectionPanel.cmbImages.getSelectedObject());
+    	new Thread(() -> {
+    		try {
+    			consumer.notifyBatchSamize(selectionPanel.cmbModels.getSelectedModel().getName(), 
+    					rai == null ? null : consumer.getFocusedImageName() );
+    			selectionPanel.cmbModels.getSelectedModel().processBatchOfPrompts(pointPrompts, rectPrompts, rai, batchDrawerCallback);
+			} catch (IOException | TaskException | InterruptedException e) {
+				e.printStackTrace();
+			}
+    		SwingUtilities.invokeLater(() -> centerPanel.batchCard.stopProgressBtn.setEnabled(false));
+    	}).start();;
+    	pointPrompts.stream().forEach(pp -> consumer.deletePointRoi(pp));
+    	rectPrompts.stream().forEach(pp -> consumer.deleteRectRoi(pp));
+    }
+
+    protected void close() {
+        selectionPanel.cmbModels.unLoadModel();
+        drawersPanel.modelDrawerPanel.interruptThreads();
+    }
+    
+    protected void createListeners() {
+        // Guard: don’t recreate if called twice
+        if (imageListener != null) return;
+
+        imageListener = new ImageSelectionListener() {
+            @Override
+            public void modelActionsOnImageChanged() {
+                Main.this.selectionPanel.cmbModels.getSelectedModel().closeProcess();
+            }
+
+            @Override
+            public void imageActionsOnImageChanged() {
+                consumer.deactivateListeners();
+                consumer.deselectImage();
+                setTwoThirdsEnabled(false);
+
+                if (Main.this.selectionPanel.cmbImages.getSelectedObject() == null) {
+                    Main.this.selectionPanel.go.setEnabled(false);
+                    return;
+                }
+                if (Main.this.selectionPanel.go.isEnabled()) return;
+
+                Main.this.selectionPanel.go.showAnimation(true);
+                new Thread(() -> {
+                    boolean installed = Main.this.selectionPanel.cmbModels.getSelectedModel().isInstalled();
+                    SwingUtilities.invokeLater(() -> {
+                    	Main.this.selectionPanel.go.setEnabled(installed);
+                    	Main.this.selectionPanel.go.showAnimation(false);
+                    });
+                }).start();
+            }
+        };
+
+        modelListener = new ModelSelectionListener() {
+            @Override
+            public void changeDrawerPanel() {
+                if (drawersPanel.modelDrawerPanel.isVisible())
+                	drawersPanel.modelDrawerPanel.setSelectedModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
+            }
+
+            @Override
+            public void changeGUI() {
+                setTwoThirdsEnabled(false);
+
+                // your original logic overwrote the first line anyway
+                Main.this.selectionPanel.go.setEnabled(false);
+                Main.this.selectionPanel.go.showAnimation(true);
+
+                new Thread(() -> {
+                    boolean installed = Main.this.selectionPanel.cmbModels.getSelectedModel().isInstalled();
+                    SwingUtilities.invokeLater(() -> {
+                    	Main.this.selectionPanel.go.setEnabled(installed);
+                    	Main.this.selectionPanel.go.showAnimation(false);
+                        if (!installed && !Main.this.isModelDrawerOpen)
+                            toggleModelDrawer();
+                    });
+                }).start();
+            }
+        };
+
+        modelDrawerListener = new ModelDrawerPanelListener() {
+            @Override
+            public void setGUIEnabled(boolean enabled) {
+            	Main.this.selectionPanel.cmbModels.setEnabled(enabled);
+            	Main.this.selectionPanel.cmbImages.setEnabled(enabled);
+
+                if (!enabled) {
+                    setTwoThirdsEnabled(false);
+                    return;
+                }
+
+                if (Main.this.selectionPanel.cmbImages.getSelectedObject() != null) {
+                    new Thread(() -> {
+                        boolean installed = Main.this.selectionPanel.cmbModels.getSelectedModel().isInstalled();
+                        if (installed) {
+                            SwingUtilities.invokeLater(() -> selectionPanel.go.setEnabled(true));
+                        }
+                    }).start();
+                }
+            }
+        };
+
+        batchDrawerCallback = new BatchCallback() {
+            private int nRois;
+
+            @Override
+            public void setTotalNumberOfRois(int nRois) {
+                this.nRois = nRois;
+                SwingUtilities.invokeLater(() -> centerPanel.batchCard.batchProgress.setValue(0));
+            }
+
+            @Override
+            public void updateProgress(int n) {
+                SwingUtilities.invokeLater(() ->
+                centerPanel.batchCard.batchProgress.setValue((int) Math.round(100 * n / (double) nRois))
+                );
+            }
+
+            @Override
+            public void drawRoi(List<Mask> masks) {
+                SwingUtilities.invokeLater(() -> consumer.addPolygonsFromGUI(masks));
+            }
+
+            @Override
+            public void deletePointPrompt(List<int[]> promptList) {
+                SwingUtilities.invokeLater(() ->
+                    promptList.forEach(consumer::deletePointRoi)
+                );
+            }
+
+            @Override
+            public void deleteRectPrompt(List<int[]> promptList) {
+                SwingUtilities.invokeLater(() ->
+                    promptList.stream()
+                        .map(r -> new Rectangle(r[0], r[1], r[2] - r[0], r[3] - r[1]))
+                        .forEach(consumer::deleteRectRoi)
+                );
+            }
+        };
+
+        consumerCallback = new ConsumerCallback() {
+            @Override
+            public void validPromptChosen(boolean isValid) {
+                if (isValid && !isValidPrompt) {
+                    CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
+                    lyt.show(cardPanel1_2, INVISIBLE_STR);
+                    isValidPrompt = true;
+                    if (Main.this.selectionPanel.cmbModels.getSelectedModel().isLoaded())
+                        MainGUIOld.this.chkInstant.setEnabled(true);
+
+                } else if (!isValid && isValidPrompt) {
+                    CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
+                    lyt.show(cardPanel1_2, VISIBLE_STR);
+                    isValidPrompt = false;
+                    MainGUIOld.this.chkInstant.setSelected(false);
+                    MainGUIOld.this.chkInstant.setEnabled(false);
+                    MainGUIOld.this.setInstantPromptsEnabled(false);
+                }
+            }
+        };
     }
 
     public static void main(String[] args) {

@@ -35,6 +35,7 @@ public class MainGUI extends JPanel {
         drawersPanel.setVisible(false);
         drawersPanel.setModelsOpen(false);
         drawersPanel.setImagesOpen(false);
+    	selectionPanel.go.setEnabled(false);
 
         setTwoThirdsEnabled(false);
     }

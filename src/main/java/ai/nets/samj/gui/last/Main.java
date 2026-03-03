@@ -136,7 +136,6 @@ public class Main extends MainGUI {
         
         this.drawersPanel.modelDrawerPanel.addModelDrawerPanelListener(modelDrawerListener);
 		
-        ///*
 		this.selectionPanel.getModelSelection().getButton().addActionListener(e -> Main.this.toggleModelDrawer());
 		this.selectionPanel.getImageSelection().getButton().addActionListener(e -> Main.this.toggleImageDrawer());
 		this.selectionPanel.go.addActionListener(e -> loadModel());
@@ -152,7 +151,6 @@ public class Main extends MainGUI {
             changeGUI();
         }).start();
         
-        //*/
 		this.selectionPanel.cmbModels.setListener(modelListener);
 
 		this.selectionPanel.cmbModels.setModels(this.modelList);

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.SwingUtilities;
@@ -128,7 +129,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         startWorking("Loading info");
 
         // Cancel previous info worker if any
-        if (infoWorker != null) infoWorker.cancel(true);
+        if (infoWorker != null && !infoWorker.isDone() && !infoWorker.isCancelled()) infoWorker.cancel(true);
 
         infoWorker = new SwingWorker<String, Void>() {
             @Override
@@ -148,7 +149,8 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                     html.clear();
                     html.append(description);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                	if (!(ex instanceof CancellationException))
+                		ex.printStackTrace();
                     logger.clear();
                     html.clear();
                     html.append("Failed to load model info.");
@@ -185,7 +187,11 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                 if (busy) return;             // while busy, we keep buttons disabled
 
                 try {
-                    boolean installed = get().booleanValue();
+                	boolean installed;
+                	if (this.isCancelled()) {
+                		installed = false;
+                	} else
+                		installed = get().booleanValue();
 
                     onEdt(() -> {
                         // If there is no installation manager, disable install/uninstall (same intent as your original)
@@ -268,7 +274,6 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                     logger.log("Installation failed: " + ex.getMessage(), new Color(185, 28, 28));
                 }
 
-                // Refresh info/buttons after install
                 refreshInfo(requestId);
                 refreshButtons(requestId);
             }
@@ -344,16 +349,13 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
         onEdt(() -> {
             // Disable buttons while busy
-            install.setEnabled(!busy && install.isEnabled());
-            uninstall.setEnabled(!busy && uninstall.isEnabled());
+            install.setEnabled(!busy);
+            uninstall.setEnabled(!busy);
         });
 
         notifyGuiEnabled(!busy);
 
-        if (!busy) {
-            // Re-evaluate correct button state after task completes
-            refreshButtons(requestId);
-        } else {
+        if (busy) {
             onEdt(() -> {
                 install.setEnabled(false);
                 uninstall.setEnabled(false);
@@ -374,8 +376,8 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
     }
 
     private void cancelNonInstallTasks() {
-        if (infoWorker != null) infoWorker.cancel(true);
-        if (installedWorker != null) installedWorker.cancel(true);
+        if (infoWorker != null && !infoWorker.isDone() && !infoWorker.isCancelled()) infoWorker.cancel(true);
+        if (installedWorker != null && !installedWorker.isDone() && !installedWorker.isCancelled()) installedWorker.cancel(true);
     }
 
     private void cancelInstallTasksOnly() {

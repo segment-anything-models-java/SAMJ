@@ -86,7 +86,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	/**
 	 * Name of the environment that contains the code and weigths to run SAM2 models
 	 */
-	final static public String SAM2_ENV_NAME = "samj_env";
+	final static public String SAM2_ENV_NAME = "samj-env";
 	/**
 	 * Name of the folder that contains the code and weigths for SAM2 models
 	 */
@@ -112,6 +112,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	protected Sam2EnvManager(String modelType, String path) throws BuildException {
 		if (modelType == null)
 			modelType = DEFAULT_SAM2;
+		this.path = path;
 		List<String> modelTypes = SAM2_1_BYTE_SIZES_MAP.keySet().stream().collect(Collectors.toList());
 		if (!modelTypes.contains(modelType) && !modelType.equals("base")) {
 			throw new IllegalArgumentException("Invalid model variant chosen: '" + modelType + "'."
@@ -131,7 +132,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    );
 
 	    // TODO currently not supported setting the path
-	    pixi = Appose.pixi().content(renderedPixi);
+	    pixi = Appose.pixi().scheme("pixi.toml").name(SAM2_ENV_NAME).content(renderedPixi);
 	}
 
     // TODO currently not supported setting the path
@@ -318,7 +319,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    	pixi.subscribeError(this.errConsumer);
 	    if (this.pixiConsumer != null)
 	    	pixi.subscribeProgress(this.pixiConsumer);
-	    pixi.build();
+	    pixi.rebuild();
 	    installSAM2Wheel();
 	}
 

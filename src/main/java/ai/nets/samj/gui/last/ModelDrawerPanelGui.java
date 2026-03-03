@@ -19,6 +19,7 @@
  */
 package ai.nets.samj.gui.last;
 
+
 import java.awt.Color;
 import java.awt.Font;
 
@@ -38,9 +39,9 @@ public class ModelDrawerPanelGui extends JPanel {
     
 	private static final long serialVersionUID = -5258672339166051523L;
 	private JLabel drawerTitle = new JLabel();
-    private JButton install = new JButton("Install");
-    private JButton uninstall = new JButton("Uninstall");
-    HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF", 200, 200);
+	protected JButton install = new JButton("Install");
+	protected JButton uninstall = new JButton("Uninstall");
+	protected HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF", 200, 200);
     
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
 	
@@ -99,4 +100,8 @@ public class ModelDrawerPanelGui extends JPanel {
 
 	    html.setBounds(htmlX, htmlY, htmlW, htmlH);
 	}
+    
+    protected void setTitle(String title) {
+        drawerTitle.setText(String.format(MODEL_TITLE, title));
+    }
 }

@@ -428,4 +428,9 @@ public abstract class SAMModel {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		return this.getName();
+	}
+	
 }

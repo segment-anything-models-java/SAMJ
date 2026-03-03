@@ -53,7 +53,7 @@ import org.apposed.appose.Builder.ProgressConsumer;
  * 
  * @author Carlos Javier Garcia Lopez de Haro
  */
-public class ModelDrawerPanel extends JPanel implements ActionListener {
+public class ModelDrawerPanelOld extends JPanel implements ActionListener {
 
     private static final long serialVersionUID = 6708853280844731445L;
     

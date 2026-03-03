@@ -21,7 +21,7 @@ import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.components.ComboBoxItem;
-import ai.nets.samj.gui.components.ModelDrawerPanel.ModelDrawerPanelListener;
+import ai.nets.samj.gui.last.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.gui.last.ModelSelection.ModelSelectionListener;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
@@ -121,7 +121,6 @@ public class Main extends MainGUI {
 		this.consumer = consumer;
 		createListeners();
 
-		this.selectionPanel.cmbModels.setModels(this.modelList);
 		
         this.consumer.setGuiCallback(() -> {
             selectionPanel.cmbImages.updateList();
@@ -161,6 +160,8 @@ public class Main extends MainGUI {
         
         //*/
 		this.selectionPanel.cmbModels.setListener(modelListener);
+
+		this.selectionPanel.cmbModels.setModels(this.modelList);
 	}
 
     protected void setInstantPromptsEnabled(boolean enabled) {
@@ -259,9 +260,9 @@ public class Main extends MainGUI {
 
         modelListener = new ModelSelectionListener() {
             @Override
-            public void changeDrawerPanel() {
+            public void changeDrawerPanel(SAMModel selected) {
                 if (drawersPanel.modelDrawerPanel.isVisible())
-                	drawersPanel.modelDrawerPanel.setSelectedModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
+                	drawersPanel.modelDrawerPanel.setSelectedModel(selected);
             }
 
             @Override

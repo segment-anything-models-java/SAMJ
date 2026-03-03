@@ -5,7 +5,6 @@ import java.awt.CardLayout;
 import javax.swing.JPanel;
 
 import ai.nets.samj.gui.components.ImageDrawerPanel;
-import ai.nets.samj.gui.components.ModelDrawerPanel;
 
 public class DrawersPanel extends JPanel {
 	
@@ -32,7 +31,7 @@ public class DrawersPanel extends JPanel {
 
 	public DrawersPanel() {
 		setLayout(new CardLayout());
-        modelDrawerPanel = ModelDrawerPanel.create();
+        modelDrawerPanel = new ModelDrawerPanel();
         imageDrawerPanel = ImageDrawerPanel.create();
         add(modelDrawerPanel, MODEL_TAG);
         add(imageDrawerPanel, IMAGE_TAG);

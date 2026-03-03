@@ -166,156 +166,79 @@ public class HTMLPane extends JEditorPane {
     }
 
     private void rebuildTemplate() {
-        // Build a modern HTML template and keep the "append content into body" behavior.
-        // We wrap user content inside a .container for nicer spacing and readable layout.
-        String systemFontStack =
+        // Keep CSS to what Swing's HTML/CSS parser reliably supports (very limited).
+        // Avoid: :root, CSS variables (--x), nth-child, hover, complex selectors, and CSS comments.
+
+        String fontStack =
                 "'" + font + "', " +
-                "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, " +
-                "'Apple Color Emoji', 'Segoe UI Emoji'";
+                "SansSerif"; // Swing-safe fallback
 
         header =
             "<!doctype html>\n" +
             "<html>\n" +
             "<head>\n" +
             "  <meta charset=\"utf-8\" />\n" +
-            "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n" +
-            "  <style>\n" +
-            "    :root {\n" +
-            "      --bg: " + background + ";\n" +
-            "      --fg: " + color + ";\n" +
-            "      --muted: #6B7280;\n" +          // gray-500-ish
-            "      --border: #E5E7EB;\n" +         // gray-200-ish
-            "      --card: #F9FAFB;\n" +           // gray-50-ish
-            "      --accent: " + accent + ";\n" +
-            "      --radius: 10px;\n" +
-            "      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 18px rgba(0,0,0,.06);\n" +
-            "    }\n" +
-            "\n" +
-            "    * { box-sizing: border-box; }\n" +
-            "    html, body { height: 100%; }\n" +
+            "  <style type=\"text/css\">\n" +
             "    body {\n" +
             "      margin: 0;\n" +
-            "      padding: 0;\n" +
-            "      background: var(--bg);\n" +
-            "      color: var(--fg);\n" +
-            "      font-family: " + systemFontStack + ";\n" +
-            "      font-size: " + baseFontPx + "px;\n" +
-            "      line-height: 1.45;\n" +
-            "      -webkit-font-smoothing: antialiased;\n" +
-            "      -moz-osx-font-smoothing: grayscale;\n" +
+            "      padding: 8px;\n" +
+            "      background-color: " + background + ";\n" +
+            "      color: " + color + ";\n" +
+            "      font-family: " + fontStack + ";\n" +
+            "      font-size: 12px;\n" +
+            "      line-height: 1.4;\n" +
             "    }\n" +
-            "\n" +
-            "    .container {\n" +
-            "      padding: 10px 12px;\n" +
-            "    }\n" +
-            "\n" +
             "    h1, h2, h3 {\n" +
-            "      margin: 0 0 8px 0;\n" +
-            "      line-height: 1.2;\n" +
-            "      letter-spacing: -0.01em;\n" +
+            "      margin: 0 0 6px 0;\n" +
+            "      padding: 0;\n" +
+            "      font-weight: bold;\n" +
+            "      color: " + color + ";\n" +
             "    }\n" +
-            "    h1 { font-size: 1.35em; }\n" +
-            "    h2 { font-size: 1.15em; }\n" +
-            "    h3 { font-size: 1.05em; }\n" +
-            "\n" +
-            "    p { margin: 0 0 8px 0; }\n" +
-            "    small, .muted { color: var(--muted); }\n" +
-            "\n" +
+            "    h2 { font-size: 14px; }\n" +
+            "    p {\n" +
+            "      margin: 0 0 6px 0;\n" +
+            "    }\n" +
             "    a {\n" +
-            "      color: var(--accent);\n" +
+            "      color: #2563EB;\n" +
             "      text-decoration: none;\n" +
             "    }\n" +
-            "    a:hover { text-decoration: underline; }\n" +
-            "\n" +
-            "    hr {\n" +
-            "      border: 0;\n" +
-            "      border-top: 1px solid var(--border);\n" +
-            "      margin: 10px 0;\n" +
-            "    }\n" +
-            "\n" +
-            "    /* Card utility (optional): wrap sections in <div class=\"card\"> ... */\n" +
-            "    .card {\n" +
-            "      background: var(--card);\n" +
-            "      border: 1px solid var(--border);\n" +
-            "      border-radius: var(--radius);\n" +
-            "      padding: 10px 12px;\n" +
-            "      box-shadow: var(--shadow);\n" +
-            "      margin: 0 0 10px 0;\n" +
-            "    }\n" +
-            "\n" +
-            "    /* Badges (optional): <span class=\"badge\">text</span> */\n" +
-            "    .badge {\n" +
-            "      display: inline-block;\n" +
-            "      padding: 2px 8px;\n" +
-            "      border: 1px solid var(--border);\n" +
-            "      border-radius: 999px;\n" +
-            "      background: #fff;\n" +
-            "      color: var(--muted);\n" +
-            "      font-size: 0.9em;\n" +
-            "      margin-left: 6px;\n" +
-            "      vertical-align: middle;\n" +
-            "    }\n" +
-            "\n" +
-            "    /* Tables */\n" +
             "    table {\n" +
             "      width: 100%;\n" +
-            "      border-collapse: separate;\n" +
-            "      border-spacing: 0;\n" +
-            "      border: 1px solid var(--border);\n" +
-            "      border-radius: var(--radius);\n" +
-            "      overflow: hidden;\n" +
-            "      background: #fff;\n" +
-            "      margin: 0 0 10px 0;\n" +
+            "      border-collapse: collapse;\n" +
+            "      margin: 0 0 8px 0;\n" +
             "    }\n" +
-            "    thead th {\n" +
-            "      background: var(--card);\n" +
-            "      color: var(--fg);\n" +
-            "      font-weight: 600;\n" +
-            "      padding: 8px 10px;\n" +
-            "      border-bottom: 1px solid var(--border);\n" +
+            "    th {\n" +
             "      text-align: left;\n" +
+            "      padding: 6px;\n" +
+            "      font-weight: bold;\n" +
+            "      background-color: #F3F4F6;\n" +
+            "      border: 1px solid #E5E7EB;\n" +
+            "      vertical-align: top;\n" +
             "      white-space: nowrap;\n" +
             "    }\n" +
-            "    tbody td {\n" +
-            "      padding: 7px 10px;\n" +
-            "      border-bottom: 1px solid var(--border);\n" +
+            "    td {\n" +
+            "      text-align: left;\n" +
+            "      padding: 6px;\n" +
+            "      border: 1px solid #E5E7EB;\n" +
             "      vertical-align: top;\n" +
             "    }\n" +
-            "    tbody tr:last-child td { border-bottom: 0; }\n" +
-            "    tbody tr:nth-child(even) td { background: #FCFCFD; }\n" +
-            "    tbody tr:hover td { background: #F3F4F6; }\n" +
-            "\n" +
-            "    /* Code blocks */\n" +
-            "    code {\n" +
-            "      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;\n" +
-            "      font-size: 0.95em;\n" +
-            "      background: #F3F4F6;\n" +
-            "      border: 1px solid var(--border);\n" +
-            "      border-radius: 6px;\n" +
-            "      padding: 1px 5px;\n" +
+            "    .card {\n" +
+            "      border: 1px solid #E5E7EB;\n" +
+            "      background-color: #FAFAFA;\n" +
+            "      padding: 8px;\n" +
+            "      margin: 0 0 8px 0;\n" +
             "    }\n" +
-            "    pre {\n" +
-            "      margin: 0 0 10px 0;\n" +
-            "      padding: 10px 12px;\n" +
-            "      border-radius: var(--radius);\n" +
-            "      background: #0B1220;\n" +
-            "      color: #E5E7EB;\n" +
-            "      overflow-x: auto;\n" +
-            "      border: 1px solid rgba(255,255,255,.08);\n" +
-            "    }\n" +
-            "    pre code {\n" +
-            "      background: transparent;\n" +
-            "      border: 0;\n" +
-            "      padding: 0;\n" +
-            "      color: inherit;\n" +
+            "    .muted { color: #6B7280; }\n" +
+            "    .log-line {\n" +
+            "      margin: 0;\n" +
+            "      padding: 2px 0;\n" +
+            "      border-bottom: 1px dotted #E5E7EB;\n" +
             "    }\n" +
             "  </style>\n" +
             "</head>\n" +
-            "<body>\n" +
-            "  <div class=\"container\">\n";
+            "<body>\n";
 
         footer =
-            "  </div>\n" +
             "</body>\n" +
             "</html>\n";
     }

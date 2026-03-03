@@ -146,12 +146,12 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                     // IMPORTANT: don't mix document-insert logger with setText()/append without resetting logger.
                     logger.clear();
                     html.clear();
-                    html.append("p", description);
+                    html.append(description);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     logger.clear();
                     html.clear();
-                    html.append("p", "Failed to load model info.");
+                    html.append("Failed to load model info.");
                 }
             }
         };

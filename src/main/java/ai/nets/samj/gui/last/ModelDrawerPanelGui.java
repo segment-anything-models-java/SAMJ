@@ -41,10 +41,12 @@ public class ModelDrawerPanelGui extends JPanel {
 	private JLabel drawerTitle = new JLabel();
 	protected JButton install = new JButton("Install");
 	protected JButton uninstall = new JButton("Uninstall");
-	protected HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF", 200, 200);
-    
+	protected HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF");
+	HTMLPaneScroll htmlView = new HTMLPaneScroll(html);
+	
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
 	
+    private static final double TITLE_HRATIO = 0.15;
 	
 	protected ModelDrawerPanelGui() {
 		setLayout(null);
@@ -55,7 +57,7 @@ public class ModelDrawerPanelGui extends JPanel {
         drawerTitle.setHorizontalAlignment(JLabel.CENTER);
         
         add(drawerTitle);
-        add(html);
+        add(htmlView);
         add(install);
         add(uninstall);
 	}
@@ -73,7 +75,7 @@ public class ModelDrawerPanelGui extends JPanel {
 	    int h  = Math.max(0, getHeight());
 
 	    // Title: 15% height, full width
-	    int titleH = Math.max(0, (int) Math.round(h * 0.15));
+	    int titleH = Math.max(0, (int) Math.round(h * TITLE_HRATIO));
 	    drawerTitle.setBounds(x0, y0, w, titleH);
 
 	    // Bottom buttons row: height based on preferred height (plus padding)
@@ -98,7 +100,7 @@ public class ModelDrawerPanelGui extends JPanel {
 	    int htmlW = Math.max(0, w - 2 * pad);
 	    int htmlH = Math.max(0, (btnRowY - pad) - htmlY);
 
-	    html.setBounds(htmlX, htmlY, htmlW, htmlH);
+	    htmlView.setBounds(htmlX, htmlY, htmlW, htmlH);
 	}
     
     protected void setTitle(String title) {

@@ -86,34 +86,10 @@ public abstract class SAMModel {
 		
 	};
 	
-	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is"
-			+ " computationally heavy. It is not recommended to use it on lower-end computers.</p>";
+	private static final String CAUTION_STRING =
+		    "<div class='caution'><span class='icon'>&#9432;</span>CAUTION: This model is computationally heavy. " +
+		    "It is not recommended to use it on lower-end computers.</div>";
 	
-	protected static String HTML_MODEL_FORMAT_OLD = ""
-			+ "<h2>%s</h2>" + System.lineSeparator()
-			+ "<table>" + System.lineSeparator()
-			+ "  <tr>" + System.lineSeparator()
-			+ "    <th>Weights size:</th>" + System.lineSeparator()
-			+ "    <td>%s MB</td>" + System.lineSeparator()
-			+ "  </tr>" + System.lineSeparator()
-			+ "  <tr>" + System.lineSeparator()
-			+ "    <th>Speed:</th>" + System.lineSeparator()
-			+ "    <td>%sth out of 5</td>" + System.lineSeparator()
-			+ "  </tr>" + System.lineSeparator()
-			+ "  <tr>" + System.lineSeparator()
-			+ "    <th>Performance:</th>" + System.lineSeparator()
-			+ "    <td>%sst out of 5</td>" + System.lineSeparator()
-			+ "  </tr>" + System.lineSeparator()
-			+ "  <tr>" + System.lineSeparator()
-			+ "    <th>GitHub Repository:</th>" + System.lineSeparator()
-			+ "    <td><a href=\"%s\">%s</a></td>" + System.lineSeparator()
-			+ "  </tr>" + System.lineSeparator()
-			+ "  <tr>" + System.lineSeparator()
-			+ "    <th>Paper:</th>" + System.lineSeparator()
-			+ "    <td><a href=\"%s\">%s</a></td>" + System.lineSeparator()
-			+ "  </tr>" + System.lineSeparator()
-			+ "</table>" + System.lineSeparator()
-			+ "";
 	protected static String HTML_MODEL_FORMAT = ""
 		    + "<div class='card'>"
 		    + "  <h2>%s</h2>"
@@ -122,14 +98,14 @@ public abstract class SAMModel {
 		    + "      <tr><th>Weights size:</th><td>%s MB</td></tr>"
 		    + "      <tr><th>Speed:</th><td>%s out of 5</td></tr>"
 		    + "      <tr><th>Performance:</th><td>%s out of 5</td></tr>"
-		    + "      <tr><th>GitHub Repository:</th><td><a href=\"%s\">%s</a></td></tr>"
+		    + "      <tr><th>GitHub<br>Repository:</th><td><a href=\"%s\">%s</a></td></tr>"
 		    + "      <tr><th>Paper:</th><td><a href=\"%s\">%s</a></td></tr>"
 		    + "    </tbody>"
 		    + "  </table>"
 		    + "</div>";
 	
-	private static String HTML_NOT_INSTALLED = "<br><p style=\"color: red;\">This model is not installed yet.</p>";
-
+	private static final String HTML_NOT_INSTALLED =
+		    "<div class='notice'><span class='icon'>&#9888;</span>This model is not installed yet.</div>";
 	
 	private static String HTML_DUMMY = "<br><p style=\"color: red;\">Error installing SAMJ. Cannot find models.<br>"
 										+ "Please reinstall SAMJ.<br>If the error persits create an issue at:<br>"

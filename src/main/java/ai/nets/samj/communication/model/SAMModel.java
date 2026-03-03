@@ -104,8 +104,11 @@ public abstract class SAMModel {
 		    + "  </table>"
 		    + "</div>";
 	
-	private static final String HTML_NOT_INSTALLED =
+	public static final String HTML_NOT_INSTALLED =
 		    "<div class='notice'><span class='icon'>&#9888;</span>This model is not installed yet.</div>";
+	
+	public static final String HTML_ERROR_INSTALLING =
+		    "<div class='notice'><span class='icon' aria-hidden='true'>&#10060;</span>Error while installing this model. Please try again or check the logs.</div>";
 	
 	private static String HTML_DUMMY = "<br><p style=\"color: red;\">Error installing SAMJ. Cannot find models.<br>"
 										+ "Please reinstall SAMJ.<br>If the error persits create an issue at:<br>"
@@ -176,15 +179,31 @@ public abstract class SAMModel {
 	 * @return a text describing the model.
 	 */
 	public String getDescription() {
+		return getDescription(true);
+	}
+
+	/**
+	 * @param includeInstallStatus
+	 * 	whether to provide information about installation status
+	 * @return a text describing the model.
+	 */
+	public String getDescription(boolean includeInstallStatus) {
 		String description = String.format(HTML_MODEL_FORMAT, fullName, "" + size, 
 				"" + speedRank, "" + performanceRank, githubLink, githubName, paperLink, paperName);
-		boolean installed = this.isInstalled();
-		description = this.isHeavy & installed ? CAUTION_STRING + description: description;
-		if (!installed && this.getInstallationManger() != null)
-			description = HTML_NOT_INSTALLED + description;
-		else if (!installed)
-			description = HTML_DUMMY + description; 
-		return description;
+		if (!includeInstallStatus) {
+			description = this.isHeavy ? CAUTION_STRING + description: description;
+			if (this.getInstallationManger() == null)
+				description = HTML_DUMMY + description; 
+			return description;
+		} else {
+			boolean installed = this.isInstalled();
+			description = this.isHeavy & installed ? CAUTION_STRING + description: description;
+			if (!installed && this.getInstallationManger() != null)
+				description = HTML_NOT_INSTALLED + description;
+			else if (!installed)
+				description = HTML_DUMMY + description; 
+			return description;
+		}
 	}
 	
 	/**

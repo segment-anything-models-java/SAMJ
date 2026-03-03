@@ -84,7 +84,6 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         cancelNonInstallTasks();
         stopWorking();
 
-        refreshInfo(rid);
         refreshButtons(rid);
     }
 
@@ -116,52 +115,11 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
     /* ---------------- UI refresh logic ---------------- */
 
-    private void refreshInfo(final long rid) {
-        final SAMModel m = this.model;
-
-        logger.clear();
-        if (m == null) {
-            html.clear();
-            html.append("p", "No model selected.");
-            return;
-        }
-
-        startWorking("Loading info");
-
-        // Cancel previous info worker if any
-        if (infoWorker != null && !infoWorker.isDone() && !infoWorker.isCancelled()) infoWorker.cancel(true);
-
-        infoWorker = new SwingWorker<String, Void>() {
-            @Override
-            protected String doInBackground() throws Exception {
-                return m.getDescription();
-            }
-
-            @Override
-            protected void done() {
-                if (rid != requestId) return; // stale result
-                stopWorking();
-
-                try {
-                    String description = get();
-                    // IMPORTANT: don't mix document-insert logger with setText()/append without resetting logger.
-                    logger.clear();
-                    html.clear();
-                    html.append(description);
-                } catch (Exception ex) {
-                	if (!(ex instanceof CancellationException))
-                		ex.printStackTrace();
-                    logger.clear();
-                    html.clear();
-                    html.append("Failed to load model info.");
-                }
-            }
-        };
-
-        infoWorker.execute();
+    private void refreshButtons(final long rid) {
+    	refreshButtons(rid, false);
     }
 
-    private void refreshButtons(final long rid) {
+    private void refreshButtons(final long rid, final boolean afterInstallation) {
         final SAMModel m = this.model;
 
         // Always start from disabled.
@@ -174,6 +132,8 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
         // Cancel previous installed worker if any
         if (installedWorker != null) installedWorker.cancel(true);
+        
+        startWorking("Loading info");
 
         installedWorker = new SwingWorker<Boolean, Void>() {
             @Override
@@ -184,6 +144,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
             @Override
             protected void done() {
                 if (rid != requestId) return; // stale result
+                stopWorking();
                 if (busy) return;             // while busy, we keep buttons disabled
 
                 try {
@@ -204,12 +165,25 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                         install.setEnabled(!installed);
                         uninstall.setEnabled(installed);
                     });
+                    // IMPORTANT: don't mix document-insert logger with setText()/append without resetting logger.
+                    logger.clear();
+                    html.clear();
+                    String description = m.getDescription(false);
+                    
+                    if (!installed && afterInstallation)
+                    	description = SAMModel.HTML_ERROR_INSTALLING + SAMModel.HTML_NOT_INSTALLED + description;
+                    else if (!installed)
+                    	description = SAMModel.HTML_NOT_INSTALLED + description;
+                    html.append(description);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     onEdt(() -> {
                         install.setEnabled(false);
                         uninstall.setEnabled(false);
                     });
+                    logger.clear();
+                    html.clear();
+                    html.append("Failed to load model info.");
                 }
             }
         };
@@ -226,7 +200,6 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         // If no manager: just refresh & exit (same intent as your original)
         if (m.getInstallationManger() == null) {
             onEdt(() -> {
-                refreshInfo(requestId);
                 refreshButtons(requestId);
                 notifyGuiEnabled(true);
             });
@@ -274,8 +247,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                     logger.log("Installation failed: " + ex.getMessage(), new Color(185, 28, 28));
                 }
 
-                refreshInfo(requestId);
-                refreshButtons(requestId);
+                refreshButtons(requestId, true);
             }
         };
 
@@ -288,7 +260,6 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
         if (m.getInstallationManger() == null) {
             onEdt(() -> {
-                refreshInfo(requestId);
                 refreshButtons(requestId);
                 notifyGuiEnabled(true);
             });
@@ -322,7 +293,6 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                     logger.log("Uninstall failed: " + ex.getMessage(), new Color(185, 28, 28));
                 }
 
-                refreshInfo(requestId);
                 refreshButtons(requestId);
             }
         };

@@ -89,7 +89,7 @@ public abstract class SAMModel {
 	private static final String CAUTION_STRING = "<br><p style=\"color: green;\">CAUTION: This model is"
 			+ " computationally heavy. It is not recommended to use it on lower-end computers.</p>";
 	
-	protected static String HTML_MODEL_FORMAT = ""
+	protected static String HTML_MODEL_FORMAT_OLD = ""
 			+ "<h2>%s</h2>" + System.lineSeparator()
 			+ "<table>" + System.lineSeparator()
 			+ "  <tr>" + System.lineSeparator()
@@ -114,6 +114,19 @@ public abstract class SAMModel {
 			+ "  </tr>" + System.lineSeparator()
 			+ "</table>" + System.lineSeparator()
 			+ "";
+	protected static String HTML_MODEL_FORMAT = ""
+		    + "<div class='card'>"
+		    + "  <h2>%s</h2>"
+		    + "  <table>"
+		    + "    <tbody>"
+		    + "      <tr><th>Weights size:</th><td>%s MB</td></tr>"
+		    + "      <tr><th>Speed:</th><td>%s out of 5</td></tr>"
+		    + "      <tr><th>Performance:</th><td>%s out of 5</td></tr>"
+		    + "      <tr><th>GitHub Repository:</th><td><a href=\"%s\">%s</a></td></tr>"
+		    + "      <tr><th>Paper:</th><td><a href=\"%s\">%s</a></td></tr>"
+		    + "    </tbody>"
+		    + "  </table>"
+		    + "</div>";
 	
 	private static String HTML_NOT_INSTALLED = "<br><p style=\"color: red;\">This model is not installed yet.</p>";
 

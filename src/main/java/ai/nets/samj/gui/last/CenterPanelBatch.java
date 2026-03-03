@@ -192,4 +192,13 @@ public class CenterPanelBatch extends JPanel {
 
 	    propagate3D.setBounds(cbX, cbY, cbW, checkH);
 	}
+	
+	protected void setWarningLayout(boolean isWarning) {
+		CardLayout lyt = (CardLayout) this.getLayout();
+		if (isWarning) {
+			lyt.show(cardPanel, YES_MSG);
+		} else {
+			lyt.show(cardPanel, NO_MSG);
+		}
+	}
 }

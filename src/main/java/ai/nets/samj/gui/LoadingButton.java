@@ -109,9 +109,15 @@ public class LoadingButton extends JButton {
         });
 	}
 	
+	public void setLoading() {
+		setEnabled(false);
+		showAnimation(true);
+	}
+	
 	@Override
 	public void setEnabled(boolean isEnabled) {
 		textLabel.setText(String.format(BTN_TEXT_HTML, isEnabled ? ENABLED_COLOR : DISABLED_COLOR, text));
+		showAnimation(false);
 		super.setEnabled(isEnabled);
 	}
 	

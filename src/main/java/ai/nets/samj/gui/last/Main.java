@@ -1,16 +1,11 @@
 package ai.nets.samj.gui.last;
 
-import java.awt.CardLayout;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import org.apposed.appose.BuildException;
@@ -40,8 +35,6 @@ import net.imglib2.util.Util;
 
 public class Main extends MainGUI {
 	
-	private boolean isValidPrompt = false;
-
     protected final List<SAMModel> modelList;
     protected ImageSelectionListener imageListener;
     protected ModelSelectionListener modelListener;
@@ -49,6 +42,9 @@ public class Main extends MainGUI {
     protected BatchCallback batchDrawerCallback;
     protected ConsumerCallback consumerCallback;
     protected ConsumerInterface consumer;
+    
+    private boolean uiReady = false;
+    private boolean pendingModelGuiRefresh = false;
 
     private static final long serialVersionUID = -6511057540533292091L;
 
@@ -123,12 +119,11 @@ public class Main extends MainGUI {
 		
 		this.modelList = modelList;
 		this.consumer = consumer;
+		createListeners();
 
 		this.selectionPanel.cmbModels.setModels(this.modelList);
-		this.selectionPanel.cmbModels.setListener(modelListener);
 		
         this.consumer.setGuiCallback(() -> {
-            setTwoThirdsEnabled(false);
             selectionPanel.cmbImages.updateList();
             if (selectionPanel.cmbImages.getSelectedObject() == null)
             	return;
@@ -151,28 +146,21 @@ public class Main extends MainGUI {
 		this.selectionPanel.go.addActionListener(e -> loadModel());
         this.bottomPanel.export.addActionListener(e -> consumer.exportImageLabeling());
         this.centerPanel.instantCard.chkInstant.addActionListener(
-        		e -> setInstantPromptsEnabled(this.centerPanel.instantCard.chkInstant.isSelected() && this.isValidPrompt));
+        		e -> setInstantPromptsEnabled(this.centerPanel.instantCard.chkInstant.isSelected() && this.centerPanel.isPromptValid()));
 		this.centerPanel.instantCard.propagate3D.addActionListener(e -> System.err.println("DO SOMETHING"));// TODO);
         this.centerPanel.batchCard.btnBatchSAMize.addActionListener(e -> batchSAMize());
         this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
-        this.close.addActionListener(e -> dispose());
+        this.close.addActionListener(null);// TODO);
 		this.help.addActionListener(e -> consumer.exportImageLabeling());
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                close();
-            }
-        });
         new Thread(() -> {
         	boolean installed = selectionPanel.cmbModels.getSelectedModel().isInstalled();
             if (installed && selectionPanel.cmbImages.getSelectedObject() != null)
             	SwingUtilities.invokeLater(() -> selectionPanel.go.setEnabled(true));
-            else if (!installed)
-            	toggleModelDrawer();
+            Main.this.modelListener.changeGUI();
         }).start();
         
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         //*/
+		this.selectionPanel.cmbModels.setListener(modelListener);
 	}
 
     protected void setInstantPromptsEnabled(boolean enabled) {
@@ -186,7 +174,6 @@ public class Main extends MainGUI {
     protected void loadModel() {
         SwingUtilities.invokeLater(() -> {
         	Main.this.selectionPanel.go.setEnabled(false);
-            setTwoThirdsEnabled(false);
         });
         new Thread(() -> {
             try {
@@ -194,9 +181,8 @@ public class Main extends MainGUI {
             	Main.this.selectionPanel.cmbModels.loadModel(Cast.unchecked(Main.this.selectionPanel.cmbImages.getSelectedRai()));
                 consumer.setFocusedImage(Main.this.selectionPanel.cmbImages.getSelectedObject());
                 consumer.setModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
-                setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && this.isValidPrompt);
+                setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && centerPanel.isPromptValid());
                 Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
-                setTwoThirdsEnabled(true);
             } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
             	Main.this.selectionPanel.go.setEnabled(true);
                 ex.printStackTrace();
@@ -213,15 +199,11 @@ public class Main extends MainGUI {
     		rai = null;
     	List<int[]> pointPrompts = this.consumer.getPointRoisOnFocusImage();
     	List<Rectangle> rectPrompts = this.consumer.getRectRoisOnFocusImage();
-		CardLayout lyt = (CardLayout) cardPanel2_2.getLayout();
-    	if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null) {
-        	lyt.show(cardPanel2_2, VISIBLE_STR);
-    		return;
-    	} else if (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(Util.getTypeFromInterval(rai) instanceof IntegerType)){
-        	lyt.show(cardPanel2_2, VISIBLE_STR);
+    	if ((pointPrompts.size() == 0 && rectPrompts.size() == 0 && rai == null)
+    			|| (pointPrompts.size() == 0 && rectPrompts.size() == 0 && !(Util.getTypeFromInterval(rai) instanceof IntegerType))) {
+        	centerPanel.batchCard.setWarningLayout(true);
     		return;
     	}
-    	lyt.show(cardPanel2_2, INVISIBLE_STR);
     	centerPanel.batchCard.stopProgressBtn.setEnabled(true);
     	consumer.setFocusedImage(selectionPanel.cmbImages.getSelectedObject());
     	new Thread(() -> {
@@ -257,7 +239,6 @@ public class Main extends MainGUI {
             public void imageActionsOnImageChanged() {
                 consumer.deactivateListeners();
                 consumer.deselectImage();
-                setTwoThirdsEnabled(false);
 
                 if (Main.this.selectionPanel.cmbImages.getSelectedObject() == null) {
                     Main.this.selectionPanel.go.setEnabled(false);
@@ -285,19 +266,19 @@ public class Main extends MainGUI {
 
             @Override
             public void changeGUI() {
-                setTwoThirdsEnabled(false);
-
-                // your original logic overwrote the first line anyway
-                Main.this.selectionPanel.go.setEnabled(false);
-                Main.this.selectionPanel.go.showAnimation(true);
+            	if (!uiReady) {
+            		pendingModelGuiRefresh = true;
+            		return;
+            	}
+                selectionPanel.go.setLoading();
 
                 new Thread(() -> {
                     boolean installed = Main.this.selectionPanel.cmbModels.getSelectedModel().isInstalled();
                     SwingUtilities.invokeLater(() -> {
                     	Main.this.selectionPanel.go.setEnabled(installed);
-                    	Main.this.selectionPanel.go.showAnimation(false);
-                        if (!installed && !Main.this.isModelDrawerOpen)
-                            toggleModelDrawer();
+                    	if (!installed) {
+                    		manageWhenModelNotInstalled();
+                    	}
                     });
                 }).start();
             }
@@ -310,7 +291,7 @@ public class Main extends MainGUI {
             	Main.this.selectionPanel.cmbImages.setEnabled(enabled);
 
                 if (!enabled) {
-                    setTwoThirdsEnabled(false);
+                    // TODO setTwoThirdsEnabled(false);
                     return;
                 }
 
@@ -366,23 +347,23 @@ public class Main extends MainGUI {
         consumerCallback = new ConsumerCallback() {
             @Override
             public void validPromptChosen(boolean isValid) {
-                if (isValid && !isValidPrompt) {
-                    CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
-                    lyt.show(cardPanel1_2, INVISIBLE_STR);
-                    isValidPrompt = true;
-                    if (Main.this.selectionPanel.cmbModels.getSelectedModel().isLoaded())
-                        MainGUIOld.this.chkInstant.setEnabled(true);
-
-                } else if (!isValid && isValidPrompt) {
-                    CardLayout lyt = (CardLayout) cardPanel1_2.getLayout();
-                    lyt.show(cardPanel1_2, VISIBLE_STR);
-                    isValidPrompt = false;
-                    MainGUIOld.this.chkInstant.setSelected(false);
-                    MainGUIOld.this.chkInstant.setEnabled(false);
-                    MainGUIOld.this.setInstantPromptsEnabled(false);
-                }
+                centerPanel.setValidPrompt(isValid);
             }
         };
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (uiReady) return;
+        uiReady = true;
+
+        SwingUtilities.invokeLater(() -> {
+            if (pendingModelGuiRefresh) {
+                modelListener.changeGUI();
+                pendingModelGuiRefresh = false;
+            }
+        });
     }
 
     public static void main(String[] args) {

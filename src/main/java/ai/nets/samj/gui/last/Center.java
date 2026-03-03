@@ -20,4 +20,12 @@ public class Center extends CenterPanel {
         	//setInstantPromptsEnabled(false);
         });
 	}
+	
+	public boolean isPromptValid() {
+		return true;
+	}
+	
+	public void setValidPrompt(boolean isValid) {
+		
+	}
 }

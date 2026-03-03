@@ -1,5 +1,6 @@
 package ai.nets.samj.gui.last;
 
+import java.awt.CardLayout;
 import java.awt.Window;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -8,6 +9,9 @@ public class MainGUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private static final int MIN_DRAWER_SIZE = 450;
+    
+    protected boolean isModelDrawer = true;
+    protected boolean isDrawerOpen = false;
 
     // keep compatibility with "Main extends MainGUI"
     protected javax.swing.JButton close;
@@ -33,25 +37,20 @@ public class MainGUI extends JPanel {
         centerPanel = content.centerPanel; bottomPanel = content.bottomPanel;
 
         drawersPanel.setVisible(false);
-        drawersPanel.setModelsOpen(false);
-        drawersPanel.setImagesOpen(false);
     	selectionPanel.go.setEnabled(false);
-
-        setTwoThirdsEnabled(false);
     }
 
-    protected void setTwoThirdsEnabled(boolean enabled) {}
-
-    @Override public void doLayout() {
+    @Override
+    public void doLayout() {
         int h = getHeight();
-        if (!drawersPanel.isOpen()) {
+        if (!isDrawerOpen()) {
             content.setBounds(0, 0, getWidth(), h);
             drawersPanel.setBounds(getWidth(), 0, 0, h);
             return;
         }
         int leftW = pinnedLeftW > 0 ? pinnedLeftW : getWidth();
         content.setBounds(0, 0, leftW, h);
-        drawersPanel.setBounds(leftW, 0, Math.max(0, getWidth() - leftW), h);
+        drawersPanel.setBounds(leftW, 0, getWidth() - leftW, h);
     }
 
     private Window window() { return SwingUtilities.getWindowAncestor(this); }
@@ -65,21 +64,29 @@ public class MainGUI extends JPanel {
 
     private int computeDrawerW(int leftW) { return Math.max(MIN_DRAWER_SIZE, leftW / 2); }
 
-    protected void toggleModelDrawer() { setModelDrawerOpen(!drawersPanel.isModelsOpen()); }
-    protected void toggleImageDrawer() { setImageDrawerOpen(!drawersPanel.isImagesOpen()); }
+    protected void toggleModelDrawer() { 
+    	setModelDrawerOpen(!isModelsDrawerOpen()); }
+    protected void toggleImageDrawer() { setImageDrawerOpen(!isImagesDrawerOpen()); }
 
     public void setModelDrawerOpen(boolean open) {
-        if (drawersPanel.isModelsOpen() == open) 
+        if (isModelsDrawerOpen() == open) 
         	return;
-    	boolean wasOpened = drawersPanel.isOpen();
-    	drawersPanel.setModelsOpen(open);
+    	boolean wasOpened = isDrawerOpen();
         if (open) {
-        	if (wasOpened)
-        		return;
+            isModelDrawer = true;
+            ((CardLayout) drawersPanel.getLayout()).show(drawersPanel, DrawersPanel.MODEL_TAG);
+        	if (wasOpened) {
+                return;
+        	}
+        	isDrawerOpen = true;
+            this.drawersPanel.setVisible(true);
             pinnedLeftW = getWidth() > 0 ? getWidth() : 600;
             drawerW = computeDrawerW(pinnedLeftW);
             SwingUtilities.invokeLater(() -> resizeWindowBy(drawerW));
         } else {
+            this.drawersPanel.setVisible(false);
+            isModelDrawer = false;
+            isDrawerOpen = false;
 	        final int shrink = drawerW;   // <<< capture BEFORE resetting
 	        pinnedLeftW = -1;
 	        drawerW = 0;
@@ -90,17 +97,24 @@ public class MainGUI extends JPanel {
     }
 
     public void setImageDrawerOpen(boolean open) {
-        if (drawersPanel.isImagesOpen() == open) 
+        if (isImagesDrawerOpen() == open) 
         	return;
-    	boolean wasOpened = drawersPanel.isOpen();
-    	drawersPanel.setImagesOpen(open);
+    	boolean wasOpened = isDrawerOpen();
         if (open) {
-        	if (wasOpened)
-        		return;
+        	isModelDrawer = !open;
+            ((CardLayout) drawersPanel.getLayout()).show(drawersPanel, DrawersPanel.IMAGE_TAG);
+        	if (wasOpened) {
+                return;
+        	}
+        	isDrawerOpen = true;
+            this.drawersPanel.setVisible(true);
             pinnedLeftW = getWidth() > 0 ? getWidth() : 600;
             drawerW = computeDrawerW(pinnedLeftW);
             SwingUtilities.invokeLater(() -> resizeWindowBy(drawerW));
         } else {
+            this.drawersPanel.setVisible(false);
+            isModelDrawer = false;
+            isDrawerOpen = false;
 	        final int shrink = drawerW;   // <<< capture BEFORE resetting
 	        pinnedLeftW = -1;
 	        drawerW = 0;
@@ -109,4 +123,21 @@ public class MainGUI extends JPanel {
         revalidate();
         repaint();
     }
+	
+	protected boolean isDrawerOpen() {
+		return this.isDrawerOpen;
+	}
+	
+	protected boolean isModelsDrawerOpen() {
+		return isDrawerOpen && isModelDrawer;
+	}
+	
+	protected boolean isImagesDrawerOpen() {
+		return isDrawerOpen && !isModelDrawer;
+	}
+	
+	protected void manageWhenModelNotInstalled() {
+		if (isImagesDrawerOpen() || !isDrawerOpen())
+			setModelDrawerOpen(true);
+	}
 }

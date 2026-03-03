@@ -11,8 +11,6 @@ public class DrawersPanel extends JPanel {
 	
     private static final long serialVersionUID = 4451334593534890679L;
     
-    protected boolean isModel = true;
-    
 	protected ModelDrawerPanel modelDrawerPanel;
 	
     protected ImageDrawerPanel imageDrawerPanel;
@@ -41,36 +39,4 @@ public class DrawersPanel extends JPanel {
         ((CardLayout) this.getLayout()).show(this, MODEL_TAG);
         
     }
-	
-	public boolean isOpen() {
-		return this.isVisible();
-	}
-	
-	public boolean isModelsOpen() {
-		return this.isVisible() && isModel;
-	}
-	
-	public boolean isImagesOpen() {
-		return this.isVisible() && !isModel;
-	}
-	
-	public void setImagesOpen(boolean open) {
-		if (!open) {
-			this.setVisible(open);
-			return;
-		}
-        ((CardLayout) this.getLayout()).show(this, IMAGE_TAG);
-        this.setVisible(true);
-        isModel = false;
-	}
-	
-	public void setModelsOpen(boolean open) {
-		if (!open) {
-			this.setVisible(open);
-			return;
-		}
-        ((CardLayout) this.getLayout()).show(this, MODEL_TAG);
-        this.setVisible(true);
-        isModel = true;
-	}
 }

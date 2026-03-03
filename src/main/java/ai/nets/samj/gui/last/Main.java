@@ -42,9 +42,6 @@ public class Main extends MainGUI {
     protected BatchCallback batchDrawerCallback;
     protected ConsumerCallback consumerCallback;
     protected ConsumerInterface consumer;
-    
-    private boolean uiReady = false;
-    private boolean pendingModelGuiRefresh = false;
 
     private static final long serialVersionUID = -6511057540533292091L;
 
@@ -152,10 +149,7 @@ public class Main extends MainGUI {
         this.close.addActionListener(null);// TODO);
 		this.help.addActionListener(e -> consumer.exportImageLabeling());
         new Thread(() -> {
-        	boolean installed = selectionPanel.cmbModels.getSelectedModel().isInstalled();
-            if (installed && selectionPanel.cmbImages.getSelectedObject() != null)
-            	SwingUtilities.invokeLater(() -> selectionPanel.go.setEnabled(true));
-            Main.this.modelListener.changeGUI();
+            changeGUI();
         }).start();
         
         //*/
@@ -174,7 +168,7 @@ public class Main extends MainGUI {
 
     protected void loadModel() {
         SwingUtilities.invokeLater(() -> {
-        	Main.this.selectionPanel.go.setEnabled(false);
+        	setLoading();
         });
         new Thread(() -> {
             try {
@@ -184,11 +178,11 @@ public class Main extends MainGUI {
                 consumer.setModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
                 setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && centerPanel.isPromptValid());
                 Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
+                Main.this.manageLoaded(true);
             } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
-            	Main.this.selectionPanel.go.setEnabled(true);
+            	Main.this.manageLoaded(false);
                 ex.printStackTrace();
             }
-            selectionPanel.go.showAnimation(false);
         }).start();
     }
     
@@ -227,7 +221,6 @@ public class Main extends MainGUI {
     }
     
     protected void createListeners() {
-        // Guard: don’t recreate if called twice
         if (imageListener != null) return;
 
         imageListener = new ImageSelectionListener() {
@@ -263,25 +256,6 @@ public class Main extends MainGUI {
             public void changeDrawerPanel(SAMModel selected) {
                 if (drawersPanel.modelDrawerPanel.isVisible())
                 	drawersPanel.modelDrawerPanel.setSelectedModel(selected);
-            }
-
-            @Override
-            public void changeGUI() {
-            	if (!uiReady) {
-            		pendingModelGuiRefresh = true;
-            		return;
-            	}
-                selectionPanel.go.setLoading();
-
-                new Thread(() -> {
-                    boolean installed = Main.this.selectionPanel.cmbModels.getSelectedModel().isInstalled();
-                    SwingUtilities.invokeLater(() -> {
-                    	Main.this.selectionPanel.go.setEnabled(installed);
-                    	if (!installed) {
-                    		manageWhenModelNotInstalled();
-                    	}
-                    });
-                }).start();
             }
         };
 
@@ -351,20 +325,6 @@ public class Main extends MainGUI {
                 centerPanel.setValidPrompt(isValid);
             }
         };
-    }
-
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        if (uiReady) return;
-        uiReady = true;
-
-        SwingUtilities.invokeLater(() -> {
-            if (pendingModelGuiRefresh) {
-                modelListener.changeGUI();
-                pendingModelGuiRefresh = false;
-            }
-        });
     }
 
     public static void main(String[] args) {

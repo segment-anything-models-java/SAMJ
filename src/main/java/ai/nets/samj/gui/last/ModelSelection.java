@@ -114,7 +114,6 @@ public class ModelSelection extends ComboBoxButtonComp<SAMModel> implements Item
 				// checks if indeed a different model is selected (from what was selected before)
 				if (nSelectedModel != selected) {
 					unLoadModel();
-					listener.changeGUI();
 					selected = nSelectedModel;
 				}
 			} catch (Exception ex) {
@@ -131,8 +130,6 @@ public class ModelSelection extends ComboBoxButtonComp<SAMModel> implements Item
 	public interface ModelSelectionListener {
 
 	    void changeDrawerPanel(SAMModel selected);
-	    
-	    void changeGUI();
 	}
 	
 	private void installHoverListener() {

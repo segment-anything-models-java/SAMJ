@@ -12,6 +12,9 @@ public class MainGUI extends JPanel {
     
     protected boolean isModelDrawer = true;
     protected boolean isDrawerOpen = false;
+    
+    private boolean uiReady = false;
+    private boolean pendingModelGuiRefresh = false;
 
     // keep compatibility with "Main extends MainGUI"
     protected javax.swing.JButton close;
@@ -51,6 +54,10 @@ public class MainGUI extends JPanel {
         int leftW = pinnedLeftW > 0 ? pinnedLeftW : getWidth();
         content.setBounds(0, 0, leftW, h);
         drawersPanel.setBounds(leftW, 0, getWidth() - leftW, h);
+    }
+    
+    protected void setLoaded(boolean isInstalled) {
+    	
     }
 
     private Window window() { return SwingUtilities.getWindowAncestor(this); }
@@ -136,8 +143,73 @@ public class MainGUI extends JPanel {
 		return isDrawerOpen && !isModelDrawer;
 	}
 	
-	protected void manageWhenModelNotInstalled() {
-		if (isImagesDrawerOpen() || !isDrawerOpen())
-			setModelDrawerOpen(true);
+	protected void manageInstalled(boolean isInstalled) {
+		boolean isThereImage = selectionPanel.cmbImages.getSelectedObject() != null;
+		if (!isInstalled) {
+			if (isImagesDrawerOpen() || !isDrawerOpen())
+				setModelDrawerOpen(true);
+			this.selectionPanel.go.setEnabled(false);
+		} else {
+			this.selectionPanel.go.setEnabled(isThereImage);
+		}
+		this.centerPanel.radioButton1.setEnabled(false);
+		this.centerPanel.radioButton2.setEnabled(false);
+		this.centerPanel.instantCard.chkInstant.setEnabled(false);
+		this.centerPanel.instantCard.propagate3D.setEnabled(false);
+		this.centerPanel.batchCard.btnBatchSAMize.setEnabled(false);
+		this.centerPanel.batchCard.stopProgressBtn.setEnabled(false);
+		this.centerPanel.batchCard.batchProgress.setEnabled(false);
+		this.centerPanel.batchCard.propagate3D.setEnabled(false);
+		this.bottomPanel.export.setEnabled(false);
+		this.bottomPanel.returnLargest.setEnabled(false);
 	}
+	
+	protected void setLoading() {
+		manageLoaded(false);
+		this.selectionPanel.go.setLoading();
+	}
+	
+	protected void manageLoaded(boolean isLoaded) {
+		this.selectionPanel.go.setEnabled(!isLoaded);
+		this.centerPanel.radioButton1.setEnabled(isLoaded);
+		this.centerPanel.radioButton2.setEnabled(isLoaded);
+		this.centerPanel.instantCard.chkInstant.setEnabled(isLoaded);
+		this.centerPanel.instantCard.propagate3D.setEnabled(isLoaded);
+		this.centerPanel.batchCard.btnBatchSAMize.setEnabled(isLoaded);
+		this.centerPanel.batchCard.stopProgressBtn.setEnabled(isLoaded);
+		this.centerPanel.batchCard.batchProgress.setEnabled(isLoaded);
+		this.centerPanel.batchCard.propagate3D.setEnabled(isLoaded);
+		this.bottomPanel.export.setEnabled(isLoaded);
+		this.bottomPanel.returnLargest.setEnabled(isLoaded);
+	}
+	
+    public void changeGUI() {
+    	if (!uiReady) {
+    		pendingModelGuiRefresh = true;
+    		return;
+    	}
+    	setLoading();
+        //selectionPanel.go.setLoading();
+
+        new Thread(() -> {
+            boolean installed = selectionPanel.cmbModels.getSelectedModel().isInstalled();
+            SwingUtilities.invokeLater(() -> {
+            	manageInstalled(installed);
+            });
+        }).start();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (uiReady) return;
+        uiReady = true;
+
+        SwingUtilities.invokeLater(() -> {
+            if (pendingModelGuiRefresh) {
+                changeGUI();
+                pendingModelGuiRefresh = false;
+            }
+        });
+    }
 }

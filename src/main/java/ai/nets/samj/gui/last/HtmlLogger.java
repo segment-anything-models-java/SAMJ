@@ -47,12 +47,10 @@ public final class HtmlLogger {
 
     /** Clears pane + resets internal working animation state. */
     public void clear() {
-        runOnEdt(new Runnable() {
-            @Override
-            public void run() {
-                pane.clear();
-                resetWorkingState();
-            }
+        runOnEdt(() -> {
+            // replaces pane.clear()
+            pane.setBodyHtml("");
+            resetWorkingState();
         });
     }
 

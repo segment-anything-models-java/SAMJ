@@ -167,7 +167,6 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                     });
                     // IMPORTANT: don't mix document-insert logger with setText()/append without resetting logger.
                     logger.clear();
-                    html.clear();
                     String description = m.getDescription(false);
                     
                     if (!installed && afterInstallation)
@@ -182,8 +181,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                         uninstall.setEnabled(false);
                     });
                     logger.clear();
-                    html.clear();
-                    html.append("Failed to load model info.");
+                    logger.log("Failed to load model info.");
                 }
             }
         };

@@ -8,8 +8,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JEditorPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 
 /**
  * HTML pane with Swing-safe CSS + adaptive font sizing.
@@ -126,38 +124,18 @@ public class HTMLPane extends JEditorPane {
     public void setAutoScroll(AutoScroll mode) {
         this.autoScroll = (mode != null) ? mode : AutoScroll.TOP;
     }
-
-    @Override
-    public String getText() {
-        Document doc = this.getDocument();
-        try {
-            return doc.getText(0, doc.getLength());
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-            return super.getText();
-        }
-    }
-
-    public void clear() {
+    
+    public void setBodyHtml(String bodyHtml) {
         runOnEdt(() -> {
             html.setLength(0);
+            html.append(bodyHtml != null ? bodyHtml : "");
             render();
         });
     }
-
+    
     public void append(String content) {
         runOnEdt(() -> {
             html.append(content != null ? content : "");
-            render();
-        });
-    }
-
-    public void append(String tag, String content) {
-        runOnEdt(() -> {
-            String safeTag = (tag == null || tag.trim().isEmpty()) ? "div" : tag.trim();
-            html.append("<").append(safeTag).append(">")
-                .append(content != null ? content : "")
-                .append("</").append(safeTag).append(">");
             render();
         });
     }

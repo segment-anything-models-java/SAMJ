@@ -4,8 +4,10 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -29,6 +31,10 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
     private final List<ModelDrawerPanelListener> listeners = new CopyOnWriteArrayList<ModelDrawerPanelListener>();
 
     private final HtmlLogger logger;
+    
+    // working line state
+    private volatile String workingLabel;
+    private int dots = 0;
 
     // Background tasks
     private SwingWorker<String, Void> infoWorker;
@@ -45,6 +51,11 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
     // Simple busy state
     private volatile boolean busy = false;
 
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private final Color WORKING_COLOR = new Color(107, 114, 128);
+    private final static String INSTALLING_STRING = "Installing";
+    private final static String UNINSTALLING_STRING = "Uninstalling";
+
     protected ModelDrawerPanel() {
         super();
 
@@ -54,7 +65,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         this.uninstall.addActionListener(this);
 
         // Working animation uses HtmlLogger’s “blank message => working line” behavior.
-        this.workingTimer = new Timer(300, e -> logger.log("", new Color(107, 114, 128))); // gray-ish
+        this.workingTimer = new Timer(600, e -> logger.log("", WORKING_COLOR)); // gray-ish
         this.workingTimer.setRepeats(true);
     }
 
@@ -208,7 +219,8 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
         // Ensure we’re in “logger mode”
         logger.clear();
-        logger.log("Starting installation...", new Color(37, 99, 235)); // blue-ish
+        
+        startWorking(INSTALLING_STRING);
 
         cancelInstallTasksOnly(); // if an old install/uninstall worker exists
 
@@ -267,7 +279,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         setBusy(true);
 
         logger.clear();
-        startWorking("Uninstalling model");
+        startWorking(UNINSTALLING_STRING);
 
         cancelInstallTasksOnly();
 
@@ -302,12 +314,28 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
     private void startWorking(String message) {
         logger.clear();
-        logger.setWorkingBaseText(message);
+        workingLabel = (message == null || message.trim().isEmpty()) ? "": message.trim();
+        dots = 0;
+
+        // Print immediately (so user sees it right away)
+        logger.log(buildWorkingLine(), WORKING_COLOR);
+
         if (!workingTimer.isRunning()) workingTimer.start();
     }
 
     private void stopWorking() {
         if (workingTimer.isRunning()) workingTimer.stop();
+        dots = 0;
+    }
+    
+    private String buildWorkingLine() {
+        String time = LocalTime.now().format(TIME_FMT);
+
+        dots = (dots % 3) + 1; // 1..3
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < dots; i++) sb.append('.');
+
+        return time + " " + workingLabel + sb.toString();
     }
 
     /* ---------------- busy state + utilities ---------------- */

@@ -6,6 +6,7 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
@@ -35,10 +36,14 @@ public final class HtmlLogger {
     private int workingTick = 0;
     private Position workingStart = null;
     private int workingLength = 0;
+    private AtomicLong startMillis;
+    private AtomicLong lastMessageMillis = new AtomicLong(0);
 
     private String workingBaseText = "Working, this might take several minutes";
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    
+    private static final long MINIMUM_INTERVAL = 1200;
 
     public HtmlLogger(HTMLPane pane) {
         this.pane = Objects.requireNonNull(pane, "pane");
@@ -67,6 +72,10 @@ public final class HtmlLogger {
         if (text == null) return;
 
         final boolean isWorkingTick = text.trim().isEmpty();
+        if (isWorkingTick && (System.currentTimeMillis() - this.lastMessageMillis.get()) < MINIMUM_INTERVAL)
+        	return;
+        else if (!isWorkingTick)
+        	lastMessageMillis.set(System.currentTimeMillis());
         final String msg = isWorkingTick ? buildWorkingMessage() : text;
 
         // Only reset "working offsets" when a real message arrives
@@ -81,8 +90,13 @@ public final class HtmlLogger {
             public void run() {
                 try {
                     HTMLDocument doc = requireHtmlDocument();
-                    HTMLEditorKit kit = requireHtmlEditorKit();
+                    HTMLEditorKit kit = requireHtmlEditorKit();                    
 
+                    if (isWorkingTick && startMillis == null) {
+                        startMillis = new AtomicLong(System.currentTimeMillis());
+                    } else if (!isWorkingTick) {
+                    	startMillis = null;
+                    }
                     // If we're updating the working line, remove the previous working fragment first.
                     if (isWorkingTick && workingStart != null && workingLength > 0) {
                         safeRemove(doc, workingStart.getOffset(), workingLength);
@@ -131,13 +145,18 @@ public final class HtmlLogger {
     private String buildWorkingMessage() {
         String dots;
         int mod = workingTick % 3;
-        if (mod == 0) dots = " .";
-        else if (mod == 1) dots = " . .";
+        if (mod == 0) dots = " .     ";
+        else if (mod == 1) dots = " . .   ";
         else dots = " . . .";
-
+        String elapsedTime;
+        if (this.startMillis == null) {
+        	elapsedTime = "[0s]";
+        } else {
+        	elapsedTime = "[" + (Math.round((System.currentTimeMillis() - startMillis.get()) / 100) / 10d) + "s]";
+        }
         workingTick++;
 
-        return LocalDateTime.now().format(TIME_FMT) + " -- " + workingBaseText + dots;
+        return LocalDateTime.now().format(TIME_FMT) + " -- " + workingBaseText + dots + elapsedTime;
     }
 
     private static String buildHtmlFragment(String text, Color color) {
@@ -213,10 +232,7 @@ public final class HtmlLogger {
     }
 
     private static void safeRemove(HTMLDocument doc, int offset, int length) throws BadLocationException {
-        int docLen = doc.getLength();
-        int off = Math.max(0, Math.min(offset, docLen));
-        int len = Math.max(0, Math.min(length, docLen - off));
-        if (len > 0) doc.remove(off, len);
+        if (length > 0) doc.remove(offset - length, length);
     }
 
     private void runOnEdt(Runnable r) {

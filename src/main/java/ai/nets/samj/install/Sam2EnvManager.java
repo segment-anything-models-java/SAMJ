@@ -63,6 +63,7 @@ import io.bioimage.modelrunner.download.FileDownloader;
 public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	private final String modelType;
+	private String installEnv;
 	/**
 	 * Default version for the family of SAM2 models
 	 */
@@ -126,13 +127,25 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    final String pixiTemplate = readClasspathResourceAsString("/pixi.toml");
 	    final String cudaVersion = pickCudaVersion(pixiTemplate);
 
-	    final String renderedPixi = String.format(
-	            Locale.ROOT,
-	            pixiTemplate,
-	            SAM2_ENV_NAME,
-	            cudaVersion.replace(".", ""),
-	            cudaVersion.replace(".", "")
-	    );
+	    final String renderedPixi;
+	    if (cudaVersion == null) {
+		    renderedPixi = String.format(
+		            Locale.ROOT,
+		            pixiTemplate,
+		            SAM2_ENV_NAME,
+		            "", ""
+		    );
+		    this.installEnv = "cpu";
+	    } else {
+		    renderedPixi = String.format(
+		            Locale.ROOT,
+		            pixiTemplate,
+		            SAM2_ENV_NAME,
+		            cudaVersion.replace(".", ""),
+		            cudaVersion.replace(".", "")
+		    );
+		    this.installEnv = "cuda";
+	    }
 
 	    // TODO currently not supported setting the path
 	    pixi = Appose.pixi().content(renderedPixi);
@@ -333,7 +346,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    	pixi.subscribeError(this.errConsumer);
 	    if (this.pixiConsumer != null)
 	    	pixi.subscribeProgress(this.pixiConsumer);
-	    pixi.environment("cuda").rebuild();
+	    pixi.environment(installEnv).rebuild();
 	    installSAM2Wheel();
 	}
 
@@ -386,7 +399,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	            return cv;
 	        }
 	    }
-	    return COMPAT_CUDAS.get(0);
+	    return null;
 	}
 	
 	/**

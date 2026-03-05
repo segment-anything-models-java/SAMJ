@@ -48,6 +48,8 @@ import ai.nets.samj.models.Sam2;
 
 import org.apposed.appose.Appose;
 import org.apposed.appose.BuildException;
+import org.apposed.appose.builder.PixiBuilderFactory;
+import org.apposed.appose.tool.Pixi;
 
 import io.bioimage.modelrunner.apposed.appose.Types;
 import io.bioimage.modelrunner.download.FileDownloader;
@@ -127,12 +129,13 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    final String renderedPixi = String.format(
 	            Locale.ROOT,
 	            pixiTemplate,
+	            SAM2_ENV_NAME,
 	            cudaVersion.replace(".", ""),
 	            cudaVersion.replace(".", "")
 	    );
 
 	    // TODO currently not supported setting the path
-	    pixi = Appose.pixi().scheme("pixi.toml").name(SAM2_ENV_NAME).content(renderedPixi);
+	    pixi = Appose.pixi().content(renderedPixi);
 	}
 
     // TODO currently not supported setting the path
@@ -208,8 +211,19 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @return whether the Python environment with the corresponding packages needed to run SAM2
 	 * has been installed or not
 	 */
+	public boolean checkPixiEnvIsThere() {
+		PixiBuilderFactory builder = new PixiBuilderFactory();
+		return builder.canWrap(new File(Pixi.BASE_PATH, SAM2_ENV_NAME));
+	}
+	
+	/**
+	 * Check whether the Python environment with the corresponding packages needed to run SAM2
+	 * has been installed or not. The environment folder should be named {@value #SAM2_ENV_NAME} 
+	 * @return whether the Python environment with the corresponding packages needed to run SAM2
+	 * has been installed or not
+	 */
 	public boolean checkSAMDepsInstalled() {
-		File pythonEnv = Paths.get(this.path, "envs", SAM2_ENV_NAME).toFile();
+		File pythonEnv = Paths.get(this.path, SAM2_ENV_NAME).toFile();
 		if (!pythonEnv.exists()) return false;
 		
 		List<String> uninstalled = new ArrayList<String>();
@@ -259,7 +273,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 			return;
 		this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING SAM2 WEIGHTS");
         try {
-    		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
+    		File file = Paths.get(path, SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();
     		URL url = FileDownloader.redirectedURL(new URL(String.format(SAM2_1_URL, modelType)));
     		Thread parentThread = Thread.currentThread();
@@ -311,7 +325,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws BuildException if there is any error building the environment
 	 */
 	public void installSAMDeps(boolean force) throws InterruptedException, BuildException {
-	    if (!force && checkSAMDepsInstalled())
+	    if (!force && this.checkPixiEnvIsThere())
 	        return;
 	    if (this.outConsumer != null)
 	    	pixi.subscribeOutput(this.outConsumer);
@@ -319,7 +333,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    	pixi.subscribeError(this.errConsumer);
 	    if (this.pixiConsumer != null)
 	    	pixi.subscribeProgress(this.pixiConsumer);
-	    pixi.rebuild();
+	    pixi.environment("cuda").rebuild();
 	    installSAM2Wheel();
 	}
 
@@ -389,8 +403,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installEverything() throws IOException, InterruptedException, BuildException {		
-		if (!this.checkSAMDepsInstalled()) this.installSAMDeps();
-		
+		// TODO remove if (!this.checkSAMDepsInstalled()) this.installSAMDeps();
+		if (!this.checkPixiEnvIsThere()) this.installSAMDeps();
+
 		if (!this.checkModelWeightsInstalled()) this.installModelWeigths();
 	}
 	
@@ -399,7 +414,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * @return the the path to the Python environment needed to run SAM2
 	 */
 	public String getModelEnv() {
-		File file = Paths.get(path, "envs", SAM2_ENV_NAME).toFile();
+		File file = Paths.get(path, SAM2_ENV_NAME).toFile();
 		if (!file.isDirectory()) return null;
 		return file.getAbsolutePath();
 	}
@@ -420,9 +435,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	public String getModelWeigthPath() {
 		File file;
 		try {
-			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
+			file = Paths.get(path, SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(SAM2_1_URL, modelType))).toFile();
 		} catch (MalformedURLException e) {
-			file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", String.format(SAM2_1_FNAME, modelType)).toFile();
+			file = Paths.get(path, SAM2_ENV_NAME, SAM2_NAME, "weights", String.format(SAM2_1_FNAME, modelType)).toFile();
 		}
 
 		return file.getAbsolutePath();
@@ -430,8 +445,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 
 	@Override
 	public boolean checkEverythingInstalled() {		
-		if (!this.checkSAMDepsInstalled()) return false;
-		
+		// TODO remove if (!this.checkSAMDepsInstalled()) return false;
+		if (!this.checkPixiEnvIsThere()) return false;
+
 		if (!this.checkModelWeightsInstalled()) return false;
 		
 		return true;

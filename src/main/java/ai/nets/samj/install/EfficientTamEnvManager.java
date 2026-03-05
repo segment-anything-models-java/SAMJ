@@ -207,7 +207,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 			throw new IllegalArgumentException("The provided model is not one of the supported EfficientTAM models: " 
 												+ EfficientTamJ.getListOfSupportedVariants());
         try {
-    		File file = Paths.get(path, "envs", SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, modelType))).toFile();
+    		File file = Paths.get(path, SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, modelType))).toFile();
     		file.getParentFile().mkdirs();
     		URL url = FileDownloader.redirectedURL(new URL(String.format(EFFTAM_URL, modelType)));
     		Thread parentThread = Thread.currentThread();
@@ -238,7 +238,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 	private void extractWeights() throws InterruptedException, IOException {
 		this.outConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING EFFICIENTTAM WEIGHTS");
 		String zipResourcePath = "efficienttam_ti.zip";
-        String outputDirectory = Paths.get(path, "envs", SAM2_ENV_NAME, EFFTAM_NAME, "weights").toFile().getAbsolutePath();
+        String outputDirectory = Paths.get(path, SAM2_ENV_NAME, EFFTAM_NAME, "weights").toFile().getAbsolutePath();
         try (
         	InputStream zipInputStream = EfficientTamEnvManager.class.getClassLoader().getResourceAsStream(zipResourcePath);
         	ZipInputStream zipInput = new ZipInputStream(zipInputStream);
@@ -320,9 +320,9 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 	public String getModelWeigthPath() {
 		File file;
 		try {
-			file = Paths.get(path, "envs", SAM2_ENV_NAME, EFFTAM_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)))).toFile();
+			file = Paths.get(path, SAM2_ENV_NAME, EFFTAM_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)))).toFile();
 		} catch (MalformedURLException e) {
-			file = Paths.get(path, "envs", SAM2_ENV_NAME, EFFTAM_NAME, "weights", String.format(EFFTAM_FNAME, EfficientTamJ.abbreviateModelType(modelType))).toFile();
+			file = Paths.get(path, SAM2_ENV_NAME, EFFTAM_NAME, "weights", String.format(EFFTAM_FNAME, EfficientTamJ.abbreviateModelType(modelType))).toFile();
 		}
 
 		return file.getAbsolutePath();
@@ -330,8 +330,9 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 
 	@Override
 	public boolean checkEverythingInstalled() {		
-		if (!this.checkSAMDepsInstalled()) return false;
-		
+		// TODO remove if (!this.checkSAMDepsInstalled()) return false;
+		if (!this.checkPixiEnvIsThere()) return false;
+
 		if (!this.checkModelWeightsInstalled()) return false;
 		
 		return true;

@@ -1,57 +1,11 @@
-[project]
-name = "samj-env"
-channels = ["conda-forge"]
-platforms = ["osx-arm64", "osx-64", "win-64", "linux-64"]
+[workspace]
+name = "%s"
+channels = ["https://prefix.dev/conda-forge"]
+#platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]
+platforms = ["linux-64", "win-64", "osx-arm64"]
 
-# --------------------------------------------------
-# Conda deps (non-torch)
-# --------------------------------------------------
-[dependencies]
-python = "==3.12"
-scikit-image = "*"
-
-# --------------------------------------------------
-# Common pip deps
-# --------------------------------------------------
-[pypi-dependencies]
-pytest = "*"
-appose = "*"
-sam-2 = "==1.0"
-
-# --------------------------------------------------
-# macOS
-# --------------------------------------------------
-[target.osx-arm64.pypi-dependencies]
-torch = "==2.5.1"
-torchvision = "==0.20.1"
-
-[target.osx-64.pypi-dependencies]
-torch = "==2.5.1"
-torchvision = "==0.20.1"
-
-# --------------------------------------------------
-# Linux CUDA 12.1 wheels
-# --------------------------------------------------
-[target.linux-64.pypi-dependencies]
-torch = "==2.5.1"
-torchvision = "==0.20.1"
-
-[target.linux-64.pypi-options]
-index-url = "https://download.pytorch.org/whl/cu%s"
-
-# --------------------------------------------------
-# Windows CUDA 12.1 wheels
-# --------------------------------------------------
-[target.win-64.pypi-dependencies]
-torch = "==2.5.1"
-torchvision = "==0.20.1"
-
-[target.win-64.pypi-options]
-index-url = "https://download.pytorch.org/whl/cu%s"
-
-
-# ==================================================
 # 🔒 GLOBAL ENV ISOLATION (all platforms)
+# Applies to `pixi shell` activation + all `pixi run` tasks.
 # ==================================================
 [activation.env]
 CUDA_HOME = ""
@@ -62,35 +16,52 @@ DYLD_LIBRARY_PATH = ""
 PYTHONPATH = ""
 
 
+[dependencies]
+python = "==3.12"
+scikit-image = "*"
+
+# --- CPU-only (all platforms) ---
+[feature.cpu]
+#platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]
+platforms = ["linux-64", "win-64", "osx-arm64"]
+[feature.cpu.pypi-dependencies]
+torch = { version = "==2.5.1", index = "https://download.pytorch.org/whl/cpu" }
+torchvision = { version = "==0.20.1", index = "https://download.pytorch.org/whl/cpu" }
+
+[feature.cuda]
+platforms = ["linux-64", "win-64"]
+[feature.cuda.pypi-dependencies]
+torch = { version = "==2.5.1", index = "https://download.pytorch.org/whl/cu%s" }
+torchvision = { version = "==0.20.1", index = "https://download.pytorch.org/whl/cu%s" }
+
+[environments]
+# Safe default everywhere (no GPU required)
+default = { features = ["cpu"] }
+
+cpu   = { features = ["cpu"] }
+cuda = { features = ["cuda"] }
+
+
 # ==================================================
 # TASKS
 # ==================================================
-
-# ----------------------
-# Default (Linux/macOS)
-# ----------------------
-[tasks.default]
+[tasks.python]
 cmd = "python"
-env = { CUDA_HOME="", CUDA_PATH="", CUDA_ROOT="", LD_LIBRARY_PATH="", DYLD_LIBRARY_PATH="", PYTHONPATH="" }
 
-
-# ----------------------
-# Tests (Linux/macOS)
-# ----------------------
 [tasks.test]
 cmd = "pytest -q"
-env = { CUDA_HOME="", CUDA_PATH="", CUDA_ROOT="", LD_LIBRARY_PATH="", DYLD_LIBRARY_PATH="", PYTHONPATH="" }
 
+[tasks.check-gpu]
+cmd = "python -c \"import torch; print('Torch:', torch.__version__); print('CUDA available:', torch.cuda.is_available()); print('CUDA runtime:', torch.version.cuda)\""
 
-# ----------------------
-# Windows-safe runner
-# removes CUDA folders from PATH only
-# ----------------------
-[target.win-64.tasks.default]
+# ==================================================
+# Windows: scrub CUDA from PATH for tasks
+# (activation.env can't easily do "remove matching segments" from PATH)
+# ==================================================
+[target.win-64.tasks.python]
 cmd = '''
 powershell -NoProfile -Command "
-$clean = ($env:PATH -split ';' |
-  Where-Object { $_ -notmatch 'CUDA\\\\v[0-9]+' }) -join ';';
+$clean = ($env:PATH -split ';' | Where-Object { $_ -notmatch 'CUDA\\v[0-9]+' }) -join ';';
 $env:PATH = $clean;
 $env:CUDA_HOME='';
 $env:CUDA_PATH='';
@@ -101,8 +72,7 @@ python
 [target.win-64.tasks.test]
 cmd = '''
 powershell -NoProfile -Command "
-$clean = ($env:PATH -split ';' |
-  Where-Object { $_ -notmatch 'CUDA\\\\v[0-9]+' }) -join ';';
+$clean = ($env:PATH -split ';' | Where-Object { $_ -notmatch 'CUDA\\v[0-9]+' }) -join ';';
 $env:PATH = $clean;
 $env:CUDA_HOME='';
 $env:CUDA_PATH='';
@@ -110,17 +80,13 @@ pytest -q
 "
 '''
 
-
-# ----------------------
-# Debug helper
-# ----------------------
-[tasks.check-gpu]
+[target.win-64.tasks.check-gpu]
 cmd = '''
-python - <<EOF
-import torch, os, sys
-print("Torch:", torch.__version__)
-print("CUDA available:", torch.cuda.is_available())
-print("CUDA runtime:", torch.version.cuda)
-print("PATH:", os.environ.get("PATH")[:200], "...")
-EOF
+powershell -NoProfile -Command "
+$clean = ($env:PATH -split ';' | Where-Object { $_ -notmatch 'CUDA\\v[0-9]+' }) -join ';';
+$env:PATH = $clean;
+$env:CUDA_HOME='';
+$env:CUDA_PATH='';
+python -c \"import torch; print('Torch:', torch.__version__); print('CUDA available:', torch.cuda.is_available()); print('CUDA runtime:', torch.version.cuda)\"
+"
 '''

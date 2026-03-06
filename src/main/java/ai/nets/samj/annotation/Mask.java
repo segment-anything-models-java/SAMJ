@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -45,6 +46,10 @@ public class Mask {
 	
 	private String name;
 	
+	private final int slice;
+	
+	private final int frame;
+	
 	private final String uuid = UUID.randomUUID().toString();
 	
 	public long[] rleEncoding;
@@ -59,14 +64,24 @@ public class Mask {
 	
 	private static final double COMPLEXITY_DELTA = 0.5;
 	
-	private Mask(Polygon contour, long[] rleEncoding) {
+	private Mask(Polygon contour, long[] rleEncoding, int slice , int frame) {
 		this.contour = contour;
 		this.rleEncoding = rleEncoding;
+		this.slice = slice;
+		this.frame = frame;
 		memory.put(simplification, contour);
 	}
 	
-	public static Mask build(Polygon contour, long[] rleEncoding) {
-		return new Mask(contour, rleEncoding);
+	public static Mask build(Polygon contour, long[] rleEncoding, int slice, int frame) {
+		return new Mask(contour, rleEncoding, slice, frame);
+	}
+	
+	public int getSlice() {
+		return slice;
+	}
+	
+	public int getFrame() {
+		return frame;
 	}
 	
 	public void simplify() {

@@ -42,6 +42,7 @@ public class Main extends MainGUI {
     protected BatchCallback batchDrawerCallback;
     protected ConsumerCallback consumerCallback;
     protected ConsumerInterface consumer;
+    protected Runnable cancelCallback;
 
     private static final long serialVersionUID = -6511057540533292091L;
 
@@ -145,7 +146,7 @@ public class Main extends MainGUI {
 		this.centerPanel.instantCard.propagate3D.addActionListener(e -> System.err.println("DO SOMETHING"));// TODO);
         this.centerPanel.batchCard.btnBatchSAMize.addActionListener(e -> batchSAMize());
         this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
-        this.close.addActionListener(null);// TODO);
+        this.close.addActionListener(e -> close());
 		this.help.addActionListener(e -> consumer.exportImageLabeling());
         new Thread(() -> {
             changeGUI();
@@ -213,9 +214,10 @@ public class Main extends MainGUI {
     	rectPrompts.stream().forEach(pp -> consumer.deleteRectRoi(pp));
     }
 
-    protected void close() {
+    public void close() {
         selectionPanel.cmbModels.unLoadModel();
         drawersPanel.modelDrawerPanel.interruptThreads();
+        cancelCallback.run();
     }
     
     protected void createListeners() {
@@ -341,4 +343,8 @@ public class Main extends MainGUI {
             frame.setVisible(true);
         });
     }
+
+	public void setCancelCallback(Runnable cancelCallback) {
+		this.cancelCallback = cancelCallback;
+	}
 }

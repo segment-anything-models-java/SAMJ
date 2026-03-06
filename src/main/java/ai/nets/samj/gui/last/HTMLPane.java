@@ -1,4 +1,4 @@
-package ai.nets.samj.gui;
+package ai.nets.samj.gui.last;
 
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;

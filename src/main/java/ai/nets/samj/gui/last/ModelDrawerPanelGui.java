@@ -28,8 +28,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import ai.nets.samj.gui.HTMLPane;
-
 /**
  * 
  * @author Carlos Javier Garcia Lopez de Haro

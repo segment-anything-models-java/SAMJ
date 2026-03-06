@@ -16,8 +16,6 @@ import javax.swing.text.Position;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
-import ai.nets.samj.gui.HTMLPane;
-
 /**
  * Appends small HTML fragments to an {@link HTMLPane} using the underlying {@link HTMLDocument}
  * (fast, avoids rebuilding the entire HTML each time).

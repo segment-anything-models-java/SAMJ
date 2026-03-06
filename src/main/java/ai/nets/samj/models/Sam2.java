@@ -91,20 +91,21 @@ public class Sam2 extends AbstractSamJ {
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
 			+ "from sam2.build_sam import build_sam2" + System.lineSeparator()
 			+ "from sam2.sam2_image_predictor import SAM2ImagePredictor" + System.lineSeparator()
-			+ "from sam2.utils.misc import variant_to_config_mapping" + System.lineSeparator()
-			+ "model = build_sam2(variant_to_config_mapping['%s'],r'%s').to(device)" + System.lineSeparator()
+			+ "print('%s')\n"
+			+ "print(device)\n"
+			+ "model = build_sam2('configs/sam2.1/sam2.1_hiera_t.yaml',r'%s', device=device)" + System.lineSeparator()
+			+ "print('aa')\n"
 			+ "predictor = SAM2ImagePredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
-			+ "globals()['encodings_map'] = encodings_map" + System.lineSeparator()
-			+ "globals()['shared_memory'] = shared_memory" + System.lineSeparator()
-			+ "globals()['measure'] = measure" + System.lineSeparator()
-			+ "globals()['np'] = np" + System.lineSeparator()
-			+ "globals()['torch'] = torch" + System.lineSeparator()
-			+ "globals()['label'] = label" + System.lineSeparator()
-			+ "globals()['binary_fill_holes'] = binary_fill_holes" + System.lineSeparator()
-			+ "globals()['predictor'] = predictor" + System.lineSeparator()
-			+ "globals()['device'] = device" + System.lineSeparator();
+			+ "task.export(encodings_map=encodings_map)" + System.lineSeparator()
+			+ "task.export(measure=measure)" + System.lineSeparator()
+			+ "task.export(shared_memory=shared_memory)" + System.lineSeparator()
+			+ "task.export(torch=torch)" + System.lineSeparator()
+			+ "task.export(label=label)" + System.lineSeparator()
+			+ "task.export(binary_fill_holes=binary_fill_holes)" + System.lineSeparator()
+			+ "task.export(predictor=predictor)" + System.lineSeparator()
+			+ "task.export(device=device)" + System.lineSeparator();
 	/**
 	 * String containing the Python imports code after it has been formated with the correct 
 	 * paths and names
@@ -153,12 +154,13 @@ public class Sam2 extends AbstractSamJ {
 		this.debugPrinter = debugPrinter;
 		this.isDebugging = printPythonCode;
 
-		this.env = Appose.mamba().wrap(new File(manager.getModelEnv()));
+		this.env = Appose.pixi().wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());
 		
 		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
+		python.init("import numpy as np" + System.lineSeparator());
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();
 		if (task.status == TaskStatus.CANCELED)
@@ -452,14 +454,13 @@ public class Sam2 extends AbstractSamJ {
 		String code = ""
 				+ "num_threads = 3" + System.lineSeparator()
 				+ "finished_threads = []" + System.lineSeparator()
-				+ "print(('threading' not in globals().keys()))" + System.lineSeparator()
-				+ "if \"threading\" not in globals().keys():" + System.lineSeparator()
+				+ "if \"threading\" not in globals().keys() and \\\"threading\\\" not in locals().keys():" + System.lineSeparator()
 				+ "  import threading" + System.lineSeparator()
-				+ "  globals()['threading'] = threading" + System.lineSeparator()
-				+ "if \"ThreadPoolExecutor\" not in globals().keys():" + System.lineSeparator()
+				+ "  task.export(threading=threading)" + System.lineSeparator()
+				+ "if \"ThreadPoolExecutor\" not in globals().keys() and \\\"ThreadPoolExecutor\\\" not in locals().keys():" + System.lineSeparator()
 				+ "  from concurrent.futures import ThreadPoolExecutor, as_completed" + System.lineSeparator()
-				+ "  globals()['ThreadPoolExecutor'] = ThreadPoolExecutor" + System.lineSeparator()
-				+ "  globals()['as_completed'] = as_completed" + System.lineSeparator()
+				+ "  task.export(ThreadPoolExecutor=ThreadPoolExecutor)" + System.lineSeparator()
+				+ "  task.export(as_completed=as_completed)" + System.lineSeparator()
 				+ "lock = threading.Lock()" + System.lineSeparator()
 				+ "def respond_in_thread(task, args, inds, lock, finished_threads):" + System.lineSeparator()
 				+ "  task.update(args['message'], info=args['outputs'])" + System.lineSeparator()

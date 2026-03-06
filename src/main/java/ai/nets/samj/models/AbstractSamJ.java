@@ -455,7 +455,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			int[] xArr = contoursXIt.next().stream().mapToInt(Number::intValue).toArray();
 			int[] yArr = contoursYIt.next().stream().mapToInt(Number::intValue).toArray();
 			long[] rle = rleIt.next().stream().mapToLong(Number::longValue).toArray();
-			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle));
+			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle, 0, 0));
 		}
 		recalculatePolys(masks, encodeCoords);
 		return masks;
@@ -496,7 +496,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			int[] xArr = contours_x.next().stream().mapToInt(Number::intValue).toArray();
 			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
 			long[] rle = rles.next().stream().mapToLong(Number::longValue).toArray();
-			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle));
+			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle, 0, 0));
 		}
 		return masks;
 	}

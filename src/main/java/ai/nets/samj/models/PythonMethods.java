@@ -102,10 +102,10 @@ public class PythonMethods {
 			+ "        y_contours = [y_contours[max_size_pos]]" + System.lineSeparator()
 			+ "        rles = [rles[max_size_pos]]" + System.lineSeparator()
 			+ "    return x_contours, y_contours, rles" + System.lineSeparator()
-			+ "globals()['is_edge_pixel'] = is_edge_pixel" + System.lineSeparator()
-			+ "globals()['find_contour_neighbors'] = find_contour_neighbors" +  System.lineSeparator()
-			+ "globals()['trace_contour'] = trace_contour" +  System.lineSeparator()
-			+ "globals()['get_polygons_from_binary_mask'] = get_polygons_from_binary_mask" +  System.lineSeparator();
+			+ "task.export(is_edge_pixel=is_edge_pixel)" + System.lineSeparator()
+			+ "task.export(find_contour_neighbors=find_contour_neighbors)" +  System.lineSeparator()
+			+ "task.export(trace_contour=trace_contour)" +  System.lineSeparator()
+			+ "task.export(get_polygons_from_binary_mask=get_polygons_from_binary_mask)" +  System.lineSeparator();
 	
 	/**
 	 * String containing a Python method to encode binary masks into a compressed object using the
@@ -154,7 +154,7 @@ public class PythonMethods {
 			+ "            rle.extend([int(start), int(length)])" +  System.lineSeparator()
 			+ "    " +  System.lineSeparator()
 			+ "    return rle" +  System.lineSeparator()
-			+ "globals()['encode_rle'] = encode_rle" + System.lineSeparator();
+			+ "task.export(encode_rle=encode_rle)" + System.lineSeparator();
 	
 	
 	protected static String SAM_EVERYTHING = ""

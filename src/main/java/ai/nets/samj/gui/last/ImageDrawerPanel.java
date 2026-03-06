@@ -1,11 +1,13 @@
-package ai.nets.samj.gui.components;
+package ai.nets.samj.gui.last;
 
 
+import java.awt.Color;
 import java.awt.Polygon;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -29,6 +31,7 @@ public class ImageDrawerPanel extends JPanel {
 	
 	private ImageDrawerPanel(RoiManagerConsumer consumer) {
 		setFocusable(true);
+		setBorder(BorderFactory.createLineBorder(Color.black));
 		
 		drawerTitle = new JLabel(MODEL_TITLE);
 		drawerTitle.setHorizontalAlignment(JLabel.CENTER);

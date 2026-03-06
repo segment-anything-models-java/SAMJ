@@ -4,8 +4,6 @@ import java.awt.CardLayout;
 
 import javax.swing.JPanel;
 
-import ai.nets.samj.gui.components.ImageDrawerPanel;
-
 public class DrawersPanel extends JPanel {
 	
     private static final long serialVersionUID = 4451334593534890679L;

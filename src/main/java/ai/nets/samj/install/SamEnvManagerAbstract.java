@@ -23,20 +23,25 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
 import org.apposed.appose.BuildException;
 import org.apposed.appose.Builder.ProgressConsumer;
 import org.apposed.appose.Environment;
+import org.apposed.appose.Service;
+import org.apposed.appose.Service.Task;
 import org.apposed.appose.builder.PixiBuilder;
 import org.apposed.appose.tool.Pixi;
 
@@ -125,23 +130,69 @@ public abstract class SamEnvManagerAbstract {
 
     public static void installWheel(String wheelPath, Environment env) {
 		List<String> pythonExes = Arrays.asList("python", "python3", "python.exe");
-        env.service(pythonExes, "-m", "pip", "install", "--no-deps", wheelPath);
+		Task task = null;
+		long tt = 0;
+        try {
+			Service serv = env.service(pythonExes, "-m", "pip", "install", "--no-deps", wheelPath).start();
+			serv.waitFor();
+			serv = env.service(pythonExes, "-c", "import time; time.sleep(1); print('aaaa');").start();
+			serv.waitFor();
+			int a = 2;
+		} catch (InterruptedException | IOException e) {
+			System.out.println(System.currentTimeMillis() - tt);
+			System.out.println(task.error);
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
     }
 
     public static void installWheelFromResource(String wheelResourcePath, Environment env)
             throws IOException {
 
-        Path wheel = extractToTemp(wheelResourcePath, ".whl");
-        wheel.toFile().deleteOnExit();
-       installWheel(wheel.toAbsolutePath().toString(), env);
+    	Path wheel = extractToTemp(wheelResourcePath);
+        try {
+            installWheel(wheel.toAbsolutePath().toString(), env);
+        } finally {
+        	deleteRecursively(wheel);
+        }
+    }
+    
+    private static void deleteRecursively(Path path) throws IOException {
+        if (path == null || !Files.exists(path)) {
+            return;
+        }
+
+        try (Stream<Path> stream = Files.walk(path)) {
+            stream.sorted(Comparator.reverseOrder())
+                  .forEach(new Consumer<Path>() {
+                      @Override
+                      public void accept(Path p) {
+                          try {
+                              Files.deleteIfExists(p);
+                          } catch (IOException e) {
+                              throw new UncheckedIOException(e);
+                          }
+                      }
+                  });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
     }
 
-    private static Path extractToTemp(String resourcePath, String suffix) throws IOException {
+    private static Path extractToTemp(String resourcePath) throws IOException {
         try (InputStream in = Sam2EnvManager.class.getResourceAsStream(resourcePath)) {
-            if (in == null) throw new FileNotFoundException("Resource not found: " + resourcePath);
-            Path tmp = Files.createTempFile("samj-wheel-", suffix);
-            Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-            return tmp;
+            if (in == null) {
+                throw new FileNotFoundException("Resource not found: " + resourcePath);
+            }
+
+            String fileName = Paths.get(resourcePath).getFileName().toString();
+
+            Path tempDir = Files.createTempDirectory("sam2-wheel-");
+            Path wheelPath = tempDir.resolve(fileName);
+
+            Files.copy(in, wheelPath, StandardCopyOption.REPLACE_EXISTING);
+            return wheelPath;
         }
     }
 	

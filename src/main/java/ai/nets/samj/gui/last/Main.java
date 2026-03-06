@@ -64,10 +64,6 @@ public class Main extends MainGUI {
 		@Override
 		public List<ComboBoxItem> getListOfOpenImages() {return new ArrayList<>();}
 		@Override
-		public List<Polygon> getPolygonsFromRoiManager() {return new ArrayList<>();}
-		@Override
-		public void enableAddingToRoiManager(boolean shouldBeAdding) {}
-		@Override
 		public void exportImageLabeling() {}
 		@Override
 		public Object getFocusedImage() {return null;}
@@ -81,8 +77,6 @@ public class Main extends MainGUI {
 		public List<int[]> getPointRoisOnFocusImage() {return new ArrayList<>();}
 		@Override
 		public List<Rectangle> getRectRoisOnFocusImage() {return new ArrayList<>();}
-		@Override
-		public void addPolygonsFromGUI(List<Mask> masks) {}
 		@Override
 		public void activateListeners() {}
 		@Override
@@ -99,6 +93,8 @@ public class Main extends MainGUI {
 		public boolean isValidPromptSelected() {return false;}
 		@Override
 		public void notifyBatchSamize(String modelName, String maskPrompt) {}
+		@Override
+		public void notifyPolygons(List<Mask> masks) {}
     };
 
 	public Main() {
@@ -117,6 +113,7 @@ public class Main extends MainGUI {
 		
 		this.modelList = modelList;
 		this.consumer = consumer;
+
 		createListeners();
 
 		

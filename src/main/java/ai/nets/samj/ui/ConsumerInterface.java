@@ -19,11 +19,9 @@
  */
 package ai.nets.samj.ui;
 
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.List;
-
-import javax.security.auth.callback.Callback;
+import java.util.Objects;
 
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.SAMModel;
@@ -40,6 +38,8 @@ import net.imglib2.type.numeric.RealType;
 public abstract class ConsumerInterface {
 	
 	protected SAMModel selectedModel;
+	
+	protected PromptBridge promptBridge;
 	
 	public interface ConsumerCallback { 
 		
@@ -60,19 +60,6 @@ public abstract class ConsumerInterface {
 	 * @return a list of the open images in the consumer software
 	 */
 	public abstract List<ComboBoxItem> getListOfOpenImages();
-
-	/**
-	 * 
-	 * @return all the polygons created by SAMJ models for a give image
-	 */
-	public abstract List<Polygon> getPolygonsFromRoiManager();
-
-	/**
-	 * Whether to add the ROIs being created to the ROI manager of the consumer software
-	 * @param shouldBeAdding
-	 * 	true to add the rois or false otherwise
-	 */
-	public abstract void enableAddingToRoiManager(boolean shouldBeAdding);
 	
 
 	/**
@@ -92,7 +79,7 @@ public abstract class ConsumerInterface {
 	
 	public abstract List<Rectangle> getRectRoisOnFocusImage();
 	
-	public abstract void addPolygonsFromGUI(List<Mask> masks);
+	public abstract void notifyPolygons(List<Mask> masks);
 	
 	public abstract void activateListeners();
 	
@@ -128,5 +115,10 @@ public abstract class ConsumerInterface {
 	
 	public void setCallback(ConsumerCallback callback) {
 		this.callback = callback;
+	}
+	
+	public void setPromptBridge(PromptBridge promptBridge) {
+		Objects.requireNonNull(promptBridge, "promptBridge");
+		this.promptBridge = promptBridge;
 	}
 }

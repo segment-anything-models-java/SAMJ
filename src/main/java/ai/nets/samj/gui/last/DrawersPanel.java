@@ -34,6 +34,5 @@ public class DrawersPanel extends JPanel {
         add(modelDrawerPanel, MODEL_TAG);
         add(imageDrawerPanel, IMAGE_TAG);
         ((CardLayout) this.getLayout()).show(this, MODEL_TAG);
-        
     }
 }

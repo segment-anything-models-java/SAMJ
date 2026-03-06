@@ -189,7 +189,6 @@ public class MainGUI extends JPanel {
     		return;
     	}
     	setLoading();
-        //selectionPanel.go.setLoading();
 
         new Thread(() -> {
             boolean installed = selectionPanel.cmbModels.getSelectedModel().isInstalled();

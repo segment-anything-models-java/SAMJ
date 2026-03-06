@@ -19,7 +19,7 @@ import ai.nets.samj.communication.model.SAM2Large;
 import ai.nets.samj.communication.model.SAM2Small;
 import ai.nets.samj.communication.model.SAM2Tiny;
 import ai.nets.samj.communication.model.SAMModel;
-import ai.nets.samj.gui.ImageSelection.ImageSelectionListener;
+import ai.nets.samj.gui.last.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.gui.last.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.gui.last.ModelSelection.ModelSelectionListener;
@@ -121,14 +121,19 @@ public class Main extends MainGUI {
 
 		
         this.consumer.setGuiCallback(() -> {
-            selectionPanel.cmbImages.updateList();
-            if (selectionPanel.cmbImages.getSelectedObject() == null)
-            	return;
-            selectionPanel.go.setEnabled(false);
-            selectionPanel.go.showAnimation(true);
+        	SwingUtilities.invokeLater(() -> {
+                selectionPanel.cmbImages.updateList();
+                if (selectionPanel.cmbImages.getSelectedObject() == null)
+                	return;
+                selectionPanel.go.setEnabled(false);
+                selectionPanel.go.showAnimation(true);
+        	});
             new Thread(() -> {
-            	selectionPanel.go.setEnabled(selectionPanel.cmbModels.getSelectedModel().isInstalled());
-            	selectionPanel.go.showAnimation(false);
+            	boolean isInstalled = selectionPanel.cmbModels.getSelectedModel().isInstalled();
+            	SwingUtilities.invokeLater(() -> {
+                	selectionPanel.go.setEnabled(isInstalled);
+                	selectionPanel.go.showAnimation(false);
+            	});
             }).start();
 		});
         this.consumer.setCallback(consumerCallback);
@@ -148,13 +153,13 @@ public class Main extends MainGUI {
         this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
         this.close.addActionListener(e -> close());
 		this.help.addActionListener(e -> consumer.exportImageLabeling());
-        new Thread(() -> {
-            changeGUI();
-        }).start();
+		SwingUtilities.invokeLater(() -> changeGUI());
         
 		this.selectionPanel.cmbModels.setListener(modelListener);
-
 		this.selectionPanel.cmbModels.setModels(this.modelList);
+
+		this.selectionPanel.cmbImages.setConsumer(consumer);
+		this.selectionPanel.cmbImages.setListener(this.imageListener);
 	}
 
     protected void setInstantPromptsEnabled(boolean enabled) {
@@ -177,9 +182,9 @@ public class Main extends MainGUI {
                 consumer.setModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
                 setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && centerPanel.isPromptValid());
                 Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
-                Main.this.manageLoaded(true);
+                SwingUtilities.invokeLater(() -> Main.this.manageLoaded(true));
             } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
-            	Main.this.manageLoaded(false);
+            	SwingUtilities.invokeLater(() -> Main.this.manageLoaded(false));
                 ex.printStackTrace();
             }
         }).start();
@@ -217,7 +222,6 @@ public class Main extends MainGUI {
     public void close() {
         selectionPanel.cmbModels.unLoadModel();
         drawersPanel.modelDrawerPanel.interruptThreads();
-        cancelCallback.run();
     }
     
     protected void createListeners() {

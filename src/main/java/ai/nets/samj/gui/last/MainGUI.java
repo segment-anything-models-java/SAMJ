@@ -5,6 +5,8 @@ import java.awt.Window;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
+
 public class MainGUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
@@ -25,12 +27,13 @@ public class MainGUI extends JPanel {
     protected BottomPanel bottomPanel;
 
     protected final NoDrawerMainGUI content = new NoDrawerMainGUI();
-    protected final DrawersPanel drawersPanel = new DrawersPanel();
+    protected final DrawersPanel drawersPanel;
 
     private int pinnedLeftW = -1, drawerW = 0;
 
-    public MainGUI() {
+    public MainGUI(RoiManagerConsumer roiManagerConsumer) {
         setLayout(null);
+        drawersPanel = new DrawersPanel(roiManagerConsumer);
         add(content);
         add(drawersPanel);
 

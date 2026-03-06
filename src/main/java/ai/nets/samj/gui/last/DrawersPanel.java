@@ -4,6 +4,8 @@ import java.awt.CardLayout;
 
 import javax.swing.JPanel;
 
+import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
+
 public class DrawersPanel extends JPanel {
 	
     private static final long serialVersionUID = 4451334593534890679L;
@@ -27,10 +29,10 @@ public class DrawersPanel extends JPanel {
 	 */
 	protected static final String RESOURCES_FOLDER = "icons_samj/";
 
-	public DrawersPanel() {
+	public DrawersPanel(RoiManagerConsumer roiManagerConsumer) {
 		setLayout(new CardLayout());
         modelDrawerPanel = new ModelDrawerPanel();
-        imageDrawerPanel = ImageDrawerPanel.create();
+        imageDrawerPanel = ImageDrawerPanel.create(roiManagerConsumer);
         add(modelDrawerPanel, MODEL_TAG);
         add(imageDrawerPanel, IMAGE_TAG);
         ((CardLayout) this.getLayout()).show(this, MODEL_TAG);

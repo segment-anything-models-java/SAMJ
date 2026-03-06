@@ -32,7 +32,7 @@ public class ImageDrawerPanel extends ImageDrawerPanelGui implements KeyListener
 		});
     }
 	
-	protected static ImageDrawerPanel create() {
+	private static ImageDrawerPanel create() {
 	    RoiManagerConsumer dummy = new RoiManagerConsumer() {
 	        @Override public void setSelected(Mask mm) {}
 	        @Override public void exportMask() {}

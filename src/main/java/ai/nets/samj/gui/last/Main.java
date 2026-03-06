@@ -1,6 +1,5 @@
 package ai.nets.samj.gui.last;
 
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ import ai.nets.samj.gui.last.ImageSelection.ImageSelectionListener;
 import ai.nets.samj.gui.components.ComboBoxItem;
 import ai.nets.samj.gui.last.ModelDrawerPanel.ModelDrawerPanelListener;
 import ai.nets.samj.gui.last.ModelSelection.ModelSelectionListener;
+import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
@@ -95,6 +95,8 @@ public class Main extends MainGUI {
 		public void notifyBatchSamize(String modelName, String maskPrompt) {}
 		@Override
 		public void notifyPolygons(List<Mask> masks) {}
+		@Override
+		public RoiManagerConsumer getRoiManagerConsumer() {return null;}
     };
 
 	public Main() {
@@ -110,6 +112,7 @@ public class Main extends MainGUI {
 	}
 
 	public Main(List<SAMModel> modelList, ConsumerInterface consumer) {
+		super(consumer.getRoiManagerConsumer());
 		
 		this.modelList = modelList;
 		this.consumer = consumer;
@@ -300,7 +303,7 @@ public class Main extends MainGUI {
 
             @Override
             public void drawRoi(List<Mask> masks) {
-                SwingUtilities.invokeLater(() -> consumer.addPolygonsFromGUI(masks));
+                SwingUtilities.invokeLater(() -> consumer.notifyPolygons(masks));
             }
 
             @Override

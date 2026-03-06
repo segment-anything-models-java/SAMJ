@@ -26,6 +26,7 @@ import java.util.Objects;
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.SAMModel;
 import ai.nets.samj.gui.components.ComboBoxItem;
+import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -94,6 +95,8 @@ public abstract class ConsumerInterface {
 	public abstract void deleteRectRoi(Rectangle rect);
 
 	public abstract boolean isValidPromptSelected();
+
+	public abstract RoiManagerConsumer getRoiManagerConsumer();
 
 	/**
 	 * Notify when the user has clicked on the button batchSAMIZe

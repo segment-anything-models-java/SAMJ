@@ -346,7 +346,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    	pixi.subscribeError(this.errConsumer);
 	    if (this.pixiConsumer != null)
 	    	pixi.subscribeProgress(this.pixiConsumer);
-	    pixi.environment(installEnv).build();
+	    pixi.build();
+	    //pixi.environment(installEnv).rebuild();
 	    installSAM2Wheel();
 	}
 

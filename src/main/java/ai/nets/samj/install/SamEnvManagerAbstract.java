@@ -130,18 +130,10 @@ public abstract class SamEnvManagerAbstract {
 
     public static void installWheel(String wheelPath, Environment env) {
 		List<String> pythonExes = Arrays.asList("python", "python3", "python.exe");
-		Task task = null;
-		long tt = 0;
         try {
 			Service serv = env.service(pythonExes, "-m", "pip", "install", "--no-deps", wheelPath).start();
 			serv.waitFor();
-			serv = env.service(pythonExes, "-c", "import time; time.sleep(1); print('aaaa');").start();
-			serv.waitFor();
-			int a = 2;
 		} catch (InterruptedException | IOException e) {
-			System.out.println(System.currentTimeMillis() - tt);
-			System.out.println(task.error);
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         

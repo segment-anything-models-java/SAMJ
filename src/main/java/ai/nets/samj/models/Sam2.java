@@ -20,6 +20,7 @@
 package ai.nets.samj.models;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import ai.nets.samj.install.Sam2EnvManager;
@@ -70,6 +71,17 @@ public class Sam2 extends AbstractSamJ {
 		MODELS_LIST.add("large");
 	}
 	/**
+	 * Byte sizes of all the SAM2.1 options
+	 */
+	final public static HashMap<String, String> MODEL_ABBREV;
+	static {
+		MODEL_ABBREV = new HashMap<String, String>();
+		MODEL_ABBREV.put("tiny", "t");
+		MODEL_ABBREV.put("small", "s");
+		MODEL_ABBREV.put("base_plus", "b+");
+		MODEL_ABBREV.put("large", "l");
+	}
+	/**
 	 * All the Python imports and configurations needed to start using EfficientViTSAM.
 	 */
 	public static final String IMPORTS = ""
@@ -91,10 +103,8 @@ public class Sam2 extends AbstractSamJ {
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
 			+ "from sam2.build_sam import build_sam2" + System.lineSeparator()
 			+ "from sam2.sam2_image_predictor import SAM2ImagePredictor" + System.lineSeparator()
-			+ "print('%s')\n"
 			+ "print(device)\n"
-			+ "model = build_sam2('configs/sam2.1/sam2.1_hiera_t.yaml',r'%s', device=device)" + System.lineSeparator()
-			+ "print('aa')\n"
+			+ "model = build_sam2('configs/sam2.1/sam2.1_hiera_%s.yaml',r'%s', device=device)" + System.lineSeparator()
 			+ "predictor = SAM2ImagePredictor(model)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
@@ -157,9 +167,8 @@ public class Sam2 extends AbstractSamJ {
 		this.env = Appose.pixi().wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
-		IMPORTS_FORMATED = String.format(IMPORTS, type, manager.getModelWeigthPath());
+		IMPORTS_FORMATED = String.format(IMPORTS, MODEL_ABBREV.get(type), manager.getModelWeigthPath());
 		
-		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		python.init("import numpy as np" + System.lineSeparator());
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
 		task.waitFor();

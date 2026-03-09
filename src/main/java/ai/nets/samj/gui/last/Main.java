@@ -4,6 +4,9 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
@@ -49,6 +52,9 @@ public class Main extends MainGUI {
     protected PromptBridge promptBridge;
     protected ConsumerInterface consumer;
     protected Runnable cancelCallback;
+    
+    private final ExecutorService cmbModelsExecutor = Executors.newSingleThreadExecutor();
+    private volatile Future<?> cmbModelsLastTask;
 
     private static final long serialVersionUID = -6511057540533292091L;
 
@@ -274,14 +280,26 @@ public class Main extends MainGUI {
                 		&& selected.isLoaded()) {
                 	Main.this.setImageDrawerOpen(true);
                     Main.this.manageLoaded(true);
-                } else if (Main.this.isDrawerOpen) {
-                	System.err.println("opeend");
-                    Main.this.manageLoaded(false);
-                	drawersPanel.modelDrawerPanel.setSelectedModel(selected);
-                	Main.this.setModelDrawerOpen(true);
-                } else {
-                	drawersPanel.modelDrawerPanel.setSelectedModel(selected);
+                    return;
                 }
+
+                drawersPanel.modelDrawerPanel.setSelectedModel(selected);
+                Future<?> old = cmbModelsLastTask;
+                if (old != null) old.cancel(true);
+
+                cmbModelsLastTask = cmbModelsExecutor.submit(() -> {
+                    boolean installed = selected.isInstalled();
+                    if (Thread.currentThread().isInterrupted()) return;
+
+                    SwingUtilities.invokeLater(() -> {
+                        if (installed) {
+                            Main.this.manageLoaded(false);
+                        } else {
+                            Main.this.setModelDrawerOpen(true);
+                            Main.this.manageInstalled(false);
+                        }
+                    });
+                });
             }
         };
 

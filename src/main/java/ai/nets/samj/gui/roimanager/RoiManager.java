@@ -92,7 +92,6 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
         JButton b = new JButton(label);
         btns.add(b);
         b.addActionListener(this);
-        b.addMouseListener(this);
         panel.add(b);
     }
 
@@ -174,6 +173,7 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
                 roiClasses.add(className);
             listModel.addRow(rois.get(i).getName(), className);
         }
+        updateButtonsEnabled();
     }
 
     private void addRoiFromGUI() {
@@ -325,6 +325,7 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
             erode();
         else if (command.equals("Merge"))
             merge();
+        //updateButtonsEnabled();
         list.setValueIsAdjusting(false);
 
         justClickedDelete = false;

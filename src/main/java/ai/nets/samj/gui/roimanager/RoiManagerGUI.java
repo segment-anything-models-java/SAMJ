@@ -67,6 +67,18 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
         labelsCheckbox.addItemListener(this);
         showAllCheckbox.addItemListener(this);
     }
+    
+    public void updateButtonsEnabled() {
+    	int nRois = this.listModel.getRowCount();
+    	int selectedInd = list.getSelectedIndex();
+    	for (JButton btn : this.btns) {
+    		if (btn.getText().equals("Add") || btn.getText().equals("Merge")) {
+    			btn.setEnabled(true);
+    			continue;
+    		}
+    		btn.setEnabled(nRois > 0);
+    	}
+    }
 
     public void block(boolean block) {
         for (JButton b : btns) {

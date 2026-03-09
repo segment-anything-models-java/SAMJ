@@ -257,9 +257,13 @@ public class Main extends MainGUI {
 
                 if (Main.this.selectionPanel.cmbImages.getSelectedObject() == null) {
                     Main.this.selectionPanel.go.setEnabled(false);
+                    Main.this.drawersPanel.imageDrawerPanel.roiManager.block(true);
                     return;
                 }
-                if (Main.this.selectionPanel.go.isEnabled()) return;
+                if (Main.this.selectionPanel.go.isEnabled()) {
+                    Main.this.drawersPanel.imageDrawerPanel.roiManager.updateButtonsEnabled();
+                	return;
+                }
 
                 Main.this.selectionPanel.go.showAnimation(true);
                 new Thread(() -> {

@@ -59,7 +59,7 @@ public class ImageDrawerPanelGui extends JPanel {
 		drawerTitle.setVerticalAlignment(JLabel.CENTER);
 		
 		roiManager = new RoiManager(consumer);
-		roiManager.block(false);
+		roiManager.block(true);
         
 		add(drawerTitle);
 		add(roiManager);

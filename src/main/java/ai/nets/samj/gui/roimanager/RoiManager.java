@@ -23,6 +23,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import ai.nets.samj.annotation.Mask;
+import ai.nets.samj.gui.components.PlusMinusButtonComp;
 import ai.nets.samj.gui.roimanager.commands.Command;
 import ai.nets.samj.gui.roimanager.commands.DeleteRoiCommand;
 import ai.nets.samj.gui.roimanager.commands.ModifyRoiCommand;
@@ -86,6 +87,20 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
                 }
             }
         });
+    }
+    
+    @Override
+    protected void addPointsControl() {
+        pointsComp = new PlusMinusButtonComp("Points", this::handlePointsAction);
+        panel.add(pointsComp);
+    }
+    
+    private void handlePointsAction(String command) {
+        if ("Points+".equals(command)) {
+            complicate();
+        } else if ("Points-".equals(command)) {
+        	simplify();
+        }
     }
 
     protected void addButton(String label) {

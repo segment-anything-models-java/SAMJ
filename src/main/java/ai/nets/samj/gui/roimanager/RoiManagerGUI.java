@@ -15,6 +15,8 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionListener;
 
+import ai.nets.samj.gui.components.PlusMinusButtonComp;
+
 public abstract class RoiManagerGUI extends JPanel implements ListSelectionListener, MouseListener, MouseWheelListener, ItemListener {
 
     private static final long serialVersionUID = -8405747451234902128L;
@@ -28,6 +30,7 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
     protected JCheckBox labelsCheckbox = new JCheckBox("Labels", true);
 
     protected List<JButton> btns = new ArrayList<JButton>();
+    protected PlusMinusButtonComp pointsComp;
 
     private static final int BUTTONS = 11;
 
@@ -49,7 +52,7 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
 
         addButton("Add");
         addButton("Delete");
-        addButton("Points");
+        addPointsControl();
         addButton("Dilate");
         addButton("Erode");
         addButton("IJManager");
@@ -78,6 +81,7 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
     		}
     		btn.setEnabled(nRois > 0);
     	}
+    	this.pointsComp.setEnabled(nRois > 0);
     }
 
     public void block(boolean block) {
@@ -86,6 +90,9 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
                 continue;
             b.setEnabled(!block);
         }
+        if (pointsComp != null)
+            pointsComp.setEnabled(!block);
+
         list.setEnabled(!block);
         showAllCheckbox.setEnabled(!block);
         labelsCheckbox.setEnabled(!block);
@@ -109,4 +116,7 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
     }
 
     protected abstract void addButton(String label);
+
+    protected abstract void addPointsControl();
+    
 }

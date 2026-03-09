@@ -327,6 +327,24 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 
 		return file.getAbsolutePath();
 	}
+	
+	/**
+	 * Install all the requirements to run SAM2. First, checks if micromamba is installed, if not installs it;
+	 * then checks if the Python environment and packages needed to run SAM2 are installed and if not installs it
+	 * and finally checks whether the weights are installed, and if not installs them too.
+	 * 
+	 * 
+	 * @throws IOException if there is any file related error in the model installation
+	 * @throws InterruptedException if the model installation is interrupted
+	 * @throws BuildException if there is any error building the environment
+	 */
+	public void installEverything() throws IOException, InterruptedException, BuildException {		
+		// TODO remove if (!this.checkSAMDepsInstalled()) this.installSAMDeps();
+		if (!this.checkPixiEnvIsThere()) this.installSAMDeps();
+		else installEffTAMWheel();
+
+		if (!this.checkModelWeightsInstalled()) this.installModelWeigths();
+	}
 
 	@Override
 	public boolean checkEverythingInstalled() {		

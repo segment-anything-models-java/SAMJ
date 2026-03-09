@@ -410,10 +410,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * 
 	 * @throws IOException if there is any file related error in the model installation
 	 * @throws InterruptedException if the model installation is interrupted
-	 * @throws ArchiveException if there is any error decompressing the micromamba installer
-	 * @throws URISyntaxException if there is any error with the URL to the micromamba installer download page
 	 * @throws BuildException if there is any error building the environment
-	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installEverything() throws IOException, InterruptedException, BuildException {		
 		// TODO remove if (!this.checkSAMDepsInstalled()) this.installSAMDeps();

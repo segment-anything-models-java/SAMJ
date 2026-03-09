@@ -86,6 +86,7 @@ public class MainGUI extends JPanel {
             isModelDrawer = true;
             ((CardLayout) drawersPanel.getLayout()).show(drawersPanel, DrawersPanel.MODEL_TAG);
         	if (wasOpened) {
+        		this.selectionPanel.cmbImages.toggleLabel();
                 return;
         	}
         	isDrawerOpen = true;
@@ -114,6 +115,7 @@ public class MainGUI extends JPanel {
         	isModelDrawer = !open;
             ((CardLayout) drawersPanel.getLayout()).show(drawersPanel, DrawersPanel.IMAGE_TAG);
         	if (wasOpened) {
+        		this.selectionPanel.cmbModels.toggleLabel();
                 return;
         	}
         	isDrawerOpen = true;

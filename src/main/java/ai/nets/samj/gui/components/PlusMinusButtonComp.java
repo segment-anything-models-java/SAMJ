@@ -1,98 +1,61 @@
 package ai.nets.samj.gui.components;
 
-import java.awt.BorderLayout;
-import java.awt.Cursor;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
-import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 
 public class PlusMinusButtonComp extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
     private final JLabel titleLabel;
-    private final JLabel plusLabel;
-    private final JLabel minusLabel;
+    private final JButton plusButton;
+    private final JButton minusButton;
 
     public PlusMinusButtonComp(String title, Consumer<String> action) {
-        setLayout(new BorderLayout(6, 0));
+        setLayout(new GridBagLayout());
         setOpaque(false);
 
         titleLabel = new JLabel(title);
-        plusLabel = createClickableLabel("+", "Points+");
-        minusLabel = createClickableLabel("-", "Points-");
+        plusButton = new JButton("+");
+        minusButton = new JButton("-");
 
-        JPanel rightPanel = new JPanel(new GridLayout(1, 2, 4, 0));
-        rightPanel.setOpaque(false);
-        rightPanel.add(plusLabel);
-        rightPanel.add(minusLabel);
+        plusButton.setFocusable(false);
+        minusButton.setFocusable(false);
 
-        add(titleLabel, BorderLayout.CENTER);
-        add(rightPanel, BorderLayout.EAST);
+        plusButton.setMargin(new Insets(2, 8, 2, 8));
+        minusButton.setMargin(new Insets(2, 8, 2, 8));
 
-        MouseAdapter listener = new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                JLabel src = (JLabel) e.getSource();
-                action.accept(src.getName());
-            }
+        plusButton.addActionListener(e -> action.accept("Points+"));
+        minusButton.addActionListener(e -> action.accept("Points-"));
 
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                ((JLabel) e.getSource()).setBorder(
-                        BorderFactory.createCompoundBorder(
-                                BorderFactory.createLineBorder(getForeground()),
-                                BorderFactory.createEmptyBorder(1, 6, 1, 6)
-                        )
-                );
-            }
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 0, 0, 0);
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                ((JLabel) e.getSource()).setBorder(
-                        BorderFactory.createEmptyBorder(2, 7, 2, 7)
-                );
-            }
-        };
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+        add(titleLabel, gbc);
 
-        plusLabel.addMouseListener(listener);
-        minusLabel.addMouseListener(listener);
-    }
+        gbc.gridx = 1;
+        gbc.weightx = 0.0;
+        add(plusButton, gbc);
 
-    private JLabel createClickableLabel(String text, String actionCommand) {
-        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-        lbl.setName(actionCommand);
-        lbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        lbl.setBorder(BorderFactory.createEmptyBorder(2, 7, 2, 7));
-        return lbl;
-    }
-
-    public void setEnabledButtons(boolean enabled) {
-        plusLabel.setEnabled(enabled);
-        minusLabel.setEnabled(enabled);
-        plusLabel.setCursor(enabled
-                ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-                : Cursor.getDefaultCursor());
-        minusLabel.setCursor(enabled
-                ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-                : Cursor.getDefaultCursor());
+        gbc.gridx = 2;
+        add(minusButton, gbc);
     }
 
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         titleLabel.setEnabled(enabled);
-        setEnabledButtons(enabled);
-    }
-
-    public Insets getInsets() {
-        return new Insets(2, 2, 2, 2);
+        plusButton.setEnabled(enabled);
+        minusButton.setEnabled(enabled);
     }
 }

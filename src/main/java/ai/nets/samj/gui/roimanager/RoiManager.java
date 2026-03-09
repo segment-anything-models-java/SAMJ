@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import javax.swing.JButton;
 import javax.swing.event.ListSelectionEvent;
@@ -196,9 +197,11 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
     }
 
     private void simplify() {
-        if (list.getSelectedIndex() == -1)
+        if (list.getRowCount() == 0)
             return;
         int[] indices = list.getSelectedIndices();
+        if (indices.length == 0)
+        	indices = IntStream.range(0, list.getRowCount()).toArray();
         ModifyRoiCommand command = new ModifyRoiCommand(this, rois);
         Mask mask = null;
         for (int ind : indices) {
@@ -214,9 +217,11 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
     }
 
     private void complicate() {
-        if (list.getSelectedIndex() == -1)
+        if (list.getRowCount() == 0)
             return;
         int[] indices = list.getSelectedIndices();
+        if (indices.length == 0)
+        	indices = IntStream.range(0, list.getRowCount()).toArray();
         ModifyRoiCommand command = new ModifyRoiCommand(this, rois);
         Mask mask = null;
         for (int ind : indices) {
@@ -263,10 +268,12 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
     }
 
     private void dilate() {
-        if (list.getSelectedIndex() == -1)
+        if (list.getRowCount() == 0)
             return;
-        ModifyRoiCommand command = new ModifyRoiCommand(this, rois);
         int[] indices = list.getSelectedIndices();
+        if (indices.length == 0)
+        	indices = IntStream.range(0, list.getRowCount()).toArray();
+        ModifyRoiCommand command = new ModifyRoiCommand(this, rois);
         Mask mask = null;
         for (int ind : indices) {
             mask = rois.get(ind);
@@ -282,9 +289,11 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
     }
 
     private void erode() {
-        if (list.getSelectedIndex() == -1)
+        if (list.getRowCount() == 0)
             return;
         int[] indices = list.getSelectedIndices();
+        if (indices.length == 0)
+        	indices = IntStream.range(0, list.getRowCount()).toArray();
         ModifyRoiCommand command = new ModifyRoiCommand(this, rois);
         Mask mask = null;
         for (int ind : indices) {

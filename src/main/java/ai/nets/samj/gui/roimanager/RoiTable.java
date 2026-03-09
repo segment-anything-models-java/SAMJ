@@ -79,7 +79,7 @@ public class RoiTable extends JTable {
         ));
 
         DefaultCellEditor editor = new DefaultCellEditor(editorField);
-        editor.setClickCountToStart(2); // double click on second column starts editing
+        editor.setClickCountToStart(2);
         getColumnModel().getColumn(1).setCellEditor(editor);
 
         TableColumnModel cols = getColumnModel();
@@ -159,17 +159,18 @@ public class RoiTable extends JTable {
 
     @Override
     public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+        if (toggle && !extend && rowIndex >= 0 && isRowSelected(rowIndex)) {
+            removeRowSelectionInterval(rowIndex, rowIndex);
+            repaint();
+            return;
+        }
+
         super.changeSelection(rowIndex, columnIndex, toggle, extend);
         repaint();
     }
 
     @Override
     public boolean editCellAt(int row, int column, EventObject e) {
-        if (row >= 0) {
-            // Always keep the whole row selected when editing starts
-            setRowSelectionInterval(row, row);
-        }
-
         boolean editing = super.editCellAt(row, column, e);
 
         if (editing) {

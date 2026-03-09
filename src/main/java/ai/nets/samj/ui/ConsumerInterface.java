@@ -30,6 +30,7 @@ import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 /**
  * Interface to be implemented by the imaging software that wants to use the default SAMJ UI.
@@ -61,18 +62,14 @@ public abstract class ConsumerInterface {
 	 * @return a list of the open images in the consumer software
 	 */
 	public abstract List<ComboBoxItem> getListOfOpenImages();
-	
-
-	/**
-	 * Generate and display a labeling image in the consumer software.
-	 * Samples within each ROI will have a different integer value,
-	 * numbered from 1.
-	 */
-	public abstract void exportImageLabeling();
 
 	public abstract Object getFocusedImage();
 
 	public abstract String getFocusedImageName();
+
+	public abstract int getFocusedImageZPos();
+
+	public abstract int getFocusedImageTPos();
 
 	public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getFocusedImageAsRai();
 	

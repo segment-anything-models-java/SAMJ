@@ -184,6 +184,8 @@ public class MainGUI extends JPanel {
 		this.centerPanel.batchCard.propagate3D.setEnabled(isLoaded);
 		this.bottomPanel.export.setEnabled(isLoaded);
 		this.bottomPanel.returnLargest.setEnabled(isLoaded);
+		if (isLoaded)
+			toggleImageDrawer();
 	}
 	
     public void changeGUI() {

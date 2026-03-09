@@ -6,29 +6,17 @@ import java.util.List;
 import ai.nets.samj.annotation.Mask;
 import net.imglib2.Localizable;
 
-public class PromptBridge {
+public abstract class PromptBridge {
 
-    public  List<Mask> sendRectanglePrompt(long[] xywh) {
-    	return null;
-    }
+    public abstract List<Mask> sendRectanglePrompt(long[] xywh);
 
-    public List<Mask> sentPointPrompt(List<Localizable> posPoints) {
-        return null;
-    }
+    public abstract List<Mask> sentPointPrompt(List<Localizable> posPoints);
 
-    public List<Mask> sentPointPrompt(List<Localizable> posPoints, Rectangle zoomedArea) {
-        return null;
-    }
+    public abstract List<Mask> sentPointPrompt(List<Localizable> posPoints, Rectangle zoomedArea);
 
-    public List<Mask> sentPointPrompt(List<Localizable> posPoints, List<Localizable> negPoints) {
-        return null;
-    }
+    public abstract List<Mask> sentPointPrompt(List<Localizable> posPoints, List<Localizable> negPoints);
 
-    public List<Mask> sentPointPrompt(List<Localizable> posPoints, List<Localizable> negPoints, Rectangle zoomedArea) {
-        return null;
-    }
+    public abstract List<Mask> sentPointPrompt(List<Localizable> posPoints, List<Localizable> negPoints, Rectangle zoomedArea);
 
-    public void notifyCloseModel() {
-        
-    }
+    public abstract void notifyCloseModel();
 }

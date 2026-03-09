@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
 
@@ -26,6 +27,10 @@ import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
+import ai.nets.samj.ui.PromptBridge;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
+import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.IntegerType;
@@ -41,6 +46,7 @@ public class Main extends MainGUI {
     protected ModelDrawerPanelListener modelDrawerListener;
     protected BatchCallback batchDrawerCallback;
     protected ConsumerCallback consumerCallback;
+    protected PromptBridge promptBridge;
     protected ConsumerInterface consumer;
     protected Runnable cancelCallback;
 
@@ -63,8 +69,6 @@ public class Main extends MainGUI {
 
 		@Override
 		public List<ComboBoxItem> getListOfOpenImages() {return new ArrayList<>();}
-		@Override
-		public void exportImageLabeling() {}
 		@Override
 		public Object getFocusedImage() {return null;}
 		@Override
@@ -97,6 +101,10 @@ public class Main extends MainGUI {
 		public void notifyPolygons(List<Mask> masks) {}
 		@Override
 		public RoiManagerConsumer getRoiManagerConsumer() {return null;}
+		@Override
+		public int getFocusedImageZPos() {return 0;}
+		@Override
+		public int getFocusedImageTPos() {return 0;}
     };
 
 	public Main() {
@@ -119,6 +127,7 @@ public class Main extends MainGUI {
 
 		createListeners();
 
+		this.consumer.setPromptBridge(promptBridge);
 		
         this.consumer.setGuiCallback(() -> {
         	SwingUtilities.invokeLater(() -> {
@@ -145,14 +154,14 @@ public class Main extends MainGUI {
 		this.selectionPanel.getModelSelection().getButton().addActionListener(e -> Main.this.toggleModelDrawer());
 		this.selectionPanel.getImageSelection().getButton().addActionListener(e -> Main.this.toggleImageDrawer());
 		this.selectionPanel.go.addActionListener(e -> loadModel());
-        this.bottomPanel.export.addActionListener(e -> consumer.exportImageLabeling());
+        this.bottomPanel.export.addActionListener(e -> consumer.getRoiManagerConsumer().exportMask());
         this.centerPanel.instantCard.chkInstant.addActionListener(
         		e -> setInstantPromptsEnabled(this.centerPanel.instantCard.chkInstant.isSelected() && this.centerPanel.isPromptValid()));
 		this.centerPanel.instantCard.propagate3D.addActionListener(e -> System.err.println("DO SOMETHING"));// TODO);
         this.centerPanel.batchCard.btnBatchSAMize.addActionListener(e -> batchSAMize());
         this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
         this.close.addActionListener(e -> close());
-		this.help.addActionListener(e -> consumer.exportImageLabeling());
+		this.help.addActionListener(e -> System.err.println("Not implemented"));
 		SwingUtilities.invokeLater(() -> changeGUI());
         
 		this.selectionPanel.cmbModels.setListener(modelListener);
@@ -179,6 +188,7 @@ public class Main extends MainGUI {
                 // TODO try removing Cast
             	Main.this.selectionPanel.cmbModels.loadModel(Cast.unchecked(Main.this.selectionPanel.cmbImages.getSelectedRai()));
                 consumer.setFocusedImage(Main.this.selectionPanel.cmbImages.getSelectedObject());
+                drawersPanel.imageDrawerPanel.roiManager.setImage(selectionPanel.cmbImages.getSelectedObject());
                 consumer.setModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
                 setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && centerPanel.isPromptValid());
                 Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
@@ -205,6 +215,7 @@ public class Main extends MainGUI {
     	}
     	centerPanel.batchCard.stopProgressBtn.setEnabled(true);
     	consumer.setFocusedImage(selectionPanel.cmbImages.getSelectedObject());
+        drawersPanel.imageDrawerPanel.roiManager.setImage(selectionPanel.cmbImages.getSelectedObject());
     	new Thread(() -> {
     		try {
     			consumer.notifyBatchSamize(selectionPanel.cmbModels.getSelectedModel().getName(), 
@@ -283,6 +294,62 @@ public class Main extends MainGUI {
                     }).start();
                 }
             }
+        };
+        
+        promptBridge = new PromptBridge () {
+
+			@Override
+			public List<Mask> sendRectanglePrompt(long[] xywh) {
+				int slice = consumer.getFocusedImageZPos();
+				int frame = consumer.getFocusedImageTPos();
+				final Interval rectInterval = new FinalInterval(
+						new long[] { xywh[0], xywh[1] },
+						new long[] { xywh[0] + xywh[2] -1, xywh[1] + xywh[3] - 1 } );
+				try {
+					SAMModel samj = selectionPanel.cmbModels.getSelectedModel();
+					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval);
+					List<Mask> proteovirMasks = samjMask.stream()
+							.map(mm -> Mask.build(mm.getContour(), mm.rleEncoding, slice, frame))
+							.collect(Collectors.toList());
+					Main.this.drawersPanel.imageDrawerPanel.addToRoiManager(proteovirMasks, "rect", samj.getName());
+					return proteovirMasks;
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					return new ArrayList<>();
+				}
+			}
+
+			@Override
+			public List<Mask> sentPointPrompt(List<Localizable> posPoints) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public List<Mask> sentPointPrompt(List<Localizable> posPoints, Rectangle zoomedArea) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public List<Mask> sentPointPrompt(List<Localizable> posPoints, List<Localizable> negPoints) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public List<Mask> sentPointPrompt(List<Localizable> posPoints, List<Localizable> negPoints,
+					Rectangle zoomedArea) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void notifyCloseModel() {
+				// TODO Auto-generated method stub
+				
+			}
+        	
         };
 
         batchDrawerCallback = new BatchCallback() {

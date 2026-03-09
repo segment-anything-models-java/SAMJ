@@ -92,8 +92,6 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
         }
         if (pointsComp != null)
             pointsComp.setEnabled(!block);
-
-        list.setEnabled(!block);
         showAllCheckbox.setEnabled(!block);
         labelsCheckbox.setEnabled(!block);
     }

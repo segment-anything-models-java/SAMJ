@@ -241,7 +241,7 @@ public class Main extends MainGUI {
         imageListener = new ImageSelectionListener() {
             @Override
             public void modelActionsOnImageChanged() {
-                Main.this.selectionPanel.cmbModels.getSelectedModel().closeProcess();
+                Main.this.manageLoaded(false);
             }
 
             @Override
@@ -269,8 +269,16 @@ public class Main extends MainGUI {
         modelListener = new ModelSelectionListener() {
             @Override
             public void changeDrawerPanel(SAMModel selected) {
-                if (drawersPanel.modelDrawerPanel.isVisible())
+                if (Main.this.isDrawerOpen 
+                		&& Main.this.selectionPanel.cmbModels.getSelectedModel() == selected
+                		&& selected.isLoaded()) {
+                	Main.this.setImageDrawerOpen(true);
+                    Main.this.manageLoaded(true);
+                } else if (Main.this.isDrawerOpen) {
+                    Main.this.manageLoaded(false);
                 	drawersPanel.modelDrawerPanel.setSelectedModel(selected);
+                	Main.this.setModelDrawerOpen(true);
+                }
             }
         };
 

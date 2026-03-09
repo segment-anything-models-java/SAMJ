@@ -77,6 +77,10 @@ public class ModelSelection extends ComboBoxButtonComp<SAMModel> implements Item
 	protected SAMModel getSelectedModel() {
 		return selected;
 	}
+	
+	protected SAMModel getDisplayedModel() {
+		return displayed;
+	}
 
 	protected boolean isModelInstalled(String modelName) {
 		for (SAMModel m : this.models) {

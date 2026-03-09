@@ -275,9 +275,12 @@ public class Main extends MainGUI {
                 	Main.this.setImageDrawerOpen(true);
                     Main.this.manageLoaded(true);
                 } else if (Main.this.isDrawerOpen) {
+                	System.err.println("opeend");
                     Main.this.manageLoaded(false);
                 	drawersPanel.modelDrawerPanel.setSelectedModel(selected);
                 	Main.this.setModelDrawerOpen(true);
+                } else {
+                	drawersPanel.modelDrawerPanel.setSelectedModel(selected);
                 }
             }
         };

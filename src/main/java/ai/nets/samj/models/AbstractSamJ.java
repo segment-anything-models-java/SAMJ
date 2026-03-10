@@ -109,11 +109,27 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	/**
 	 * Whether to propagate annotations to 3D/time too or not
 	 */
-	protected boolean propagate3D = true;
+	protected boolean propagate3D = false;
+	/**
+	 * Frame position used so SAMJ understands what is doing
+	 */
+	protected int samjFrameIdx = 0;
+	/**
+	 * The slice that we are currently annotating
+	 */
+	protected int sliceIdx = 0;
+	/**
+	 * Total number of slices in the image
+	 */
+	protected int nSlices = 1;
 	/**
 	 * The frame that we are currently annotating
 	 */
 	protected int frameIdx = 0;
+	/*
+	 * Total number of frames in the image
+	 */
+	protected int nFrames = 1;
 	/**
 	 * Whether the SAMJ model instance is verbose or not
 	 */
@@ -207,7 +223,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	protected abstract void processPointsWithSAM(int nPoints, int nNegPoints, boolean returnAll);
 	
+	protected abstract void processPointsWithSAMAndPropagate(int nPoints, int nNegPoints);
+	
 	protected abstract void processBoxWithSAM(boolean returnAll);
+	
+	protected abstract void processBoxWithSAMAndPropagate();
 	
 	protected abstract <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai);
 	
@@ -231,6 +251,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	public void setFrameIdx(int frameIdx) {
 		this.frameIdx = frameIdx;
+	}
+	
+	public void setSliceIdx(int sliceIdx) {
+		this.sliceIdx = sliceIdx;
 	}
 	
 	/**
@@ -509,13 +533,15 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		final List<List<Number>> contours_x_container = (List<List<Number>>)results.get("contours_x");
 		final Iterator<List<Number>> contours_x = contours_x_container.iterator();
 		final Iterator<List<Number>> contours_y = ((List<List<Number>>)results.get("contours_y")).iterator();
+		final Iterator<Number> frames = ((List<Number>)results.get("frame_ids")).iterator();
+		final Iterator<Number> slices = ((List<Number>)results.get("slice_ids")).iterator();
 		final Iterator<List<Number>> rles = ((List<List<Number>>)results.get("rle")).iterator();
 		final List<Mask> masks = new ArrayList<Mask>(contours_x_container.size());
 		while (contours_x.hasNext()) {
 			int[] xArr = contours_x.next().stream().mapToInt(Number::intValue).toArray();
 			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
 			long[] rle = rles.next().stream().mapToLong(Number::longValue).toArray();
-			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle, 0, 0));
+			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle, slices.next().intValue(), frames.next().intValue()));
 		}
 		return masks;
 	}
@@ -857,6 +883,33 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	public List<Mask> processBox(int[] boundingBox, boolean returnAll)
 			throws IOException, InterruptedException, TaskException {
+		return processBox(boundingBox, 0, 0, false, returnAll);
+	}
+	
+	/**
+	 * Method used that runs EfficientSAM using a bounding box as the prompt. The bounding box should
+	 * be a int array of length 4 of the form [x0, y0, x1, y1].
+	 * This method runs the prompt encoder and the EfficientSAM decoder only, the image encoder was run when the model
+	 * was initialized with the image, thus it is quite fast.
+	 * 
+	 * @param boundingBox
+	 * 	the bounding box that serves as the prompt for EfficientSAM
+	 * @param currentFrame
+	 * 	the current frame that the user is looking at and where prompts have been drawn
+	 * @param propagate
+	 * 	whether to propagate the annotations to the rest of the frames
+	 * @param returnAll
+	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
+	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
+	 * @throws IOException if any of the files needed to run the Python script is missing 
+	 * @throws InterruptedException if the process in interrupted
+	 * @throws TaskException if the appose task fails
+	 */
+	public List<Mask> processBox(int[] boundingBox, int currentSlice, int currentFrame, boolean propagate, boolean returnAll)
+			throws IOException, InterruptedException, TaskException {
+		this.setPropagate3D(propagate);
+		this.setFrameIdx(currentFrame);
+		this.setSliceIdx(currentSlice);
 		if (!this.imageSmall || this.encodeCoords[0] != 0 || this.encodeCoords[1] != 0 
 				|| targetDims[0] != img.dimensionsAsLongArray()[0] || targetDims[1] != img.dimensionsAsLongArray()[1]) {
 			if (needsMoreResolution(boundingBox)) {

@@ -430,12 +430,18 @@ public class EfficientTamJ extends AbstractSamJ {
 	protected <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai) {
 		checkImageIsFine(rai);
 		long[] dims = rai.dimensionsAsLongArray();
+		this.samjFrameIdx = 0;
 		if (dims.length == 2)
 			rai = Views.addDimension(Views.addDimension(rai, 0, 0), 0, 0);
 		dims = rai.dimensionsAsLongArray();
-		if (!this.propagate3D && dims.length == 3 && dims[2] != 3) {
+		if (!this.propagate3D && dims.length >= 3 && dims[2] != 3) {
+			// TODO
+			long[] arr = new long[dims.length * 2];
+			for (int i = dims.length; i < dims.length + 2; i ++)
+				arr[i] = dims[i - dims.length] - 1;
 			rai = Views.interval( rai, Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 0}) );
 			rai = Views.addDimension(rai, 0, 0);
+			this.samjFrameIdx = this.sliceIdx;
 		} else if (dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1) {
 			rai = Views.hyperSlice(rai, 0, 3);
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
@@ -487,9 +493,14 @@ public class EfficientTamJ extends AbstractSamJ {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
 		}
-
+		
+		dims = rai.dimensionsAsLongArray();
+		if (dims.length != 4 || dims[2] != 3) {
+		    throw new IllegalStateException("Expected XYCT with C=3, got " + Arrays.toString(dims));
+		}
 		this.img = rai;
 		this.targetDims = img.dimensionsAsLongArray();
+		
 	}
 
 	@Override
@@ -553,6 +564,8 @@ public class EfficientTamJ extends AbstractSamJ {
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
+				+ "task.outputs['frame_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
+				+ "task.outputs['slice_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
 				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
 		this.script = code;
 	}
@@ -581,6 +594,38 @@ public class EfficientTamJ extends AbstractSamJ {
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
+				+ "task.outputs['frame_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
+				+ "task.outputs['slice_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
+				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
+		this.script = code;
+	}
+
+	@Override
+	protected void processBoxWithSAMAndPropagate() {
+		
+		String code = "" + System.lineSeparator()
+				+ "task.update('start predict')" + System.lineSeparator()
+				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
+				+ "frame_idx, obj_ids, mask = predictor.add_new_points_or_box(" + System.lineSeparator()
+				+ "    state," + System.lineSeparator()
+				+ "    frame_idx=" + frameIdx + "," + System.lineSeparator()
+				+ "    obj_id=1," + System.lineSeparator()
+				+ "    points=None," + System.lineSeparator()
+				+ "    labels=None," + System.lineSeparator()
+				+ "    clear_old_points=True," + System.lineSeparator()
+				+ "    normalize_coords=True," + System.lineSeparator()
+				+ "    box=input_box,)" + System.lineSeparator()
+				//+ "np.save('/home/carlos/git/mask.npy', mask)" + System.lineSeparator()
+				+ "mask = (mask[0] > 0.0).cpu().numpy()" + System.lineSeparator()
+				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=True)" + System.lineSeparator()
+				+ "predictor.remove_object(state, 1, strict=False, need_output=True)" + System.lineSeparator()
+				+ "task.export(state=state)" + System.lineSeparator()
+				+ "task.update('all contours traced')" + System.lineSeparator()
+				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
+				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
+				+ "task.outputs['frame_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
+				+ "task.outputs['slice_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
 				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
 		this.script = code;
 	}
@@ -806,5 +851,11 @@ public class EfficientTamJ extends AbstractSamJ {
 	 */
 	public static String abbreviateModelType(String modelType) {
 		return MODEL_TYPE_MAP.get(modelType);
+	}
+
+	@Override
+	protected void processPointsWithSAMAndPropagate(int nPoints, int nNegPoints) {
+		// TODO Auto-generated method stub
+		
 	}
 }

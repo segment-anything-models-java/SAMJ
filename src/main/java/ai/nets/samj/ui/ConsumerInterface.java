@@ -69,7 +69,11 @@ public abstract class ConsumerInterface {
 
 	public abstract int getFocusedImageZPos();
 
+	public abstract int getFocusedImageNZ();
+
 	public abstract int getFocusedImageTPos();
+
+	public abstract int getFocusedImageNT();
 
 	public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getFocusedImageAsRai();
 	

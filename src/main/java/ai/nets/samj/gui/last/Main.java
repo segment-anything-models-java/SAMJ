@@ -335,12 +335,14 @@ public class Main extends MainGUI {
 			public List<Mask> sendRectanglePrompt(long[] xywh) {
 				int slice = consumer.getFocusedImageZPos();
 				int frame = consumer.getFocusedImageTPos();
+				int nFrames = consumer.getFocusedImageNT();
+				int nSlices = consumer.getFocusedImageNZ();
 				final Interval rectInterval = new FinalInterval(
 						new long[] { xywh[0], xywh[1] },
 						new long[] { xywh[0] + xywh[2] -1, xywh[1] + xywh[3] - 1 } );
 				try {
 					SAMModel samj = selectionPanel.cmbModels.getSelectedModel();
-					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval);
+					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval, slice, frame, centerPanel.instantCard.propagate3D.isSelected());
 					List<Mask> proteovirMasks = samjMask.stream()
 							.map(mm -> Mask.build(mm.getContour(), mm.rleEncoding, slice, frame))
 							.collect(Collectors.toList());

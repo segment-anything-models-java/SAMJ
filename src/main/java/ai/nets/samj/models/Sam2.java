@@ -590,4 +590,16 @@ public class Sam2 extends AbstractSamJ {
 		}
 		this.script = code;
 	}
+
+	@Override
+	protected void processPointsWithSAMAndPropagate(int nPoints, int nNegPoints) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void processBoxWithSAMAndPropagate() {
+		// TODO Auto-generated method stub
+		
+	}
 }

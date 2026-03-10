@@ -100,10 +100,11 @@ public class ModelSelection extends ComboBoxButtonComp<SAMModel> implements Item
 		return this.btn;
 	}
 	
-	protected <T extends RealType<T> & NativeType<T>> void loadModel(RandomAccessibleInterval<T> rai) throws InterruptedException, BuildException, TaskException, IOException {
+	protected <T extends RealType<T> & NativeType<T>> void loadModel(RandomAccessibleInterval<T> rai, int slice, int frame,
+			int nSlices, int nFrames, boolean propagate) throws InterruptedException, BuildException, TaskException, IOException {
 		if (!selected.isLoaded())
 			selected.loadModel(null);
-		selected.setImage(rai);
+		selected.setImage(rai, slice, frame, nSlices, nFrames, propagate);
 	}
 	
 	protected void unLoadModel() {

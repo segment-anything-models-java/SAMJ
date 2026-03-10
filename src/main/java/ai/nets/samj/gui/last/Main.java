@@ -192,22 +192,29 @@ public class Main extends MainGUI {
     protected void loadModel() {
         SwingUtilities.invokeLater(() -> {
         	setLoading();
+			int slice = consumer.getFocusedImageZPos();
+			int frame = consumer.getFocusedImageTPos();
+			int nFrames = consumer.getFocusedImageNT();
+			int nSlices = consumer.getFocusedImageNZ();
+			boolean propagate = centerPanel.isInstantShowing() ? centerPanel.instantCard.propagate3D.isSelected() : centerPanel.batchCard.propagate3D.isSelected();
+	        new Thread(() -> {
+	            try {
+	                // TODO try removing Cast
+	            	
+	            	Main.this.selectionPanel.cmbModels.loadModel(Cast.unchecked(Main.this.selectionPanel.cmbImages.getSelectedRai()),
+	            			slice, frame, nSlices, nFrames, propagate);
+	                consumer.setFocusedImage(Main.this.selectionPanel.cmbImages.getSelectedObject());
+	                drawersPanel.imageDrawerPanel.roiManager.setImage(selectionPanel.cmbImages.getSelectedObject());
+	                consumer.setModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
+	                setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && centerPanel.isPromptValid());
+	                Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
+	                SwingUtilities.invokeLater(() -> Main.this.manageLoaded(true));
+	            } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
+	            	SwingUtilities.invokeLater(() -> Main.this.manageLoaded(false));
+	                ex.printStackTrace();
+	            }
+	        }).start();
         });
-        new Thread(() -> {
-            try {
-                // TODO try removing Cast
-            	Main.this.selectionPanel.cmbModels.loadModel(Cast.unchecked(Main.this.selectionPanel.cmbImages.getSelectedRai()));
-                consumer.setFocusedImage(Main.this.selectionPanel.cmbImages.getSelectedObject());
-                drawersPanel.imageDrawerPanel.roiManager.setImage(selectionPanel.cmbImages.getSelectedObject());
-                consumer.setModel(Main.this.selectionPanel.cmbModels.getSelectedModel());
-                setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && centerPanel.isPromptValid());
-                Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
-                SwingUtilities.invokeLater(() -> Main.this.manageLoaded(true));
-            } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
-            	SwingUtilities.invokeLater(() -> Main.this.manageLoaded(false));
-                ex.printStackTrace();
-            }
-        }).start();
     }
     
     protected < T extends RealType< T > & NativeType< T > > void batchSAMize() {
@@ -346,15 +353,13 @@ public class Main extends MainGUI {
 			public List<Mask> sendRectanglePrompt(long[] xywh) {
 				int slice = consumer.getFocusedImageZPos();
 				int frame = consumer.getFocusedImageTPos();
-				int nFrames = consumer.getFocusedImageNT();
-				int nSlices = consumer.getFocusedImageNZ();
+				boolean propagate = centerPanel.isInstantShowing() ? centerPanel.instantCard.propagate3D.isSelected() : centerPanel.batchCard.propagate3D.isSelected();
 				final Interval rectInterval = new FinalInterval(
 						new long[] { xywh[0], xywh[1] },
 						new long[] { xywh[0] + xywh[2] -1, xywh[1] + xywh[3] - 1 } );
 				try {
 					SAMModel samj = selectionPanel.cmbModels.getSelectedModel();
-					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval, slice, frame, 
-							nSlices, nFrames, centerPanel.instantCard.propagate3D.isSelected());
+					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval, slice, frame, propagate);
 					List<Mask> proteovirMasks = samjMask.stream()
 							.map(mm -> Mask.build(mm.getContour(), mm.rleEncoding, slice, frame))
 							.collect(Collectors.toList());

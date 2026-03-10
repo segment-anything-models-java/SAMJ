@@ -252,19 +252,13 @@ public abstract class SAMModel {
 	 * 	the slice where we are annotating
 	 * @param frame
 	 * 	the frame where we are annotating
-	 * @param nSlices
-	 * 	number of slices in the image we are annotating
-	 * @param frame
-	 * 	number of frames in the image we are annotating
-	 * @param nFrames
-	 * 	whether to propagate to other slices/frames
 	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
 	 * @throws TaskException if there is any error running Python in Appose
 	 * @throws IOException if there is any error with the shared memory
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D,
-			int slice, int frame, int nSlices, int nFrames, boolean propagate) 
+			int slice, int frame, boolean propagate) 
 			throws TaskException, InterruptedException, IOException {
 		try {
 			List<int[]> list = listOfPoints2D.stream()
@@ -293,12 +287,6 @@ public abstract class SAMModel {
 	 * 	the slice where we are annotating
 	 * @param frame
 	 * 	the frame where we are annotating
-	 * @param nSlices
-	 * 	number of slices in the image we are annotating
-	 * @param frame
-	 * 	number of frames in the image we are annotating
-	 * @param nFrames
-	 * 	whether to propagate to other slices/frames
 	 * @param propagate
 	 * 	whether to propagate to other slices/frames
 	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
@@ -307,7 +295,7 @@ public abstract class SAMModel {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D,
-			Rectangle zoomedRectangle, int slice, int frame, int nSlices, int nFrames, boolean propagate) throws IOException, TaskException, InterruptedException {
+			Rectangle zoomedRectangle, int slice, int frame, boolean propagate) throws IOException, TaskException, InterruptedException {
 		try {
 			List<int[]> list = listOfPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
@@ -329,12 +317,6 @@ public abstract class SAMModel {
 	 * 	the slice where we are annotating
 	 * @param frame
 	 * 	the frame where we are annotating
-	 * @param nSlices
-	 * 	number of slices in the image we are annotating
-	 * @param frame
-	 * 	number of frames in the image we are annotating
-	 * @param nFrames
-	 * 	whether to propagate to other slices/frames
 	 * @param propagate
 	 * 	whether to propagate to other slices/frames
 	 * @return a list of polygons that represent the edges of each of the masks segmented by the model
@@ -342,7 +324,7 @@ public abstract class SAMModel {
 	 * @throws TaskException if there is any error running the Python process
 	 * @throws InterruptedException if the process in interrupted
 	 */
-	public List<Mask> fetch2dSegmentation(Interval boundingBox2D, int slice, int frame, int nSlices, int nFrames, boolean propagate) 
+	public List<Mask> fetch2dSegmentation(Interval boundingBox2D, int slice, int frame, boolean propagate) 
 			throws IOException, InterruptedException, TaskException {
 		try {
 			//order to processBox() should be: x0,y0, x1,y1
@@ -352,7 +334,7 @@ public abstract class SAMModel {
 				(int)boundingBox2D.max(0),
 				(int)boundingBox2D.max(1)
 			};
-			return samj.processBox(bbox, slice, frame, nSlices, nFrames, propagate, !onlyBiggest);
+			return samj.processBox(bbox, slice, frame, propagate, !onlyBiggest);
 		} catch (IOException | InterruptedException | TaskException e) {
 			log.error(getName()+", providing empty result because of some trouble: "+Types.stackTrace(e));
 			throw e;

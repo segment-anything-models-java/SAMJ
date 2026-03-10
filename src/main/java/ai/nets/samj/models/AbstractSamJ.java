@@ -107,6 +107,14 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	protected DebugTextPrinter debugPrinter = System.out::println;
 	/**
+	 * Whether to propagate annotations to 3D/time too or not
+	 */
+	protected boolean propagate3D = true;
+	/**
+	 * The frame that we are currently annotating
+	 */
+	protected int frameIdx = 0;
+	/**
 	 * Whether the SAMJ model instance is verbose or not
 	 */
 	protected boolean isDebugging = true;
@@ -217,6 +225,14 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			python.close();
 	}
 	
+	public void setPropagate3D(boolean propagate3D) {
+		this.propagate3D = propagate3D;
+	}
+	
+	public void setFrameIdx(int frameIdx) {
+		this.frameIdx = frameIdx;
+	}
+	
 	/**
 	 * 
 	 * @return true if the SAMJ model instance is verbose or not
@@ -285,7 +301,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	/**
-	 * Encode an image (n-dimensional array) with an SAM model
+	 * Encode an image (n-dimensional array) with an SAM model.
+	 * Images should follow the ordering of WHCZT. If any of those dimensions is missing,
+	 * just skip it while maintaining the order: WHCT, WHZ, WH, WHT...
+	 * At least a 2d WH image is required.
 	 * @param <T>
 	 * 	ImgLib2 data type of the image of interest
 	 * @param rai

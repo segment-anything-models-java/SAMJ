@@ -20,6 +20,7 @@
 package ai.nets.samj.models;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -35,7 +36,7 @@ import ai.nets.samj.install.SamEnvManagerAbstract;
 import java.io.File;
 import java.io.IOException;
 
-
+import io.bioimage.modelrunner.tensor.Utils;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
@@ -101,10 +102,8 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "import torch._dynamo" + System.lineSeparator() // TODO remove
 		    + "torch._dynamo.config.suppress_errors = True" + System.lineSeparator() // TODO remove
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
-			+ "from efficient_track_anything.build_efficienttam import build_efficienttam" + System.lineSeparator()
-			+ "from efficient_track_anything.efficienttam_image_predictor import EfficientTAMImagePredictor" + System.lineSeparator()
-			+ "model = build_efficienttam(r'%s',r'%s', device=device)" + System.lineSeparator()
-			+ "predictor = EfficientTAMImagePredictor(model)" + System.lineSeparator()
+			+ "from efficient_track_anything.build_efficienttam import build_efficienttam_video_predictor" + System.lineSeparator()
+			+ "predictor = build_efficienttam_video_predictor(r'%s',r'%s', device=device)" + System.lineSeparator()
 			+ "task.update('created predictor')" + System.lineSeparator()
 			+ "encodings_map = {}" + System.lineSeparator()
 			+ "task.export(encodings_map=encodings_map)" + System.lineSeparator()
@@ -114,7 +113,139 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "task.export(label=label)" + System.lineSeparator()
 			+ "task.export(binary_fill_holes=binary_fill_holes)" + System.lineSeparator()
 			+ "task.export(predictor=predictor)" + System.lineSeparator()
-			+ "task.export(device=device)" + System.lineSeparator();
+			+ "task.export(device=device)" + System.lineSeparator()
+			+ "import torch.nn.functional as F" + System.lineSeparator()
+			+ "\n"
+			+ "" + System.lineSeparator()
+			+ "def load_video_frames_from_xycz_array(" + System.lineSeparator()
+			+ "    video_xycz: np.ndarray," + System.lineSeparator()
+			+ "    image_size: int," + System.lineSeparator()
+			+ "    offload_video_to_cpu: bool," + System.lineSeparator()
+			+ "    img_mean=(0.485, 0.456, 0.406)," + System.lineSeparator()
+			+ "    img_std=(0.229, 0.224, 0.225)," + System.lineSeparator()
+			+ "    compute_device=torch.device(\"cuda\")," + System.lineSeparator()
+			+ "):" + System.lineSeparator()
+			+ "    \"\"\"" + System.lineSeparator()
+			+ "    Convert a uint8 numpy array of shape (x, y, 3, z) into the same output format as" + System.lineSeparator()
+			+ "    EfficientTAM's load_video_frames_from_jpg_images(...), using a batched torch path." + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "    Parameters" + System.lineSeparator()
+			+ "    ----------" + System.lineSeparator()
+			+ "    video_xycz : np.ndarray" + System.lineSeparator()
+			+ "        Video array with shape (x, y, 3, z), dtype uint8." + System.lineSeparator()
+			+ "    image_size : int" + System.lineSeparator()
+			+ "        Spatial size expected by EfficientTAM." + System.lineSeparator()
+			+ "    offload_video_to_cpu : bool" + System.lineSeparator()
+			+ "        If False, move the output tensor to compute_device." + System.lineSeparator()
+			+ "    img_mean : tuple" + System.lineSeparator()
+			+ "        Per-channel mean used by EfficientTAM." + System.lineSeparator()
+			+ "    img_std : tuple" + System.lineSeparator()
+			+ "        Per-channel std used by EfficientTAM." + System.lineSeparator()
+			+ "    compute_device : torch.device" + System.lineSeparator()
+			+ "        Target device when offload_video_to_cpu is False." + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "    Returns" + System.lineSeparator()
+			+ "    -------" + System.lineSeparator()
+			+ "    images : torch.Tensor" + System.lineSeparator()
+			+ "        Shape (z, 3, image_size, image_size), dtype float32, normalized." + System.lineSeparator()
+			+ "    video_height : int" + System.lineSeparator()
+			+ "        Original frame height (y)." + System.lineSeparator()
+			+ "    video_width : int" + System.lineSeparator()
+			+ "        Original frame width (x)." + System.lineSeparator()
+			+ "    \"\"\"" + System.lineSeparator()
+			+ "    if not isinstance(video_xycz, np.ndarray):" + System.lineSeparator()
+			+ "        raise TypeError(\"video_xycz must be a numpy.ndarray\")" + System.lineSeparator()
+			+ "    if video_xycz.dtype != np.uint8:" + System.lineSeparator()
+			+ "        raise TypeError(f\"Expected np.uint8, got {video_xycz.dtype}\")" + System.lineSeparator()
+			+ "    if video_xycz.ndim != 4:" + System.lineSeparator()
+			+ "        raise ValueError(f\"Expected 4D array (x, y, 3, z), got shape {video_xycz.shape}\")" + System.lineSeparator()
+			+ "    if video_xycz.shape[2] != 3:" + System.lineSeparator()
+			+ "        raise ValueError(f\"Expected 3 channels on axis 2, got shape {video_xycz.shape}\")" + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "    video_width = video_xycz.shape[0]" + System.lineSeparator()
+			+ "    video_height = video_xycz.shape[1]" + System.lineSeparator()
+			+ "    # (x, y, 3, z) -> (z, 3, y, x)" + System.lineSeparator()
+			+ "    images = torch.from_numpy(video_xycz).permute(3, 2, 1, 0).contiguous()" + System.lineSeparator()
+			+ "    images = images.to(torch.float32).div_(255.0)" + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "    if not offload_video_to_cpu:" + System.lineSeparator()
+			+ "        images = images.to(compute_device, non_blocking=True)" + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "    images = F.interpolate(" + System.lineSeparator()
+			+ "        images," + System.lineSeparator()
+			+ "        size=(image_size, image_size)," + System.lineSeparator()
+			+ "        mode=\"bilinear\"," + System.lineSeparator()
+			+ "        align_corners=False," + System.lineSeparator()
+			+ "        antialias=True," + System.lineSeparator()
+			+ "    )" + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "    img_mean = torch.tensor(img_mean, dtype=torch.float32, device=images.device)[None, :, None, None]" + System.lineSeparator()
+			+ "    img_std = torch.tensor(img_std, dtype=torch.float32, device=images.device)[None, :, None, None]" + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "    images.sub_(img_mean).div_(img_std)" + System.lineSeparator()
+			+ "    return images, video_height, video_width" + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "@torch.inference_mode()" + System.lineSeparator()
+			+ "def init_state(" + System.lineSeparator()
+			+ "    npy_video," + System.lineSeparator()
+			+ "    offload_video_to_cpu=False," + System.lineSeparator()
+			+ "    offload_state_to_cpu=False," + System.lineSeparator()
+			+ "):" + System.lineSeparator()
+			+ "    \"\"\"Initialize an inference state.\"\"\"" + System.lineSeparator()
+			+ "    compute_device = self.device  # device of the model" + System.lineSeparator()
+			+ "    images, video_height, video_width = load_video_frames_from_xycz_array(" + System.lineSeparator()
+			+ "        video_xycz=npy_video," + System.lineSeparator()
+			+ "        image_size=predictor.image_size," + System.lineSeparator()
+			+ "        offload_video_to_cpu=offload_video_to_cpu," + System.lineSeparator()
+			+ "        compute_device=compute_device," + System.lineSeparator()
+			+ "    )" + System.lineSeparator()
+			+ "    inference_state = {}" + System.lineSeparator()
+			+ "    inference_state[\"images\"] = images" + System.lineSeparator()
+			+ "    inference_state[\"num_frames\"] = len(images)" + System.lineSeparator()
+			+ "    # whether to offload the video frames to CPU memory" + System.lineSeparator()
+			+ "    # turning on this option saves the GPU memory with only a very small overhead" + System.lineSeparator()
+			+ "    inference_state[\"offload_video_to_cpu\"] = offload_video_to_cpu" + System.lineSeparator()
+			+ "    # whether to offload the inference state to CPU memory" + System.lineSeparator()
+			+ "    # turning on this option saves the GPU memory at the cost of a lower tracking fps" + System.lineSeparator()
+			+ "    # (e.g. in a test case of 768x768 model, fps dropped from 27 to 24 when tracking one object" + System.lineSeparator()
+			+ "    # and from 24 to 21 when tracking two objects)" + System.lineSeparator()
+			+ "    inference_state[\"offload_state_to_cpu\"] = offload_state_to_cpu" + System.lineSeparator()
+			+ "    # the original video height and width, used for resizing final output scores" + System.lineSeparator()
+			+ "    inference_state[\"video_height\"] = video_height" + System.lineSeparator()
+			+ "    inference_state[\"video_width\"] = video_width" + System.lineSeparator()
+			+ "    inference_state[\"device\"] = compute_device" + System.lineSeparator()
+			+ "    if offload_state_to_cpu:" + System.lineSeparator()
+			+ "        inference_state[\"storage_device\"] = torch.device(\"cpu\")" + System.lineSeparator()
+			+ "    else:" + System.lineSeparator()
+			+ "        inference_state[\"storage_device\"] = compute_device" + System.lineSeparator()
+			+ "    # inputs on each frame" + System.lineSeparator()
+			+ "    inference_state[\"point_inputs_per_obj\"] = {}" + System.lineSeparator()
+			+ "    inference_state[\"mask_inputs_per_obj\"] = {}" + System.lineSeparator()
+			+ "    # visual features on a small number of recently visited frames for quick interactions" + System.lineSeparator()
+			+ "    inference_state[\"cached_features\"] = {}" + System.lineSeparator()
+			+ "    # values that don't change across frames (so we only need to hold one copy of them)" + System.lineSeparator()
+			+ "    inference_state[\"constants\"] = {}" + System.lineSeparator()
+			+ "    # mapping between client-side object id and model-side object index" + System.lineSeparator()
+			+ "    inference_state[\"obj_id_to_idx\"] = OrderedDict()" + System.lineSeparator()
+			+ "    inference_state[\"obj_idx_to_id\"] = OrderedDict()" + System.lineSeparator()
+			+ "    inference_state[\"obj_ids\"] = []" + System.lineSeparator()
+			+ "    # Slice (view) of each object tracking results, sharing the same memory with \"output_dict\"" + System.lineSeparator()
+			+ "    inference_state[\"output_dict_per_obj\"] = {}" + System.lineSeparator()
+			+ "    # A temporary storage to hold new outputs when user interact with a frame" + System.lineSeparator()
+			+ "    # to add clicks or mask (it's merged into \"output_dict\" before propagation starts)" + System.lineSeparator()
+			+ "    inference_state[\"temp_output_dict_per_obj\"] = {}" + System.lineSeparator()
+			+ "    # Frames that already holds consolidated outputs from click or mask inputs" + System.lineSeparator()
+			+ "    # (we directly use their consolidated outputs during tracking)" + System.lineSeparator()
+			+ "    # metadata for each tracking frame (e.g. which direction it's tracked)" + System.lineSeparator()
+			+ "    inference_state[\"frames_tracked_per_obj\"] = {}" + System.lineSeparator()
+			+ "    # Warm up the visual backbone and cache the image feature on frame 0" + System.lineSeparator()
+			+ "    predictor._get_image_feature(inference_state, frame_idx=0, batch_size=1)" + System.lineSeparator()
+			+ "    return inference_state" + System.lineSeparator()
+			+ ""  + System.lineSeparator()
+			+ ""  + System.lineSeparator()
+			+ ""  + System.lineSeparator()
+			+ ""
+			+ "task.export(init_state=init_state)" + System.lineSeparator();
 	/**
 	 * String containing the Python imports code after it has been formated with the correct 
 	 * paths and names
@@ -291,15 +422,62 @@ public class EfficientTamJ extends AbstractSamJ {
 	}
 
 	@Override
+	// TODO test extensively
 	protected <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai) {
 		checkImageIsFine(rai);
 		long[] dims = rai.dimensionsAsLongArray();
 		if (dims.length == 2)
-			rai = Views.addDimension(rai, 0, 0);
+			rai = Views.addDimension(Views.addDimension(rai, 0, 0), 0, 0);
 		dims = rai.dimensionsAsLongArray();
-		if (dims[2] == 1)
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2}), 
+		if (!this.propagate3D && dims.length == 3 && dims[2] != 3) {
+			rai = Views.interval( rai, Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 0}) );
+			rai = Views.addDimension(rai, 0, 0);
+		} else if (dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1)
+			rai = Views.hyperSlice(rai, 0, 3);
+		dims = rai.dimensionsAsLongArray();
+		
+		if (dims.length == 3 && dims[2] == 1) {
+			rai = Views.interval( Views.expandMirrorDouble(Views.addDimension(rai, 0, 0), new long[] {0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
+		} else if (dims.length == 3 && dims[2] == 3) {
+			rai = Views.addDimension(rai, 0, 0);
+		} else if (this.propagate3D && dims.length == 3 && dims[2] != 3) {
+			rai = Utils.rearangeAxes(Views.addDimension(rai, 0, 0), new int[] {0, 1, 3, 2});
+			dims = rai.dimensionsAsLongArray();
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (this.propagate3D && dims.length == 4 && dims[2] != 3 && dims[2] != 1) {
+			long[] intervalArr = new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 0};
+			rai = Views.interval( rai, Intervals.createMinMax(intervalArr) );
+			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
+			dims = rai.dimensionsAsLongArray();
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (this.propagate3D && dims.length == 4 && dims[2] == 1 && dims[3] != 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (this.propagate3D && dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1) {
+			rai = Views.hyperSlice(rai, 4, 0);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (this.propagate3D && dims.length == 5 && dims[2] == 1 && dims[3] > 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (this.propagate3D && dims.length == 5 && dims[2] == 1 && dims[4] > 1) {
+			rai = Views.hyperSlice(rai, 3, 0);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (this.propagate3D && dims.length == 5 && dims[2] == 3 && dims[3] > 1) {
+			rai = Views.hyperSlice(rai, 4, 0);
+		} else if (this.propagate3D && dims.length == 5 && dims[2] == 3 && dims[4] > 1) {
+			rai = Views.hyperSlice(rai, 3, 0);
+		} else if (this.propagate3D && dims.length == 5 && dims[2] != 3) {
+			rai = Views.hyperSlice(rai, 3, 0);
+			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		}
+
 		this.img = rai;
 		this.targetDims = img.dimensionsAsLongArray();
 	}
@@ -310,29 +488,33 @@ public class EfficientTamJ extends AbstractSamJ {
 		script += "im_shm = shared_memory.SharedMemory(name='"
 				+ shma.getNameForPython() + "', size=" + shma.getSize() 
 				+ ")" + System.lineSeparator();
-		int size = (int) targetDims[2];
-		for (int i = 0; i < targetDims.length - 1; i ++) {
+		int size = (int) (targetDims[2] * targetDims[3]);
+		for (int i = 0; i < 2; i ++) {
 			size *= Math.ceil(targetDims[i] / (double) scale);
 			}
 		script += "im = np.ndarray(" + size + ", dtype='" + CommonUtils.getDataTypeFromRAI(Cast.unchecked(shma.getSharedRAI()))
 				+ "', buffer=im_shm.buf).reshape([";
-		for (int i = 0; i < targetDims.length - 1; i ++)
+		for (int i = 0; i < targetDims.length - 2; i ++)
 			script += (int) Math.ceil(targetDims[i] / (double) scale) + ", ";
-		script += targetDims[2];
+		script += targetDims[2] + ", " + targetDims[3];
 		script += "])" + System.lineSeparator();
-		script += "im = np.transpose(im, (1, 0, 2))" + System.lineSeparator();
+		script += "im = np.transpose(im, (1, 0, 2, 3))" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();
 		script += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
 		script += ""
-			+ "predictor.set_image(im)";
+			+ "state = init_state(im," + System.lineSeparator()
+		+ "    offload_video_to_cpu=False," + System.lineSeparator()
+		+ "    offload_state_to_cpu=False,)" + System.lineSeparator()
+		+ "task.export(state=state)" + System.lineSeparator()
+		+ "predictor._get_image_feature(state, frame_idx=" + frameIdx + ", batch_size=1)";
 	}
 
 	@Override
 	protected <T extends RealType<T> & NativeType<T>> void createSHMArray(RandomAccessibleInterval<T> imShared) {
 		RandomAccessibleInterval<T> imageToBeSent = ImgLib2Utils.reescaleIfNeeded(imShared);
 		long[] dims = imageToBeSent.dimensionsAsLongArray();
-		shma = SharedMemoryArray.create(new long[] {dims[0], dims[1], dims[2]}, new UnsignedByteType(), false, false);
+		shma = SharedMemoryArray.create(new long[] {dims[0], dims[1], dims[2], dims[3]}, new UnsignedByteType(), false, false);
 		adaptImageToModel(imageToBeSent, shma.getSharedRAI());
 	}
 
@@ -368,17 +550,26 @@ public class EfficientTamJ extends AbstractSamJ {
 
 	@Override
 	protected void processBoxWithSAM(boolean returnAll) {
+
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
 				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
-				+ "mask, _, _ = predictor.predict(" + System.lineSeparator()
-				+ "    point_coords=None," + System.lineSeparator()
-				+ "    point_labels=None," + System.lineSeparator()
-				+ "    multimask_output=False," + System.lineSeparator()
+				+ "predictor._get_image_feature(state, frame_idx=0, batch_size=1)"
+				+ "frame_idx, obj_ids, mask = predictor.add_new_points_or_box(" + System.lineSeparator()
+				+ "    state," + System.lineSeparator()
+				+ "    frame_idx=" + frameIdx + "," + System.lineSeparator()
+				+ "    obj_id=1," + System.lineSeparator()
+				+ "    points=None," + System.lineSeparator()
+				+ "    labels=None," + System.lineSeparator()
+				+ "    clear_old_points=True," + System.lineSeparator()
+				+ "    clear_old_points=True," + System.lineSeparator()
 				+ "    box=input_box,)" + System.lineSeparator()
 				//+ "np.save('/home/carlos/git/mask.npy', mask)" + System.lineSeparator()
+				+ "mask = (mask[0] > 0.0).cpu().numpy()" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=" + (!returnAll ? "True" : "False") + ")" + System.lineSeparator()
+				+ "predictor.remove_object(state, 1, strict=False, need_output=True)" + System.lineSeparator()
+				+ "task.export(state=state)" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
@@ -388,9 +579,8 @@ public class EfficientTamJ extends AbstractSamJ {
 	
 	private <T extends RealType<T> & NativeType<T>> void checkImageIsFine(RandomAccessibleInterval<T> inImg) {
 		long[] dims = inImg.dimensionsAsLongArray();
-		if ((dims.length != 3 && dims.length != 2) || (dims.length == 3 && dims[2] != 3 && dims[2] != 1)){
-			throw new IllegalArgumentException("Currently EfficientViTSAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
-					+ "The image dimensions order should be 'xyc', first dimension width, second height and third channels.");
+		if ((dims.length < 2)){
+			throw new IllegalArgumentException("Image should have at least 2 dimensions");
 		}
 	}
 	
@@ -404,22 +594,25 @@ public class EfficientTamJ extends AbstractSamJ {
 	
 	private <T extends RealType<T> & NativeType<T>>
 	void adaptImageToModel(RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<T> targetImg) {
-		if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 3) {
-			for (int i = 0; i < 3; i ++) {
-				RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), 
-						Views.hyperSlice(targetImg, 2, i) );
+		if (ogImg.numDimensions() == 4 && ogImg.dimensionsAsLongArray()[2] == 3) {
+			for (int j = 0; j < ogImg.numDimensions(); j ++) {
+				RandomAccessibleInterval<T> frame = Views.hyperSlice(ogImg, 3, j);
+				for (int i = 0; i < 3; i ++) {
+					RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(frame, 2, i), this.debugPrinter), 
+							Views.hyperSlice(frame, 2, i) );
+				}
+				RealTypeConverters.copyFromTo( frame, Views.hyperSlice(targetImg, 3, j));
 			}
-		} else if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 1) {
-			debugPrinter.printText("CONVERTED 1 CHANNEL IMAGE INTO 3 TO BE FEEDED TO SAMJ");
-			IntervalView<UnsignedByteType> resIm = 
-					Views.interval( Views.expandMirrorDouble(ImgLib2Utils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2}), 
-					Intervals.createMinMax(new long[] {0, 0, 0, ogImg.dimensionsAsLongArray()[0] - 1, ogImg.dimensionsAsLongArray()[1] - 1, 2}) );
-			RealTypeConverters.copyFromTo( resIm, targetImg );
-		} else if (ogImg.numDimensions() == 2) {
-			adaptImageToModel(Views.addDimension(ogImg, 0, 0), targetImg);
+		} else if (ogImg.numDimensions() == 4 && ogImg.dimensionsAsLongArray()[2] == 1) {
+			for (int j = 0; j < ogImg.numDimensions(); j ++) {
+				IntervalView<UnsignedByteType> resIm = 
+						Views.interval( Views.expandMirrorDouble(ImgLib2Utils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2, 0}), 
+						Intervals.createMinMax(new long[] {0, 0, 0, 0,
+								ogImg.dimensionsAsLongArray()[0] - 1, ogImg.dimensionsAsLongArray()[1] - 1, 2, ogImg.dimensionsAsLongArray()[3] - 1}) );
+				RealTypeConverters.copyFromTo( resIm, targetImg );
+			}
 		} else {
-			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
-					+ "The image dimensions order should be 'yxc', first dimension height, second width and third channels.");
+			throw new IllegalArgumentException("Error preprocessing the image");
 		}
 	}
 	

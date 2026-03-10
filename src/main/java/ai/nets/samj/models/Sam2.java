@@ -383,9 +383,8 @@ public class Sam2 extends AbstractSamJ {
 	
 	private <T extends RealType<T> & NativeType<T>> void checkImageIsFine(RandomAccessibleInterval<T> inImg) {
 		long[] dims = inImg.dimensionsAsLongArray();
-		if ((dims.length != 3 && dims.length != 2) || (dims.length == 3 && dims[2] != 3 && dims[2] != 1)){
-			throw new IllegalArgumentException("Currently EfficientViTSAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
-					+ "The image dimensions order should be 'xyc', first dimension width, second height and third channels.");
+		if ((dims.length < 2)){
+			throw new IllegalArgumentException("Image should have at least 2 dimensions");
 		}
 	}
 	

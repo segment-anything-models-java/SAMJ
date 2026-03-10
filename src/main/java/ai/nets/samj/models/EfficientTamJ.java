@@ -185,14 +185,17 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "    images.sub_(img_mean).div_(img_std)" + System.lineSeparator()
 			+ "    return images, video_height, video_width" + System.lineSeparator()
 			+ "" + System.lineSeparator()
+			+ "" + System.lineSeparator()
+			+ "from collections import OrderedDict" + System.lineSeparator()
 			+ "@torch.inference_mode()" + System.lineSeparator()
 			+ "def init_state(" + System.lineSeparator()
 			+ "    npy_video," + System.lineSeparator()
 			+ "    offload_video_to_cpu=False," + System.lineSeparator()
 			+ "    offload_state_to_cpu=False," + System.lineSeparator()
+			+ "    frame_idx=0," + System.lineSeparator()
 			+ "):" + System.lineSeparator()
 			+ "    \"\"\"Initialize an inference state.\"\"\"" + System.lineSeparator()
-			+ "    compute_device = self.device  # device of the model" + System.lineSeparator()
+			+ "    compute_device = predictor.device  # device of the model" + System.lineSeparator()
 			+ "    images, video_height, video_width = load_video_frames_from_xycz_array(" + System.lineSeparator()
 			+ "        video_xycz=npy_video," + System.lineSeparator()
 			+ "        image_size=predictor.image_size," + System.lineSeparator()
@@ -239,13 +242,14 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "    # metadata for each tracking frame (e.g. which direction it's tracked)" + System.lineSeparator()
 			+ "    inference_state[\"frames_tracked_per_obj\"] = {}" + System.lineSeparator()
 			+ "    # Warm up the visual backbone and cache the image feature on frame 0" + System.lineSeparator()
-			+ "    predictor._get_image_feature(inference_state, frame_idx=0, batch_size=1)" + System.lineSeparator()
+			+ "    predictor._get_image_feature(inference_state, frame_idx=frame_idx, batch_size=1)" + System.lineSeparator()
 			+ "    return inference_state" + System.lineSeparator()
 			+ ""  + System.lineSeparator()
 			+ ""  + System.lineSeparator()
 			+ ""  + System.lineSeparator()
 			+ ""
-			+ "task.export(init_state=init_state)" + System.lineSeparator();
+			+ "task.export(init_state=init_state)" + System.lineSeparator()
+			+ "task.export(OrderedDict=OrderedDict)" + System.lineSeparator();
 	/**
 	 * String containing the Python imports code after it has been formated with the correct 
 	 * paths and names
@@ -432,8 +436,14 @@ public class EfficientTamJ extends AbstractSamJ {
 		if (!this.propagate3D && dims.length == 3 && dims[2] != 3) {
 			rai = Views.interval( rai, Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 0}) );
 			rai = Views.addDimension(rai, 0, 0);
-		} else if (dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1)
+		} else if (dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1) {
 			rai = Views.hyperSlice(rai, 0, 3);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (dims.length == 4 && dims[2] == 1 && dims[3] == 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		}
 		dims = rai.dimensionsAsLongArray();
 		
 		if (dims.length == 3 && dims[2] == 1) {
@@ -498,16 +508,15 @@ public class EfficientTamJ extends AbstractSamJ {
 			script += (int) Math.ceil(targetDims[i] / (double) scale) + ", ";
 		script += targetDims[2] + ", " + targetDims[3];
 		script += "])" + System.lineSeparator();
-		script += "im = np.transpose(im, (1, 0, 2, 3))" + System.lineSeparator();
 		//code += "np.save('/home/carlos/git/aa.npy', im)" + System.lineSeparator();
 		script += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
 		script += ""
 			+ "state = init_state(im," + System.lineSeparator()
 		+ "    offload_video_to_cpu=False," + System.lineSeparator()
-		+ "    offload_state_to_cpu=False,)" + System.lineSeparator()
-		+ "task.export(state=state)" + System.lineSeparator()
-		+ "predictor._get_image_feature(state, frame_idx=" + frameIdx + ", batch_size=1)";
+		+ "    offload_state_to_cpu=False,"
+		+ "    frame_idx=" + frameIdx + ")" + System.lineSeparator()
+		+ "task.export(state=state)" + System.lineSeparator();
 	}
 
 	@Override
@@ -554,7 +563,6 @@ public class EfficientTamJ extends AbstractSamJ {
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
 				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
-				+ "predictor._get_image_feature(state, frame_idx=0, batch_size=1)"
 				+ "frame_idx, obj_ids, mask = predictor.add_new_points_or_box(" + System.lineSeparator()
 				+ "    state," + System.lineSeparator()
 				+ "    frame_idx=" + frameIdx + "," + System.lineSeparator()
@@ -562,7 +570,7 @@ public class EfficientTamJ extends AbstractSamJ {
 				+ "    points=None," + System.lineSeparator()
 				+ "    labels=None," + System.lineSeparator()
 				+ "    clear_old_points=True," + System.lineSeparator()
-				+ "    clear_old_points=True," + System.lineSeparator()
+				+ "    normalize_coords=True," + System.lineSeparator()
 				+ "    box=input_box,)" + System.lineSeparator()
 				//+ "np.save('/home/carlos/git/mask.npy', mask)" + System.lineSeparator()
 				+ "mask = (mask[0] > 0.0).cpu().numpy()" + System.lineSeparator()
@@ -595,18 +603,17 @@ public class EfficientTamJ extends AbstractSamJ {
 	private <T extends RealType<T> & NativeType<T>>
 	void adaptImageToModel(RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<T> targetImg) {
 		if (ogImg.numDimensions() == 4 && ogImg.dimensionsAsLongArray()[2] == 3) {
-			for (int j = 0; j < ogImg.numDimensions(); j ++) {
+			for (int j = 0; j < ogImg.dimensionsAsLongArray()[3]; j ++) {
 				RandomAccessibleInterval<T> frame = Views.hyperSlice(ogImg, 3, j);
 				for (int i = 0; i < 3; i ++) {
-					RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(frame, 2, i), this.debugPrinter), 
-							Views.hyperSlice(frame, 2, i) );
+					RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(frame, 2, i)), 
+							Views.hyperSlice(Views.hyperSlice(targetImg, 3, j), 2, i) );
 				}
-				RealTypeConverters.copyFromTo( frame, Views.hyperSlice(targetImg, 3, j));
 			}
 		} else if (ogImg.numDimensions() == 4 && ogImg.dimensionsAsLongArray()[2] == 1) {
 			for (int j = 0; j < ogImg.numDimensions(); j ++) {
 				IntervalView<UnsignedByteType> resIm = 
-						Views.interval( Views.expandMirrorDouble(ImgLib2Utils.convertViewToRGB(ogImg, this.debugPrinter), new long[] {0, 0, 2, 0}), 
+						Views.interval( Views.expandMirrorDouble(ImgLib2Utils.convertViewToRGB(ogImg), new long[] {0, 0, 2, 0}), 
 						Intervals.createMinMax(new long[] {0, 0, 0, 0,
 								ogImg.dimensionsAsLongArray()[0] - 1, ogImg.dimensionsAsLongArray()[1] - 1, 2, ogImg.dimensionsAsLongArray()[3] - 1}) );
 				RealTypeConverters.copyFromTo( resIm, targetImg );

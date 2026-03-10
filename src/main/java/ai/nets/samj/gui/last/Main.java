@@ -111,6 +111,10 @@ public class Main extends MainGUI {
 		public int getFocusedImageZPos() {return 0;}
 		@Override
 		public int getFocusedImageTPos() {return 0;}
+		@Override
+		public int getFocusedImageNZ() {return 0;}
+		@Override
+		public int getFocusedImageNT() {return 0;}
     };
 
 	public Main() {
@@ -258,8 +262,15 @@ public class Main extends MainGUI {
                 if (Main.this.selectionPanel.cmbImages.getSelectedObject() == null) {
                     Main.this.selectionPanel.go.setEnabled(false);
                     Main.this.drawersPanel.imageDrawerPanel.roiManager.block(true);
+                    Main.this.centerPanel.instantCard.propagate3D.setEnabled(false);
+                    Main.this.centerPanel.batchCard.propagate3D.setEnabled(false);
                     return;
                 }
+                int nSlices = Main.this.consumer.getFocusedImageNT();
+                int nFrames = Main.this.consumer.getFocusedImageNZ();
+                Main.this.centerPanel.instantCard.propagate3D.setEnabled(nSlices > 1 || nFrames > 1);
+                Main.this.centerPanel.batchCard.propagate3D.setEnabled(nSlices > 1 || nFrames > 1);
+                	
                 if (Main.this.selectionPanel.go.isEnabled()) {
                     Main.this.drawersPanel.imageDrawerPanel.roiManager.updateButtonsEnabled();
                 	return;
@@ -342,7 +353,8 @@ public class Main extends MainGUI {
 						new long[] { xywh[0] + xywh[2] -1, xywh[1] + xywh[3] - 1 } );
 				try {
 					SAMModel samj = selectionPanel.cmbModels.getSelectedModel();
-					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval, slice, frame, centerPanel.instantCard.propagate3D.isSelected());
+					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval, slice, frame, 
+							nSlices, nFrames, centerPanel.instantCard.propagate3D.isSelected());
 					List<Mask> proteovirMasks = samjMask.stream()
 							.map(mm -> Mask.build(mm.getContour(), mm.rleEncoding, slice, frame))
 							.collect(Collectors.toList());

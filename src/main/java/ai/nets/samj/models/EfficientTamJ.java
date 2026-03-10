@@ -431,67 +431,67 @@ public class EfficientTamJ extends AbstractSamJ {
 		checkImageIsFine(rai);
 		long[] dims = rai.dimensionsAsLongArray();
 		this.samjFrameIdx = 0;
-		if (dims.length == 2)
-			rai = Views.addDimension(Views.addDimension(rai, 0, 0), 0, 0);
-		dims = rai.dimensionsAsLongArray();
-		if (!this.propagate3D && dims.length >= 3 && dims[2] != 3) {
-			// TODO
-			long[] arr = new long[dims.length * 2];
-			for (int i = dims.length; i < dims.length + 2; i ++)
-				arr[i] = dims[i - dims.length] - 1;
-			rai = Views.interval( rai, Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 0}) );
+		if (dims.length == 2) {
+			rai = Views.interval( Views.expandMirrorDouble(Views.addDimension(rai, 0, 0), new long[] {0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
 			rai = Views.addDimension(rai, 0, 0);
+			this.samjFrameIdx = 0;
+		} else if (dims.length == 3 && dims[2] == 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
+			rai = Views.addDimension(rai, 0, 0);
+			this.samjFrameIdx = 0;
+		} else if (dims.length == 3 && dims[2] == 3 && this.nFrames == 1 && this.nSlices == 1) {
+			rai = Views.addDimension(rai, 0, 0);
+			this.samjFrameIdx = 0;
+		} else if (dims.length == 3 && dims[2] > 1 && this.nFrames != 1) {
+			rai = Views.addDimension(rai, 0, 0);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
+			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
+			this.samjFrameIdx = this.frameIdx;
+		} else if (dims.length == 3 && dims[2] > 1 && this.nSlices != 1) {
+			rai = Views.addDimension(rai, 0, 0);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
+			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
 			this.samjFrameIdx = this.sliceIdx;
-		} else if (dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1) {
-			rai = Views.hyperSlice(rai, 0, 3);
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
-					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+		} else if (dims.length == 3 && this.nSlices != 1 & this.nFrames != 1) {
+			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s", Arrays.toString(dims), nSlices, nFrames));
 		} else if (dims.length == 4 && dims[2] == 1 && dims[3] == 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-		}
-		dims = rai.dimensionsAsLongArray();
-		
-		if (dims.length == 3 && dims[2] == 1) {
-			rai = Views.interval( Views.expandMirrorDouble(Views.addDimension(rai, 0, 0), new long[] {0, 0, 2}), 
-					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
-		} else if (dims.length == 3 && dims[2] == 3) {
-			rai = Views.addDimension(rai, 0, 0);
-		} else if (this.propagate3D && dims.length == 3 && dims[2] != 3) {
-			rai = Utils.rearangeAxes(Views.addDimension(rai, 0, 0), new int[] {0, 1, 3, 2});
-			dims = rai.dimensionsAsLongArray();
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
+			this.samjFrameIdx = this.sliceIdx;
+		} else if (dims.length == 4 && dims[2] == 1 && dims[3] != 1 && this.nFrames > 1 && this.nSlices == 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-		} else if (this.propagate3D && dims.length == 4 && dims[2] != 3 && dims[2] != 1) {
-			long[] intervalArr = new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 0};
-			rai = Views.interval( rai, Intervals.createMinMax(intervalArr) );
+			this.samjFrameIdx = this.frameIdx;
+		} else if (dims.length == 4 && dims[2] == 1 && dims[3] != 1 && this.nFrames == 1 && this.nSlices > 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+			this.samjFrameIdx = this.sliceIdx;
+		} else if (dims.length == 4 && dims[2] == 1 && dims[3] != 1 && this.nFrames > 1 && this.nSlices > 1) {
+			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s", Arrays.toString(dims), nSlices, nFrames));
+		} else if (dims.length == 4 && dims[2] == 3 && dims[3] == 1 && this.nFrames == 1 && this.nSlices == 1) {
+			this.samjFrameIdx = this.sliceIdx;
+		} else if (dims.length == 4 && dims[2] > 1 && dims[3] == 1 && this.nFrames > 1 && this.nSlices == 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
-			dims = rai.dimensionsAsLongArray();
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
-					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-		} else if (this.propagate3D && dims.length == 4 && dims[2] == 1 && dims[3] != 1) {
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
-					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-		} else if (this.propagate3D && dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1) {
-			rai = Views.hyperSlice(rai, 4, 0);
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
-					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-		} else if (this.propagate3D && dims.length == 5 && dims[2] == 1 && dims[3] > 1) {
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
-					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-		} else if (this.propagate3D && dims.length == 5 && dims[2] == 1 && dims[4] > 1) {
-			rai = Views.hyperSlice(rai, 3, 0);
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
-					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-		} else if (this.propagate3D && dims.length == 5 && dims[2] == 3 && dims[3] > 1) {
-			rai = Views.hyperSlice(rai, 4, 0);
-		} else if (this.propagate3D && dims.length == 5 && dims[2] == 3 && dims[4] > 1) {
-			rai = Views.hyperSlice(rai, 3, 0);
-		} else if (this.propagate3D && dims.length == 5 && dims[2] != 3) {
-			rai = Views.hyperSlice(rai, 3, 0);
+			this.samjFrameIdx = this.frameIdx;
+		} else if (dims.length == 4 && dims[2] > 1 && dims[3] == 1 && this.nFrames == 1 && this.nSlices > 1) {
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
-			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}),
-					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+			this.samjFrameIdx = this.sliceIdx;
+		} else if (dims.length == 4 && dims[2] > 1 && dims[3] > 1 && this.nFrames > 1 && this.nSlices > 1) {
+			rai = Views.interval( rai, Intervals.createMinMax(new long[] {0, 0, 0, this.frameIdx, dims[0] - 1, dims[1] - 1, dims[2] - 1, this.frameIdx}));
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
+			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
+			this.samjFrameIdx = this.sliceIdx;
+		} else if (dims.length == 4 && dims[2] > 1 && dims[3] > 1 && (this.nFrames == 1 && this.nSlices == 1)) {
+			throw new IllegalArgumentException("Channel dimension should always follow WH (WHC)");
 		}
 		
 		dims = rai.dimensionsAsLongArray();

@@ -339,6 +339,41 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	public <T extends RealType<T> & NativeType<T>>
 	void setImage(RandomAccessibleInterval<T> rai) throws IOException, InterruptedException, TaskException {
+		setImage(rai, 0, 0, 1, 1, false);
+	}
+	
+	/**
+	 * Encode an image (n-dimensional array) with an SAM model.
+	 * Images should follow the ordering of WHCZT. If any of those dimensions is missing,
+	 * just skip it while maintaining the order: WHCT, WHZ, WH, WHT...
+	 * At least a 2d WH image is required.
+	 * @param <T>
+	 * 	ImgLib2 data type of the image of interest
+	 * @param rai
+	 * 	image (n-dimensional array) that is going to be encoded as a {@link RandomAccessibleInterval}
+	 * @param currentSlice
+	 * 	the current slice that the user is looking at and where prompts have been drawn
+	 * 	the bounding box that serves as the prompt for EfficientSAM
+	 * @param currentFrame
+	 * 	the current frame that the user is looking at and where prompts have been drawn
+	 * 	the bounding box that serves as the prompt for EfficientSAM
+	 * @param nSlices
+	 * 	the number of slices in the image being annotated
+	 * @param nFrames
+	 * 	number of frames in the image being annotated
+	 * @param propagate
+	 * 	whether to propagate the annotations to the rest of the frames
+	 * @throws IOException if any of the files to run a Python process is missing
+	 * @throws InterruptedException if the process is interrupted
+	 * @throws TaskException if the appose task fails
+	 */
+	public <T extends RealType<T> & NativeType<T>>
+	void setImage(RandomAccessibleInterval<T> rai, int currentSlice, int currentFrame, int nSlices, int nFrames, boolean propagate) throws IOException, InterruptedException, TaskException {
+		this.setPropagate3D(propagate);
+		this.setSliceIdx(currentSlice);
+		this.setFrameIdx(currentFrame);
+		this.nSlices = nSlices;
+		this.nFrames = nFrames;
 		setImageOfInterest(rai);
 		if (img.dimensionsAsLongArray()[0] * img.dimensionsAsLongArray()[1] > MAX_ENCODED_AREA_RS * MAX_ENCODED_AREA_RS
 				|| img.dimensionsAsLongArray()[0] > MAX_ENCODED_SIDE || img.dimensionsAsLongArray()[1] > MAX_ENCODED_SIDE) {
@@ -894,8 +929,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 
 	 * @param boundingBox
 	 * 	the bounding box that serves as the prompt for EfficientSAM
+	 * @param currentSlice
+	 * 	the current slice that the user is looking at and where prompts have been drawn
+	 * 	the bounding box that serves as the prompt for EfficientSAM
 	 * @param currentFrame
 	 * 	the current frame that the user is looking at and where prompts have been drawn
+	 * 	the bounding box that serves as the prompt for EfficientSAM
 	 * @param propagate
 	 * 	whether to propagate the annotations to the rest of the frames
 	 * @param returnAll

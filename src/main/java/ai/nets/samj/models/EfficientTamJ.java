@@ -101,8 +101,6 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "import os" + System.lineSeparator()
 			+ "import platform" + System.lineSeparator()
 			+ "import types" + System.lineSeparator()
-			+ "import torch._dynamo" + System.lineSeparator() // TODO remove
-		    + "torch._dynamo.config.suppress_errors = True" + System.lineSeparator() // TODO remove
 			+ "from multiprocessing import shared_memory" + System.lineSeparator()
 			+ "from efficient_track_anything.build_efficienttam import build_efficienttam_video_predictor" + System.lineSeparator()
 			+ "predictor = build_efficienttam_video_predictor(r'%s',r'%s', device=device)" + System.lineSeparator()

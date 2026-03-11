@@ -113,7 +113,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	/**
 	 * Frame position used so SAMJ understands what is doing
 	 */
-	protected int samjFrameIdx = 0;
+	protected boolean isSlice = true;
 	/**
 	 * The slice that we are currently annotating
 	 */
@@ -963,7 +963,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 				(int) Math.ceil((boundingBox[1] - encodeCoords[1]) / (double) scale),
 				(int) Math.ceil((boundingBox[2] - encodeCoords[0]) / (double) scale), (int) Math.ceil((boundingBox[3] - encodeCoords[1]) / (double) scale)};;
 		this.script = "";
-		processBoxWithSAM(returnAll);
+		if (!propagate)
+			processBoxWithSAM(returnAll);
+		else
+			processBoxWithSAMAndPropagate();
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_box", adaptedBoundingBox);
 		printScript(script, "Rectangle inference");

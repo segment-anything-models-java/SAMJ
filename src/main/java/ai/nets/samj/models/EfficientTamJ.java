@@ -115,7 +115,7 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "task.export(predictor=predictor)" + System.lineSeparator()
 			+ "task.export(device=device)" + System.lineSeparator()
 			+ "import torch.nn.functional as F" + System.lineSeparator()
-			+ "\n"
+			+ "" + System.lineSeparator()
 			+ "" + System.lineSeparator()
 			+ "def load_video_frames_from_xycz_array(" + System.lineSeparator()
 			+ "    video_xycz: np.ndarray," + System.lineSeparator()
@@ -430,68 +430,103 @@ public class EfficientTamJ extends AbstractSamJ {
 	protected <T extends RealType<T> & NativeType<T>> void setImageOfInterest(RandomAccessibleInterval<T> rai) {
 		checkImageIsFine(rai);
 		long[] dims = rai.dimensionsAsLongArray();
-		this.samjFrameIdx = 0;
 		if (dims.length == 2) {
 			rai = Views.interval( Views.expandMirrorDouble(Views.addDimension(rai, 0, 0), new long[] {0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
 			rai = Views.addDimension(rai, 0, 0);
-			this.samjFrameIdx = 0;
+			isSlice = true;
 		} else if (dims.length == 3 && dims[2] == 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, dims[0] - 1, dims[1] - 1, 2}) );
 			rai = Views.addDimension(rai, 0, 0);
-			this.samjFrameIdx = 0;
+			isSlice = true;
 		} else if (dims.length == 3 && dims[2] == 3 && this.nFrames == 1 && this.nSlices == 1) {
 			rai = Views.addDimension(rai, 0, 0);
-			this.samjFrameIdx = 0;
+			isSlice = true;
 		} else if (dims.length == 3 && dims[2] > 1 && this.nFrames != 1) {
 			rai = Views.addDimension(rai, 0, 0);
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
-			this.samjFrameIdx = this.frameIdx;
+			isSlice = false;
 		} else if (dims.length == 3 && dims[2] > 1 && this.nSlices != 1) {
 			rai = Views.addDimension(rai, 0, 0);
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
-			this.samjFrameIdx = this.sliceIdx;
+			isSlice = true;
 		} else if (dims.length == 3 && this.nSlices != 1 & this.nFrames != 1) {
 			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s", Arrays.toString(dims), nSlices, nFrames));
 		} else if (dims.length == 4 && dims[2] == 1 && dims[3] == 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-			this.samjFrameIdx = this.sliceIdx;
+			isSlice = true;
 		} else if (dims.length == 4 && dims[2] == 1 && dims[3] != 1 && this.nFrames > 1 && this.nSlices == 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-			this.samjFrameIdx = this.frameIdx;
+			isSlice = false;
 		} else if (dims.length == 4 && dims[2] == 1 && dims[3] != 1 && this.nFrames == 1 && this.nSlices > 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
-			this.samjFrameIdx = this.sliceIdx;
-		} else if (dims.length == 4 && dims[2] == 1 && dims[3] != 1 && this.nFrames > 1 && this.nSlices > 1) {
-			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s", Arrays.toString(dims), nSlices, nFrames));
+			isSlice = true;
 		} else if (dims.length == 4 && dims[2] == 3 && dims[3] == 1 && this.nFrames == 1 && this.nSlices == 1) {
-			this.samjFrameIdx = this.sliceIdx;
+			isSlice = true;
 		} else if (dims.length == 4 && dims[2] > 1 && dims[3] == 1 && this.nFrames > 1 && this.nSlices == 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
-			this.samjFrameIdx = this.frameIdx;
+			isSlice = false;
 		} else if (dims.length == 4 && dims[2] > 1 && dims[3] == 1 && this.nFrames == 1 && this.nSlices > 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
-			this.samjFrameIdx = this.sliceIdx;
+			isSlice = true;
 		} else if (dims.length == 4 && dims[2] > 1 && dims[3] > 1 && this.nFrames > 1 && this.nSlices > 1) {
 			rai = Views.interval( rai, Intervals.createMinMax(new long[] {0, 0, 0, this.frameIdx, dims[0] - 1, dims[1] - 1, dims[2] - 1, this.frameIdx}));
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
-			this.samjFrameIdx = this.sliceIdx;
+			isSlice = true;
 		} else if (dims.length == 4 && dims[2] > 1 && dims[3] > 1 && (this.nFrames == 1 && this.nSlices == 1)) {
 			throw new IllegalArgumentException("Channel dimension should always follow WH (WHC)");
+		} else if (dims.length == 5 && dims[2] == 3 && dims[3] == 1 && dims[4] == 1 && this.nFrames == 1 && this.nSlices == 1) {
+			isSlice = true;
+		} else if (dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] == 1 && this.nFrames == 1 && this.nSlices == 1) {
+			rai = Views.hyperSlice(rai, 4, 0);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+			isSlice = true;
+		} else if (dims.length == 5 && dims[2] > 1 && dims[3] == 1 && dims[4] == 1 && this.nFrames > 1 && this.nSlices == 1) {
+			rai = Views.hyperSlice(rai, 4, 0);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
+			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
+			isSlice = false;
+		} else if (dims.length == 5 && dims[2] > 1 && dims[3] == 1 && dims[4] == 1 && this.nFrames == 1 && this.nSlices > 1) {
+			rai = Views.hyperSlice(rai, 4, 0);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
+			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
+			isSlice = true;
+		} else if (dims.length == 5 && dims[2] == 1 && dims[3] > 1 && this.nSlices > 1) {
+			rai = Views.hyperSlice(rai, 4, this.frameIdx);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+			isSlice = true;
+		} else if (dims.length == 5 && dims[2] == 3 && dims[3] > 1 && this.nSlices > 1) {
+			rai = Views.hyperSlice(rai, 4, this.frameIdx);
+			isSlice = true;
+			isSlice = true;
+		} else if (dims.length == 5 && dims[2] == 3 && dims[3] == 1 && dims[4] > 1 && this.nSlices == 1 && this.nFrames > 1) {
+			rai = Views.hyperSlice(rai, 3, this.sliceIdx);
+			isSlice = false;
+		} else if (dims.length == 5 && dims[2] == 1 && dims[3] == 1 && dims[4] > 1 && this.nSlices == 1 && this.nFrames > 1) {
+			rai = Views.hyperSlice(rai, 3, this.sliceIdx);
+			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
+					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
+			isSlice = false;
+		} else {
+			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s", Arrays.toString(dims), nSlices, nFrames));
 		}
 		
 		dims = rai.dimensionsAsLongArray();
@@ -578,7 +613,7 @@ public class EfficientTamJ extends AbstractSamJ {
 				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
 				+ "frame_idx, obj_ids, mask = predictor.add_new_points_or_box(" + System.lineSeparator()
 				+ "    state," + System.lineSeparator()
-				+ "    frame_idx=" + frameIdx + "," + System.lineSeparator()
+				+ "    frame_idx=" + (this.isSlice ? sliceIdx : frameIdx) + "," + System.lineSeparator()
 				+ "    obj_id=1," + System.lineSeparator()
 				+ "    points=None," + System.lineSeparator()
 				+ "    labels=None," + System.lineSeparator()
@@ -595,7 +630,7 @@ public class EfficientTamJ extends AbstractSamJ {
 				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
 				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
 				+ "task.outputs['frame_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
-				+ "task.outputs['slice_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
+				+ "task.outputs['slice_ids'] = len(contours_x) * [" + sliceIdx + "]" + System.lineSeparator()
 				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
 		this.script = code;
 	}
@@ -605,10 +640,12 @@ public class EfficientTamJ extends AbstractSamJ {
 		
 		String code = "" + System.lineSeparator()
 				+ "task.update('start predict')" + System.lineSeparator()
+				+ "seed_frame_idx = " + (this.isSlice ? sliceIdx : frameIdx) + System.lineSeparator()
+				+ "end_frame_idx = " + (this.isSlice ? nSlices : nFrames) + System.lineSeparator()
 				+ "input_box = np.array([[input_box[0], input_box[1]], [input_box[2], input_box[3]]])" + System.lineSeparator()
 				+ "frame_idx, obj_ids, mask = predictor.add_new_points_or_box(" + System.lineSeparator()
 				+ "    state," + System.lineSeparator()
-				+ "    frame_idx=" + frameIdx + "," + System.lineSeparator()
+				+ "    frame_idx=seed_frame_idx," + System.lineSeparator()
 				+ "    obj_id=1," + System.lineSeparator()
 				+ "    points=None," + System.lineSeparator()
 				+ "    labels=None," + System.lineSeparator()
@@ -619,14 +656,61 @@ public class EfficientTamJ extends AbstractSamJ {
 				+ "mask = (mask[0] > 0.0).cpu().numpy()" + System.lineSeparator()
 				+ (this.isIJROIManager ? "mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
 				+ "contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=True)" + System.lineSeparator()
-				+ "predictor.remove_object(state, 1, strict=False, need_output=True)" + System.lineSeparator()
+				+ "" + System.lineSeparator()
+				+ "seen_frames = set()" + System.lineSeparator()
+				+ "seen_frames.add(seed_frame_idx)" + System.lineSeparator()
+				+ "frame_ids = [" + frameIdx + "]" + System.lineSeparator()
+				+ "slice_ids = [" + sliceIdx + "]" + System.lineSeparator()
+				+ "all_x = contours_x" + System.lineSeparator()
+				+ "all_y = contours_y" + System.lineSeparator()
+				+ "all_rle = rle_masks" + System.lineSeparator()
+				+ "if seed_frame_idx < end_frame_idx:" + System.lineSeparator()
+				+ "    max_frame_num_to_track = end_frame_idx - seed_frame_idx + 1" + System.lineSeparator()
+				+ "    for frame_idx, obj_ids, mask in predictor.propagate_in_video(" + System.lineSeparator()
+				+ "        state," + System.lineSeparator()
+				+ "        start_frame_idx=seed_frame_idx," + System.lineSeparator()
+				+ "        max_frame_num_to_track=max_frame_num_to_track," + System.lineSeparator()
+				+ "        reverse=False," + System.lineSeparator()
+				+ "    ):" + System.lineSeparator()
+				+ "        if frame_idx in seen_frames:" + System.lineSeparator()
+				+ "            continue" + System.lineSeparator()
+				+ "        mask = (mask[0] > 0.0).cpu().numpy()" + System.lineSeparator()
+				+ (this.isIJROIManager ? "        mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "        contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=True)" + System.lineSeparator()
+				+ "        all_x.extend(contours_x)" + System.lineSeparator()
+				+ "        all_y.extend(contours_y)" + System.lineSeparator()
+				+ "        all_rle.extend(rle_masks)" + System.lineSeparator()
+				+ "        frame_ids.append(" + (this.isSlice ? this.frameIdx : "frame_idx") + ")" + System.lineSeparator()
+				+ "        slice_ids.append(" + (this.isSlice ? "frame_idx" : this.sliceIdx) + ")" + System.lineSeparator()
+				+ "        seen_frames.add(frame_idx)" + System.lineSeparator()
+				+ "" + System.lineSeparator()
+				+ "if seed_frame_idx > 0:" + System.lineSeparator()
+				+ "    max_frame_num_to_track = seed_frame_idx - 0 + 1" + System.lineSeparator()
+				+ "    for frame_idx, obj_ids, mask in predictor.propagate_in_video(" + System.lineSeparator()
+				+ "        state," + System.lineSeparator()
+				+ "        start_frame_idx=seed_frame_idx," + System.lineSeparator()
+				+ "        max_frame_num_to_track=max_frame_num_to_track," + System.lineSeparator()
+				+ "        reverse=True," + System.lineSeparator()
+				+ "    ):" + System.lineSeparator()
+				+ "        if frame_idx in seen_frames:" + System.lineSeparator()
+				+ "            continue" + System.lineSeparator()
+				+ "        mask = (mask[0] > 0.0).cpu().numpy()" + System.lineSeparator()
+				+ (this.isIJROIManager ? "        mask[0, 1:, 1:] += mask[0, :-1, :-1]" : "") + System.lineSeparator()
+				+ "        contours_x, contours_y, rle_masks = get_polygons_from_binary_mask(mask[0], only_biggest=True)" + System.lineSeparator()
+				+ "        all_x.extend(contours_x)" + System.lineSeparator()
+				+ "        all_y.extend(contours_y)" + System.lineSeparator()
+				+ "        all_rle.extend(rle_masks)" + System.lineSeparator()
+				+ "        frame_ids.append(" + (this.isSlice ? this.frameIdx : "frame_idx") + ")" + System.lineSeparator()
+				+ "        slice_ids.append(" + (this.isSlice ? "frame_idx" : this.sliceIdx) + ")" + System.lineSeparator()
+				+ "        seen_frames.add(frame_idx)" + System.lineSeparator()
+				+ "predictor.remove_object(state, 1, strict=False, need_output=False)" + System.lineSeparator()
 				+ "task.export(state=state)" + System.lineSeparator()
 				+ "task.update('all contours traced')" + System.lineSeparator()
-				+ "task.outputs['contours_x'] = contours_x" + System.lineSeparator()
-				+ "task.outputs['contours_y'] = contours_y" + System.lineSeparator()
-				+ "task.outputs['frame_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
-				+ "task.outputs['slice_ids'] = len(contours_x) * [" + frameIdx + "]" + System.lineSeparator()
-				+ "task.outputs['rle'] = rle_masks" + System.lineSeparator();
+				+ "task.outputs['contours_x'] = all_x" + System.lineSeparator()
+				+ "task.outputs['contours_y'] = all_y" + System.lineSeparator()
+				+ "task.outputs['frame_ids'] = frame_ids" + System.lineSeparator()
+				+ "task.outputs['slice_ids'] = slice_ids" + System.lineSeparator()
+				+ "task.outputs['rle'] = all_rle" + System.lineSeparator();
 		this.script = code;
 	}
 	

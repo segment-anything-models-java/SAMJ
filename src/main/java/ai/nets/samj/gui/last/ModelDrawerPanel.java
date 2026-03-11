@@ -117,6 +117,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         } else if (e.getSource() == uninstall && uninstall.getText().equals(STOP_STRING)) {
         	voluntaryStop = true;
         	cancelInstallTasksOnly();
+        	uninstallModel();
         }
     }
 

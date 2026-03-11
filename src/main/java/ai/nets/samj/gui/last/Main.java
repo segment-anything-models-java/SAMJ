@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
 
@@ -345,6 +344,13 @@ public class Main extends MainGUI {
                     }).start();
                 }
             }
+
+			@Override
+			public void setInstalling(boolean installing) {
+				Main.this.selectionPanel.cmbImages.setEnabled(!installing);
+				Main.this.selectionPanel.cmbModels.setEnabled(!installing);
+				
+			}
         };
         
         promptBridge = new PromptBridge () {

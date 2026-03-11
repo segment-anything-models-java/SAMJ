@@ -223,6 +223,8 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         startWorking(INSTALLING_STRING);
 
         cancelInstallTasksOnly(); // if an old install/uninstall worker exists
+        
+        notifyInstalling(true);
 
         installWorker = new SwingWorker<Void, Void>() {
             @Override
@@ -248,6 +250,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
             protected void done() {
                 setBusy(false);
 
+                notifyInstalling(false);
                 try {
                     // surface exceptions if any
                     get();
@@ -359,6 +362,18 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
         }
     }
 
+    private void notifyInstalling(final boolean installing) {
+        onEdt(() -> {
+            for (ModelDrawerPanelListener l : listeners) {
+                try {
+                    l.setInstalling(installing);
+                } catch (Exception ignore) {
+                    // keep UI resilient
+                }
+            }
+        });
+    }
+
     private void notifyGuiEnabled(final boolean enabled) {
         onEdt(() -> {
             for (ModelDrawerPanelListener l : listeners) {
@@ -395,5 +410,6 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
     public interface ModelDrawerPanelListener {
         void setGUIEnabled(boolean enabled);
+        void setInstalling(boolean installing);
     }
 }

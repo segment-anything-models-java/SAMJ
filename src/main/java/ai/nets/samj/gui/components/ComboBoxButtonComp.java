@@ -80,6 +80,13 @@ public class ComboBoxButtonComp<T> extends JPanel {
         adjustButtonFont();
     }
 
+    @Override
+    public void setEnabled(boolean isEnabled) {
+    	this.cmbBox.setEnabled(isEnabled);
+    	this.btn.setEnabled(isEnabled);
+    	super.setEnabled(isEnabled);
+    }
+
     private void adjustButtonFont() {
         int btnHeight = btn.getHeight();
         int btnWidth = btn.getWidth();

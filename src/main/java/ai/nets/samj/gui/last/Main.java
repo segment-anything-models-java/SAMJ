@@ -359,12 +359,9 @@ public class Main extends MainGUI {
 						new long[] { xywh[0] + xywh[2] -1, xywh[1] + xywh[3] - 1 } );
 				try {
 					SAMModel samj = selectionPanel.cmbModels.getSelectedModel();
-					List<ai.nets.samj.annotation.Mask> samjMask = samj.fetch2dSegmentation(rectInterval, slice, frame, propagate);
-					List<Mask> proteovirMasks = samjMask.stream()
-							.map(mm -> Mask.build(mm.getContour(), mm.rleEncoding, slice, frame))
-							.collect(Collectors.toList());
-					Main.this.drawersPanel.imageDrawerPanel.addToRoiManager(proteovirMasks, "rect", samj.getName());
-					return proteovirMasks;
+					List<Mask> samjMask = samj.fetch2dSegmentation(rectInterval, slice, frame, propagate);
+					Main.this.drawersPanel.imageDrawerPanel.addToRoiManager(samjMask, "rect", samj.getName());
+					return samjMask;
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					return new ArrayList<>();

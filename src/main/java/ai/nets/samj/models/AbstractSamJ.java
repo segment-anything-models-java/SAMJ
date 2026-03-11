@@ -570,13 +570,20 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		final Iterator<List<Number>> contours_y = ((List<List<Number>>)results.get("contours_y")).iterator();
 		final Iterator<Number> frames = ((List<Number>)results.get("frame_ids")).iterator();
 		final Iterator<Number> slices = ((List<Number>)results.get("slice_ids")).iterator();
+		Iterator<String> ids = null;
+		if (results.get("ids") != null) {
+			ids = ((List<String>)results.get("ids")).iterator();
+		}
 		final Iterator<List<Number>> rles = ((List<List<Number>>)results.get("rle")).iterator();
 		final List<Mask> masks = new ArrayList<Mask>(contours_x_container.size());
 		while (contours_x.hasNext()) {
 			int[] xArr = contours_x.next().stream().mapToInt(Number::intValue).toArray();
 			int[] yArr = contours_y.next().stream().mapToInt(Number::intValue).toArray();
 			long[] rle = rles.next().stream().mapToLong(Number::longValue).toArray();
-			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle, slices.next().intValue(), frames.next().intValue()));
+			String id = null;
+			if (ids != null)
+				id = ids.next();
+			masks.add(Mask.build(new Polygon(xArr, yArr, xArr.length), rle, slices.next().intValue(), frames.next().intValue(), id));
 		}
 		return masks;
 	}

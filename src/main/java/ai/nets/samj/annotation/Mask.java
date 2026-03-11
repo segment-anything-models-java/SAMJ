@@ -50,6 +50,8 @@ public class Mask {
 	
 	private final int frame;
 	
+	private final String objectID;
+	
 	private final String uuid = UUID.randomUUID().toString();
 	
 	public long[] rleEncoding;
@@ -64,16 +66,28 @@ public class Mask {
 	
 	private static final double COMPLEXITY_DELTA = 0.5;
 	
-	private Mask(Polygon contour, long[] rleEncoding, int slice , int frame) {
+	private Mask(Polygon contour, long[] rleEncoding, int slice , int frame, String objectID) {
 		this.contour = contour;
 		this.rleEncoding = rleEncoding;
 		this.slice = slice;
 		this.frame = frame;
 		memory.put(simplification, contour);
+		if (objectID == null)
+			this.objectID = UUID.randomUUID().toString();
+		else
+			this.objectID = objectID;
 	}
 	
 	public static Mask build(Polygon contour, long[] rleEncoding, int slice, int frame) {
-		return new Mask(contour, rleEncoding, slice, frame);
+		return new Mask(contour, rleEncoding, slice, frame, null);
+	}
+	
+	public static Mask build(Polygon contour, long[] rleEncoding, int slice, int frame, String objectID) {
+		return new Mask(contour, rleEncoding, slice, frame, objectID);
+	}
+	
+	public String getObjectId() {
+		return this.objectID;
 	}
 	
 	public int getSlice() {

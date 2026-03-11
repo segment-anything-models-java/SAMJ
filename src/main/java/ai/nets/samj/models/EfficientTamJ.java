@@ -710,7 +710,9 @@ public class EfficientTamJ extends AbstractSamJ {
 				+ "task.outputs['contours_y'] = all_y" + System.lineSeparator()
 				+ "task.outputs['frame_ids'] = frame_ids" + System.lineSeparator()
 				+ "task.outputs['slice_ids'] = slice_ids" + System.lineSeparator()
-				+ "task.outputs['rle'] = all_rle" + System.lineSeparator();
+				+ "task.outputs['rle'] = all_rle" + System.lineSeparator()
+				+ "import uuid" + System.lineSeparator()
+				+ "task.outputs['ids'] = [str(uuid.uuid4())] * len(slice_ids)";
 		this.script = code;
 	}
 	

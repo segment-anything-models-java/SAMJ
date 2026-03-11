@@ -10,6 +10,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -39,6 +40,8 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
     private Object image;
 
     private int prevIndex = -1;
+    
+    private HashMap<String, String> objectIdMap = new HashMap<String, String>();
 
     private RoiManagerConsumer consumer;
 
@@ -139,7 +142,13 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
 
     public void addRoi(Mask roi) {
         rois.add(roi);
-        roiClasses.add(buildNextClassName());
+        if (objectIdMap.get(roi.getObjectId()) != null)
+            roiClasses.add(objectIdMap.get(roi.getObjectId()));
+        else {
+        	String name = buildNextClassName();
+        	roiClasses.add(name);
+        	objectIdMap.put(roi.getObjectId(), name);
+        }
         updateShowAll();
     }
 

@@ -26,6 +26,8 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
     private static final long serialVersionUID = 4287546137999029365L;
 
     private volatile SAMModel model;
+    
+    private volatile boolean voluntaryStop = false;
 
     // Keep listener API compatible; make it thread-safe to avoid ConcurrentModificationException.
     private final List<ModelDrawerPanelListener> listeners = new CopyOnWriteArrayList<ModelDrawerPanelListener>();
@@ -110,8 +112,11 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == install) {
             installModel();
-        } else if (e.getSource() == uninstall) {
+        } else if (e.getSource() == uninstall && uninstall.getText().equals(UNINSTALL_STRING)) {
             uninstallModel();
+        } else if (e.getSource() == uninstall && uninstall.getText().equals(STOP_STRING)) {
+        	voluntaryStop = true;
+        	cancelInstallTasksOnly();
         }
     }
 
@@ -180,7 +185,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                     logger.clear();
                     String description = m.getDescription(false);
                     
-                    if (!installed && afterInstallation)
+                    if (!installed && afterInstallation && !voluntaryStop)
                     	description = SAMModel.HTML_ERROR_INSTALLING + SAMModel.HTML_NOT_INSTALLED + description;
                     else if (!installed)
                     	description = SAMModel.HTML_NOT_INSTALLED + description;
@@ -203,6 +208,7 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
     /* ---------------- install / uninstall ---------------- */
 
     private void installModel() {
+    	voluntaryStop = false;
         final SAMModel m = this.model;
         if (m == null) return;
 
@@ -253,8 +259,10 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
                 notifyInstalling(false);
                 try {
                     // surface exceptions if any
-                    get();
-                    logger.log("Installation complete.", new Color(22, 163, 74)); // green-ish
+                	if (!this.isCancelled()) {
+                        get();
+                        logger.log("Installation complete.", new Color(22, 163, 74)); // green-ish
+                	}
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     logger.log("Installation failed: " + ex.getMessage(), new Color(185, 28, 28));
@@ -364,6 +372,9 @@ public class ModelDrawerPanel extends ModelDrawerPanelGui implements ActionListe
 
     private void notifyInstalling(final boolean installing) {
         onEdt(() -> {
+        	this.uninstall.setEnabled(true);
+        	if (installing) this.uninstall.setText(STOP_STRING);
+        	else this.uninstall.setText(UNINSTALL_STRING);
             for (ModelDrawerPanelListener l : listeners) {
                 try {
                     l.setInstalling(installing);

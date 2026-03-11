@@ -37,18 +37,24 @@ public class ModelDrawerPanelGui extends JPanel {
     
 	private static final long serialVersionUID = -5258672339166051523L;
 	private JLabel drawerTitle = new JLabel();
-	protected JButton install = new JButton("Install");
-	protected JButton uninstall = new JButton("Uninstall");
+	protected JButton install;
+	protected JButton uninstall;
 	protected HTMLPane html = new HTMLPane("Segoe UI", "#333333", "#FFFFFF");
 	HTMLPaneScroll htmlView = new HTMLPaneScroll(html);
 	
     private static final String MODEL_TITLE = "<html><div style='text-align: center; font-size: 15px;'>%s</html>";
 	
     private static final double TITLE_HRATIO = 0.15;
+
+    protected static final String INSTALL_STRING = "Install";
+    protected static final String UNINSTALL_STRING = "Uninstall";
+    protected static final String STOP_STRING = "Stop";
 	
 	protected ModelDrawerPanelGui() {
 		setLayout(null);
 		setBorder(BorderFactory.createLineBorder(Color.black));
+		install = new JButton(INSTALL_STRING);
+		uninstall = new JButton(UNINSTALL_STRING);
         drawerTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         drawerTitle.setForeground(new Color(50, 50, 50)); 
         drawerTitle.setText(String.format(MODEL_TITLE, "&nbsp;"));

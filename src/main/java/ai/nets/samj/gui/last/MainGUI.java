@@ -6,6 +6,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
+import ai.nets.samj.ui.ConsumerInterface;
 
 public class MainGUI extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -14,6 +15,7 @@ public class MainGUI extends JPanel {
     
     protected boolean isModelDrawer = true;
     protected boolean isDrawerOpen = false;
+    protected ConsumerInterface consumer;
     
     private boolean uiReady = false;
     private boolean pendingModelGuiRefresh = false;
@@ -179,16 +181,29 @@ public class MainGUI extends JPanel {
 		this.centerPanel.radioButton1.setEnabled(isLoaded);
 		this.centerPanel.radioButton2.setEnabled(isLoaded);
 		this.centerPanel.instantCard.chkInstant.setEnabled(isLoaded);
-		this.centerPanel.instantCard.propagate3D.setEnabled(isLoaded);
 		this.centerPanel.batchCard.btnBatchSAMize.setEnabled(isLoaded);
 		this.centerPanel.batchCard.stopProgressBtn.setEnabled(isLoaded);
 		this.centerPanel.batchCard.batchProgress.setEnabled(isLoaded);
-		this.centerPanel.batchCard.propagate3D.setEnabled(isLoaded);
 		this.bottomPanel.export.setEnabled(isLoaded);
 		this.bottomPanel.returnLargest.setEnabled(isLoaded);
 		if (isLoaded && !this.isImagesDrawerOpen()) {
 			toggleImageDrawer();
 			this.selectionPanel.cmbImages.toggleLabel();
+		}
+		if (this.selectionPanel.cmbImages.getSelectedObject() == null) {
+			this.centerPanel.instantCard.propagate3D.setEnabled(false);
+			this.centerPanel.batchCard.propagate3D.setEnabled(false);
+			this.centerPanel.instantCard.propagate3D.setSelected(false);
+			this.centerPanel.batchCard.propagate3D.setSelected(false);
+			return;
+		}
+		int nFrames = selectionPanel.cmbImages.getSelectedNFrames();
+		int nSlices = selectionPanel.cmbImages.getSelectedNSlices();
+		this.centerPanel.instantCard.propagate3D.setEnabled(nSlices > 1 | nFrames > 1);
+		this.centerPanel.batchCard.propagate3D.setEnabled(nSlices > 1 | nFrames > 1);
+		if (nSlices == 1 && nFrames == 1) {
+			this.centerPanel.instantCard.propagate3D.setSelected(false);
+			this.centerPanel.batchCard.propagate3D.setSelected(false);
 		}
 	}
 	

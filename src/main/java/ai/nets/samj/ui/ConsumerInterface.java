@@ -30,7 +30,6 @@ import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 /**
  * Interface to be implemented by the imaging software that wants to use the default SAMJ UI.
@@ -66,14 +65,6 @@ public abstract class ConsumerInterface {
 	public abstract Object getFocusedImage();
 
 	public abstract String getFocusedImageName();
-
-	public abstract int getFocusedImageZPos();
-
-	public abstract int getFocusedImageNZ();
-
-	public abstract int getFocusedImageTPos();
-
-	public abstract int getFocusedImageNT();
 
 	public abstract < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval<T> getFocusedImageAsRai();
 	

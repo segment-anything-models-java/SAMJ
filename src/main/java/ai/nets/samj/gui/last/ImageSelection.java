@@ -61,6 +61,30 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getValue();
 	}
 	
+	protected int getSelectedNFrames() {
+		if (this.cmbBox.getSelectedItem() == null)
+			return 0;
+		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getNFrames();
+	}
+	
+	protected int getSelectedNSlices() {
+		if (this.cmbBox.getSelectedItem() == null)
+			return 0;
+		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getNSlices();
+	}
+	
+	protected int getSelectedCurrentFrame() {
+		if (this.cmbBox.getSelectedItem() == null)
+			return 0;
+		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getCurrentFrame();
+	}
+	
+	protected int getSelectedCurrentSlice() {
+		if (this.cmbBox.getSelectedItem() == null)
+			return 0;
+		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getCurrentSlice();
+	}
+	
 	protected <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> getSelectedRai() {
 		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getImageAsImgLib2();
 	}

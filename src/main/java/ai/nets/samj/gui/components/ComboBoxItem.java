@@ -72,6 +72,30 @@ public abstract class ComboBoxItem {
     public Object getValue() {
         return value;
     }
+
+    /**
+     * 
+     * @return the position of the current frame
+     */
+    public abstract int getCurrentFrame();
+
+    /**
+     * 
+     * @return the position of the current z slice
+     */
+    public abstract int getCurrentSlice();
+
+    /**
+     * 
+     * @return the number of frames in the object of interest
+     */
+    public abstract int getNFrames();
+
+    /**
+     * 
+     * @return the number of slices in the object of interest
+     */
+    public abstract int getNSlices();
     
     /**
      * 

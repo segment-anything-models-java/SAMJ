@@ -49,7 +49,6 @@ public class Main extends MainGUI {
     protected BatchCallback batchDrawerCallback;
     protected ConsumerCallback consumerCallback;
     protected PromptBridge promptBridge;
-    protected ConsumerInterface consumer;
     protected Runnable cancelCallback;
     
     private final ExecutorService cmbModelsExecutor = Executors.newSingleThreadExecutor();
@@ -106,14 +105,6 @@ public class Main extends MainGUI {
 		public void notifyPolygons(List<Mask> masks) {}
 		@Override
 		public RoiManagerConsumer getRoiManagerConsumer() {return null;}
-		@Override
-		public int getFocusedImageZPos() {return 0;}
-		@Override
-		public int getFocusedImageTPos() {return 0;}
-		@Override
-		public int getFocusedImageNZ() {return 0;}
-		@Override
-		public int getFocusedImageNT() {return 0;}
     };
 
 	public Main() {
@@ -166,7 +157,6 @@ public class Main extends MainGUI {
         this.bottomPanel.export.addActionListener(e -> consumer.getRoiManagerConsumer().exportMask());
         this.centerPanel.instantCard.chkInstant.addActionListener(
         		e -> setInstantPromptsEnabled(this.centerPanel.instantCard.chkInstant.isSelected() && this.centerPanel.isPromptValid()));
-		this.centerPanel.instantCard.propagate3D.addActionListener(e -> System.err.println("DO SOMETHING"));// TODO);
         this.centerPanel.batchCard.btnBatchSAMize.addActionListener(e -> batchSAMize());
         this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
         this.close.addActionListener(e -> close());
@@ -191,10 +181,10 @@ public class Main extends MainGUI {
     protected void loadModel() {
         SwingUtilities.invokeLater(() -> {
         	setLoading();
-			int slice = consumer.getFocusedImageZPos();
-			int frame = consumer.getFocusedImageTPos();
-			int nFrames = consumer.getFocusedImageNT();
-			int nSlices = consumer.getFocusedImageNZ();
+			int slice = selectionPanel.cmbImages.getSelectedCurrentSlice();
+			int frame = selectionPanel.cmbImages.getSelectedCurrentFrame();
+			int nFrames = selectionPanel.cmbImages.getSelectedNFrames();
+			int nSlices = selectionPanel.cmbImages.getSelectedNSlices();
 			boolean propagate = centerPanel.isInstantShowing() ? centerPanel.instantCard.propagate3D.isSelected() : centerPanel.batchCard.propagate3D.isSelected();
 	        new Thread(() -> {
 	            try {
@@ -208,7 +198,7 @@ public class Main extends MainGUI {
 	                setInstantPromptsEnabled(Main.this.centerPanel.instantCard.chkInstant.isSelected() && centerPanel.isPromptValid());
 	                Main.this.selectionPanel.cmbModels.getSelectedModel().setReturnOnlyBiggest(bottomPanel.returnLargest.isSelected());
 	                SwingUtilities.invokeLater(() -> Main.this.manageLoaded(true));
-	            } catch (IOException | RuntimeException | InterruptedException | BuildException | TaskException ex) {
+	            } catch (Exception ex) {
 	            	SwingUtilities.invokeLater(() -> Main.this.manageLoaded(false));
 	                ex.printStackTrace();
 	            }
@@ -257,7 +247,6 @@ public class Main extends MainGUI {
         imageListener = new ImageSelectionListener() {
             @Override
             public void modelActionsOnImageChanged() {
-                Main.this.manageLoaded(false);
             }
 
             @Override
@@ -268,18 +257,7 @@ public class Main extends MainGUI {
                 if (Main.this.selectionPanel.cmbImages.getSelectedObject() == null) {
                     Main.this.selectionPanel.go.setEnabled(false);
                     Main.this.drawersPanel.imageDrawerPanel.roiManager.block(true);
-                    Main.this.centerPanel.instantCard.propagate3D.setEnabled(false);
-                    Main.this.centerPanel.batchCard.propagate3D.setEnabled(false);
                     return;
-                }
-                int nSlices = Main.this.consumer.getFocusedImageNT();
-                int nFrames = Main.this.consumer.getFocusedImageNZ();
-                Main.this.centerPanel.instantCard.propagate3D.setEnabled(nSlices > 1 || nFrames > 1);
-                Main.this.centerPanel.batchCard.propagate3D.setEnabled(nSlices > 1 || nFrames > 1);
-                	
-                if (Main.this.selectionPanel.go.isEnabled()) {
-                    Main.this.drawersPanel.imageDrawerPanel.roiManager.updateButtonsEnabled();
-                	return;
                 }
 
                 Main.this.selectionPanel.go.showAnimation(true);
@@ -287,7 +265,12 @@ public class Main extends MainGUI {
                     boolean installed = Main.this.selectionPanel.cmbModels.getSelectedModel().isInstalled();
                     SwingUtilities.invokeLater(() -> {
                     	Main.this.selectionPanel.go.setEnabled(installed);
+                    	if (installed)
+                            Main.this.manageLoaded(false);
                     	Main.this.selectionPanel.go.showAnimation(false);
+                        if (Main.this.selectionPanel.go.isEnabled())
+                            Main.this.drawersPanel.imageDrawerPanel.roiManager.updateButtonsEnabled();
+                        	return;
                     });
                 }).start();
             }
@@ -338,8 +321,9 @@ public class Main extends MainGUI {
                 if (Main.this.selectionPanel.cmbImages.getSelectedObject() != null) {
                     new Thread(() -> {
                         boolean installed = Main.this.selectionPanel.cmbModels.getSelectedModel().isInstalled();
+                        manageInstalled(false);
                         if (installed) {
-                            SwingUtilities.invokeLater(() -> selectionPanel.go.setEnabled(true));
+                            SwingUtilities.invokeLater(() -> Main.this.manageLoaded(false));
                         }
                     }).start();
                 }
@@ -357,8 +341,8 @@ public class Main extends MainGUI {
 
 			@Override
 			public List<Mask> sendRectanglePrompt(long[] xywh) {
-				int slice = consumer.getFocusedImageZPos();
-				int frame = consumer.getFocusedImageTPos();
+				int slice = selectionPanel.cmbImages.getSelectedCurrentSlice();
+				int frame = selectionPanel.cmbImages.getSelectedCurrentFrame();
 				boolean propagate = centerPanel.isInstantShowing() ? centerPanel.instantCard.propagate3D.isSelected() : centerPanel.batchCard.propagate3D.isSelected();
 				final Interval rectInterval = new FinalInterval(
 						new long[] { xywh[0], xywh[1] },

@@ -64,6 +64,7 @@ public class Sam2 extends AbstractSamJ {
 	 * Map that associates the key for each of the existing EfficientViTSAM models to its complete name
 	 */
 	private static final List<String> MODELS_LIST = new ArrayList<String>();
+	private static final String DEFAULT_DEVICE = "cpu";
 	static {
 		MODELS_LIST.add("tiny");
 		MODELS_LIST.add("small");
@@ -91,10 +92,12 @@ public class Sam2 extends AbstractSamJ {
 			+ "measure.label(np.ones((10, 10)), connectivity=1)" + System.lineSeparator()
 			+ "import torch" + System.lineSeparator()
 			+ "device = 'cpu'" + System.lineSeparator()
-			+ ((!IS_APPLE_SILICON || true) ? "" // TODO Add a button so the user can decide whether to use accelerators or not (I tried enabling by default and some models might be out of memory)
-					: "from torch.backends import mps" + System.lineSeparator()
-					+ "if mps.is_built() and mps.is_available():" + System.lineSeparator()
-					+ "  device = 'mps'" + System.lineSeparator())
+			+ "if %s and torch.cuda.is_available():" + System.lineSeparator()
+			+ "  device = 'cuda'" + System.lineSeparator()
+			+ "elif %s:" + System.lineSeparator()
+			+ "  from torch.backends import mps" + System.lineSeparator()
+			+ "  if mps.is_built() and mps.is_available():" + System.lineSeparator()
+			+ "    device = 'mps'" + System.lineSeparator()
 			+ "from scipy.ndimage import binary_fill_holes" + System.lineSeparator()
 			+ "from scipy.ndimage import label" + System.lineSeparator()
 			+ "import sys" + System.lineSeparator()
@@ -129,21 +132,6 @@ public class Sam2 extends AbstractSamJ {
 	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
 	 * @param type
 	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
-	 * @throws InterruptedException if the process is interrupted
-	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
-	 * @throws TaskException if there is any error running hte Python script with Appose
-	 */
-	private Sam2(SamEnvManagerAbstract manager, String type) throws BuildException, TaskException, InterruptedException {
-		this(manager, type, (t) -> {}, false);
-	}
-
-	/**
-	 * Create an instance of the class to be able to run EfficientViTSAM in Java.
-	 * 
-	 * @param manager
-	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
-	 * @param type
-	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
 	 * @param debugPrinter
 	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
 	 * @param printPythonCode
@@ -154,20 +142,19 @@ public class Sam2 extends AbstractSamJ {
 	 * 
 	 */
 	private Sam2(SamEnvManagerAbstract manager, String type,
-	                      final DebugTextPrinter debugPrinter,
-	                      final boolean printPythonCode) throws InterruptedException, BuildException, TaskException {
+	                      final DebugTextPrinter debugPrinter, String device) throws InterruptedException, BuildException, TaskException {
 
 		if (type.equals("base")) type = "base_plus";
 		if (!MODELS_LIST.contains(type))
 			throw new IllegalArgumentException("The model type should be one of the following: " 
 							+ MODELS_LIST);
 		this.debugPrinter = debugPrinter;
-		this.isDebugging = printPythonCode;
 
 		this.env = Appose.pixi().wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
-		IMPORTS_FORMATED = String.format(IMPORTS, MODEL_ABBREV.get(type), manager.getModelWeigthPath());
+		IMPORTS_FORMATED = String.format(IMPORTS, device == "cuda" ? "True" : "False", 
+				device == "mps" ? "True" : "False", MODEL_ABBREV.get(type), manager.getModelWeigthPath());
 		
 		python.init("import numpy as np" + System.lineSeparator());
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
@@ -201,11 +188,35 @@ public class Sam2 extends AbstractSamJ {
 	 */
 	public static Sam2
 	initializeSam(String modelType, SamEnvManagerAbstract manager,
-	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws BuildException, InterruptedException, TaskException {
+	              final DebugTextPrinter debugPrinter) throws BuildException, InterruptedException, TaskException {
+		return initializeSam(modelType, manager, debugPrinter, DEFAULT_DEVICE);
+	}
+
+	/**
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
+	 * This method encodes the image provided, so depending on the computer and on the model
+	 * it might take some time
+	 * 
+	 * @param modelType
+	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
+	 * @param manager
+	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @param debugPrinter
+	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
+	 * @param printPythonCode
+	 * 	whether to print the Python code that is going to be executed on the Python process or not
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
+	 * 	with the image already encoded
+	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
+	 */
+	public static Sam2
+	initializeSam(String modelType, SamEnvManagerAbstract manager,
+	              final DebugTextPrinter debugPrinter, String device) throws BuildException, InterruptedException, TaskException {
 		Sam2 sam = null;
 		try{
-			sam = new Sam2(manager, modelType, debugPrinter, printPythonCode);
+			sam = new Sam2(manager, modelType, debugPrinter, device);
 			sam.encodeCoords = new long[] {0, 0};
 		} catch (InterruptedException | BuildException | TaskException ex) {
 			if (sam != null) sam.close();
@@ -230,15 +241,26 @@ public class Sam2 extends AbstractSamJ {
 	 */
 	public static Sam2 initializeSam(String modelType, SamEnvManagerAbstract manager) 
 				throws TaskException, BuildException, InterruptedException {
-		Sam2 sam = null;
-		try{
-			sam = new Sam2(manager, modelType);
-			sam.encodeCoords = new long[] {0, 0};
-		} catch (TaskException | BuildException | InterruptedException ex) {
-			if (sam != null) sam.close();
-			throw ex;
-		}
-		return sam;
+		return initializeSam(modelType, manager, DEFAULT_DEVICE);
+	}
+
+	/**
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
+	 * This method encodes the image provided, so depending on the computer and on the model
+	 * it might take some time
+	 * 
+	 * @param modelType
+	 * 	EfficientViTSAM model type that we want to use, it can be "l0", "l1", "l2", "xl1" or "xl2"
+	 * @param manager
+	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
+	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
+	 */
+	public static Sam2 initializeSam(String modelType, SamEnvManagerAbstract manager, String device) 
+				throws TaskException, BuildException, InterruptedException {
+		return initializeSam(modelType, manager, (t) -> {}, device);
 	}
 
 	/**
@@ -261,9 +283,32 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws TaskException if there is any error running hte Python script with Appose
 	 */
 	public static Sam2 initializeSam(SamEnvManagerAbstract manager,
-	              final DebugTextPrinter debugPrinter,
-	              final boolean printPythonCode) throws TaskException, BuildException, InterruptedException {
-		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, debugPrinter, printPythonCode);
+	              final DebugTextPrinter debugPrinter) throws TaskException, BuildException, InterruptedException {
+		return initializeSam(manager, debugPrinter, DEFAULT_DEVICE);
+	}
+
+	/**
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
+	 * This method encodes the image provided, so depending on the computer and on the model
+	 * it might take some time.
+	 * 
+	 * The model used is the default one {@value Sam2EnvManager#DEFAULT_SAM2}
+	 * 
+	 * @param manager
+	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @param debugPrinter
+	 * 	functional interface to redirect the Python process Appose text log and ouptut to be redirected anywhere
+	 * @param printPythonCode
+	 * 	whether to print the Python code that is going to be executed on the Python process or not
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
+	 * 	with the image already encoded
+	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
+	 */
+	public static Sam2 initializeSam(SamEnvManagerAbstract manager,
+	              final DebugTextPrinter debugPrinter, String device) throws TaskException, BuildException, InterruptedException {
+		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, debugPrinter, device);
 	}
 
 	/**
@@ -282,7 +327,26 @@ public class Sam2 extends AbstractSamJ {
 	 * @throws TaskException if there is any error running hte Python script with Appose
 	 */
 	public static Sam2 initializeSam(SamEnvManagerAbstract manager) throws BuildException, TaskException, InterruptedException {
-		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager);
+		return initializeSam(manager, DEFAULT_DEVICE);
+	}
+
+	/**
+	 * Create an EfficientViTSamJ instance that allows to use EfficientViTSAM on an image.
+	 * This method encodes the image provided, so depending on the computer and on the model
+	 * it might take some time.
+	 * 
+	 * The model used is the default one {@value Sam2EnvManager#DEFAULT_SAM2}
+	 * 
+	 * @param manager
+	 * 	environment manager that contians all the paths to the environments needed, Python executables and model weights
+	 * @return an instance of {@link Sam2} that allows running EfficienTViTSAM on an image
+	 * 	with the image already encoded
+	 * @throws InterruptedException if the process is interrupted
+	 * @throws BuildException if there is any error with the Python environment and the Python process cannot be launched
+	 * @throws TaskException if there is any error running hte Python script with Appose
+	 */
+	public static Sam2 initializeSam(SamEnvManagerAbstract manager, String device) throws BuildException, TaskException, InterruptedException {
+		return initializeSam(Sam2EnvManager.DEFAULT_SAM2, manager, (t) -> {}, device);
 	}
 
 	@Override

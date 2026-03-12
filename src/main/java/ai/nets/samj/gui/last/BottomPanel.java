@@ -8,7 +8,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
-import ai.nets.samj.install.GpuCompatibility;
 import io.bioimage.modelrunner.system.PlatformDetection;
 
 public class BottomPanel extends JPanel {

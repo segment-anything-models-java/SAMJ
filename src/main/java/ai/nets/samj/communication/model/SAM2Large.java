@@ -118,7 +118,7 @@ public class SAM2Large extends SAMModel {
 			this.log.info( text );
 		};
 		if (this.samj == null)
-			samj = Sam2.initializeSam(ID, manager, filteringLogger, false);
+			samj = Sam2.initializeSam(ID, manager, filteringLogger, device);
 	}
 
 	@Override

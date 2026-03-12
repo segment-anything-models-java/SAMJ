@@ -41,8 +41,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 
-import org.apache.commons.compress.archivers.ArchiveException;
-
 import ai.nets.samj.gui.tools.FileUtils;
 import ai.nets.samj.models.Sam2;
 
@@ -63,7 +61,6 @@ import io.bioimage.modelrunner.download.FileDownloader;
 public class Sam2EnvManager extends SamEnvManagerAbstract {
 	
 	private final String modelType;
-	private String installEnv;
 	/**
 	 * Default version for the family of SAM2 models
 	 */
@@ -241,7 +238,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		
 		List<String> uninstalled = new ArrayList<String>();
 		try {
-			uninstalled = DependencyChecker.checkUninstalledDependenciesInEnv(pixi.build(), CHECK_DEPS);
+			uninstalled = DependencyChecker.checkUninstalledDependenciesInEnv(pixi.environment(installEnv).build(), CHECK_DEPS);
 		} catch (Exception e) {
 			return false;
 		}
@@ -346,14 +343,13 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    	pixi.subscribeError(this.errConsumer);
 	    if (this.pixiConsumer != null)
 	    	pixi.subscribeProgress(this.pixiConsumer);
-	    pixi.build();
-	    //pixi.environment(installEnv).rebuild();
+	    pixi.environment(installEnv).build();
 	    installSAM2Wheel();
 	}
 
 	private void installSAM2Wheel() throws BuildException {
 		try {
-			installWheelFromResource("/" + SAM2_WHEEL, pixi.build());
+			installWheelFromResource("/" + SAM2_WHEEL, pixi.environment(installEnv).build());
 		} catch (IOException e) {
 			throw new BuildException("Failed to install SAM2 from wheel: " 
 									+ System.lineSeparator() + Types.stackTrace(e));

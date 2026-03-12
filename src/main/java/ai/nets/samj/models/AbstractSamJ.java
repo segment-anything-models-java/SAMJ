@@ -131,10 +131,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	protected int nFrames = 1;
 	/**
-	 * Whether the SAMJ model instance is verbose or not
-	 */
-	protected boolean isDebugging = true;
-	/**
 	 * Instance referencing the Python environment that is going to be used to run EfficientSAM
 	 */
 	protected Environment env;
@@ -258,14 +254,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 	
 	/**
-	 * 
-	 * @return true if the SAMJ model instance is verbose or not
-	 */
-	public boolean isDebugging() {
-		return isDebugging;
-	}
-	
-	/**
 	 * IMPORTANT (only for ImageJ)
 	 * If the resulting polygons are going to be displayed using 
 	 * ImageJ's ROI manager, this method method needs to be called with true.
@@ -279,22 +267,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	public void setUsinIJRoiManager(boolean isUsingIJRoiManager) {
 		this.isIJROIManager = isUsingIJRoiManager;
-	}
-
-	/**
-	 * Method that prints the String in the script parameter to the {@link DebugTextPrinter}
-	 * 
-	 * @param script
-	 * 	text that wants to be printed, usually a Python script
-	 * @param designationOfTheScript
-	 * 	the name (or some string to design) of the text that is going to be printed
-	 */
-	public void printScript(final String script, final String designationOfTheScript) {
-		if (!isDebugging) return;
-		debugPrinter.printText("START: =========== "+designationOfTheScript+" ===========");
-		debugPrinter.printText(LocalDateTime.now().toString());
-		debugPrinter.printText(script);
-		debugPrinter.printText("END:   =========== "+designationOfTheScript+" ===========");
 	}
 
 	/**
@@ -313,15 +285,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 */
 	public void setDebugPrinter(final DebugTextPrinter lineComsumer) {
 		if (lineComsumer != null) debugPrinter = lineComsumer;
-	}
-	
-	/**
-	 * Set whether the SAMJ model instance has to be more verbose or not
-	 * @param newState
-	 * 	whether the new model is verbose or not
-	 */
-	public void setDebugging(boolean newState) {
-		isDebugging = newState;
 	}
 	
 	/**
@@ -387,7 +350,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		sendImgLib2AsNp();
 		createEncodeImageScript();
 		try {
-			printScript(script, "Creation of initial embeddings");
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
@@ -416,7 +378,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		sendCropAsNp(cropSize);
 		createEncodeImageScript();
 		try {
-			printScript(script, "Creation of the cropped embeddings");
 			Task task = python.task(script);
 			task.waitFor();
 			if (task.status == TaskStatus.CANCELED)
@@ -626,7 +587,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 											.collect(Collectors.toList());
 			inputs.put("rect_prompts", rectPrompts);
 			processPromptsBatchWithSAM(maskShma, returnAll);
-			printScript(script, "Batch of prompts inference");
 			List<Mask> polys = processAndRetrieveContours(inputs, callback);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
@@ -667,7 +627,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 											.collect(Collectors.toList());
 			inputs.put("rect_prompts", rectPrompts);
 			processPromptsBatchWithSAM(maskShma, returnAll);
-			printScript(script, "Batch of prompts inference");
 			List<Mask> polys = processAndRetrieveContours(inputs);
 			recalculatePolys(polys, encodeCoords);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
@@ -869,7 +828,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_points", pointsList);
 		inputs.put("input_neg_points", pointsNegList);
-		printScript(script, "Points and negative points inference");
 		List<Mask> polys = processAndRetrieveContours(inputs);
 		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processPoints() obtained " + polys.size() + " polygons");
@@ -976,7 +934,6 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			processBoxWithSAMAndPropagate();
 		HashMap<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("input_box", adaptedBoundingBox);
-		printScript(script, "Rectangle inference");
 		List<Mask> polys = processAndRetrieveContours(inputs);
 		recalculatePolys(polys, encodeCoords);
 		debugPrinter.printText("processBox() obtained " + polys.size() + " polygons");

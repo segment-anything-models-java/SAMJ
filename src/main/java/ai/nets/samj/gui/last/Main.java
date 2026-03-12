@@ -10,7 +10,6 @@ import java.util.concurrent.Future;
 
 import javax.swing.SwingUtilities;
 
-import org.apposed.appose.BuildException;
 import org.apposed.appose.TaskException;
 
 import ai.nets.samj.annotation.Mask;

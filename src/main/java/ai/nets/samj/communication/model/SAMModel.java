@@ -55,6 +55,7 @@ public abstract class SAMModel {
 
 	protected String fullName;
 	protected AbstractSamJ samj;
+	protected String device = "cpu";
 	protected double size;
 	protected int performanceRank;
 	protected int speedRank;
@@ -164,6 +165,14 @@ public abstract class SAMModel {
 			log.error(this.fullName + " experienced an error: " + e.getMessage());
 			throw e;
 		}
+	}
+	
+	public String getDevice() {
+		return this.device;
+	}
+	
+	public void setDevice(String device) {
+		this.device = device;
 	}
 	
 	/**

@@ -41,7 +41,6 @@ import org.apposed.appose.BuildException;
 import org.apposed.appose.Builder.ProgressConsumer;
 import org.apposed.appose.Environment;
 import org.apposed.appose.Service;
-import org.apposed.appose.Service.Task;
 import org.apposed.appose.builder.PixiBuilder;
 import org.apposed.appose.tool.Pixi;
 
@@ -59,6 +58,10 @@ public abstract class SamEnvManagerAbstract {
 	 * {@link Mamba} instance used to create the environments
 	 */
 	protected PixiBuilder pixi;
+	/**
+	 * Environment being used for pixi
+	 */
+	protected String installEnv = "default";
 	/**
 	 * Consumer to transmit information about the output
 	 */
@@ -115,6 +118,9 @@ public abstract class SamEnvManagerAbstract {
 	
 	public abstract void uninstall();
 
+	public String getPixiEnv() {
+		return this.installEnv;
+	}
 	
 	public void setOutputConsumer(Consumer<String> consumer) {
 		this.outConsumer = consumer;

@@ -115,7 +115,7 @@ public class EfficientTAMTiny extends SAMModel {
 			this.log.info( text );
 		};
 		if (this.samj == null)
-			samj = EfficientTamJ.initializeSam(ID, manager, filteringLogger, false);
+			samj = EfficientTamJ.initializeSam(ID, manager, filteringLogger, device);
 	}
 
 	@Override

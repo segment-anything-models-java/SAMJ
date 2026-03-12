@@ -16,9 +16,9 @@ public class NoDrawerMainGUI extends JPanel {
 
     // Tune these
     private static final double TITLE_H_PCT     = 0.10;
-    private static final double SELECTION_H_PCT = 0.25;
-    private static final double CENTER_H_PCT    = 0.45;
-    private static final double BOTTOM_H_PCT    = 0.15;
+    private static final double SELECTION_H_PCT = 0.225;
+    private static final double CENTER_H_PCT    = 0.425;
+    private static final double BOTTOM_H_PCT    = 0.20;
 
     private static final int BUTTONS_GAP_PX = 4;
 

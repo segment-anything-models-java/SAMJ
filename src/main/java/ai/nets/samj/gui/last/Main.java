@@ -159,6 +159,7 @@ public class Main extends MainGUI {
         this.centerPanel.batchCard.btnBatchSAMize.addActionListener(e -> batchSAMize());
         this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
         this.close.addActionListener(e -> close());
+		this.bottomPanel.acceleratorEnabled.addActionListener((e) -> System.err.println("If already laoded warn"));
 		this.help.addActionListener(e -> System.err.println("Not implemented"));
 		SwingUtilities.invokeLater(() -> changeGUI());
         
@@ -180,6 +181,7 @@ public class Main extends MainGUI {
     protected void loadModel() {
         SwingUtilities.invokeLater(() -> {
         	setLoading();
+        	selectionPanel.cmbModels.getSelectedModel().setDevice(bottomPanel.getDevice());
 			int slice = selectionPanel.cmbImages.getSelectedCurrentSlice();
 			int frame = selectionPanel.cmbImages.getSelectedCurrentFrame();
 			int nFrames = selectionPanel.cmbImages.getSelectedNFrames();

@@ -150,7 +150,7 @@ public class Sam2 extends AbstractSamJ {
 							+ MODELS_LIST);
 		this.debugPrinter = debugPrinter;
 
-		this.env = Appose.pixi().wrap(new File(manager.getModelEnv()));
+		this.env = Appose.pixi().environment(manager.getPixiEnv()).wrap(new File(manager.getModelEnv()));
 		python = env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS, device == "cuda" ? "True" : "False", 

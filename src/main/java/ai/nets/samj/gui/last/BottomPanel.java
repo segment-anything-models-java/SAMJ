@@ -19,6 +19,10 @@ public class BottomPanel extends JPanel {
     protected JCheckBox acceleratorEnabled;
 
     protected JButton export = new JButton("Export...");
+    
+    private boolean isCUDA = false;
+    
+    private boolean isMPS = false;
 
 	private static final int    PAD_X = 2;          // horizontal inset from border
 	private static final int    PAD_Y = 2;          // vertical inset from border
@@ -32,11 +36,14 @@ public class BottomPanel extends JPanel {
 		setLayout(null);
         setBorder(new LineBorder(Color.BLACK));
         
-        if (PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64))
+        if (PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64)) {
         	acceleratorEnabled = new JCheckBox(MPS_ACCELERATOR, false);
-        else
+        	isMPS = true;
+        } else {
         	acceleratorEnabled = new JCheckBox(CUDA_ACCELERATOR, false);
-        acceleratorEnabled.setEnabled(false);
+        	isCUDA = true;
+        }
+        acceleratorEnabled.setEnabled(true);
         
         add(returnLargest);
         add(acceleratorEnabled);
@@ -68,5 +75,13 @@ public class BottomPanel extends JPanel {
 	    acceleratorEnabled.setBounds(x, y, Math.max(1, innerW), baseH);
 	    y += baseH + GAP_Y;
 	    export.setBounds(x, y, Math.max(1, innerW), btnH);
+	}
+	
+	public String getDevice() {
+		if (this.acceleratorEnabled.isSelected() && isCUDA)
+			return "cuda";
+		else if (this.acceleratorEnabled.isSelected() && isMPS)
+			return "mps";
+		return "cpu";
 	}
 }

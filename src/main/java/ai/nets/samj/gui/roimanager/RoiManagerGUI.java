@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +16,7 @@ import javax.swing.event.ListSelectionListener;
 
 import ai.nets.samj.gui.components.PlusMinusButtonComp;
 
-public abstract class RoiManagerGUI extends JPanel implements ListSelectionListener, MouseListener, MouseWheelListener, ItemListener {
+public abstract class RoiManagerGUI extends JPanel implements ListSelectionListener, MouseListener, ItemListener {
 
     private static final long serialVersionUID = -8405747451234902128L;
 
@@ -66,7 +65,6 @@ public abstract class RoiManagerGUI extends JPanel implements ListSelectionListe
 
         list.addListSelectionListener(this);
         list.addMouseListener(this);
-        list.addMouseWheelListener(this);
         labelsCheckbox.addItemListener(this);
         showAllCheckbox.addItemListener(this);
     }

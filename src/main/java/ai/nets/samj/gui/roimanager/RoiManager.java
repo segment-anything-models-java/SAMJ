@@ -7,8 +7,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +29,7 @@ import ai.nets.samj.gui.roimanager.commands.DeleteRoiCommand;
 import ai.nets.samj.gui.roimanager.commands.ModifyRoiCommand;
 import ai.nets.samj.gui.roimanager.utils.PolygonUtils;
 
-public class RoiManager extends RoiManagerGUI implements MouseWheelListener, ListSelectionListener, MouseListener, ActionListener, ItemListener {
+public class RoiManager extends RoiManagerGUI implements ListSelectionListener, MouseListener, ActionListener, ItemListener {
 
     private static final long serialVersionUID = -8405747451234902128L;
 
@@ -419,10 +417,6 @@ public class RoiManager extends RoiManagerGUI implements MouseWheelListener, Lis
             consumer.setSelected(this.rois.get(lastIndex));
             prevIndex = lastIndex;
         }
-    }
-
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
     }
 
     @Override

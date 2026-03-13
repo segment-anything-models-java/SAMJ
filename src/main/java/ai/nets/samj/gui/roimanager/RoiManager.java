@@ -372,13 +372,8 @@ public class RoiManager extends RoiManagerGUI implements ListSelectionListener, 
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if (e.getComponent().equals(this.list)) {
-            int ind = this.list.locationToIndex(e.getPoint());
-            if (ind < 0 || ind == prevIndex || ind > this.rois.size())
-                return;
-            consumer.setSelected(this.rois.get(ind));
-            prevIndex = ind;
-        }
+        // Selection changes are handled from the table selection model so
+        // ctrl/shift interactions follow Swing's final selection state.
     }
 
     @Override
@@ -411,12 +406,31 @@ public class RoiManager extends RoiManagerGUI implements ListSelectionListener, 
             return;
 
         if (!e.getValueIsAdjusting()) {
-            int lastIndex = list.getLeadSelectionIndex();
-            if (lastIndex == prevIndex || lastIndex < 0 || lastIndex >= this.rois.size())
+            int selectedIndex = getActiveSelectionIndex();
+            if (selectedIndex == prevIndex)
                 return;
-            consumer.setSelected(this.rois.get(lastIndex));
-            prevIndex = lastIndex;
+            if (selectedIndex < 0 || selectedIndex >= this.rois.size()) {
+                consumer.setSelected(null);
+                prevIndex = -1;
+                return;
+            }
+            consumer.setSelected(this.rois.get(selectedIndex));
+            prevIndex = selectedIndex;
         }
+    }
+
+    private int getActiveSelectionIndex() {
+        int leadIndex = list.getLeadSelectionIndex();
+        if (leadIndex >= 0 && leadIndex < rois.size()) {
+            int leadViewIndex = list.convertRowIndexToView(leadIndex);
+            if (leadViewIndex >= 0 && list.isRowSelected(leadViewIndex))
+                return leadIndex;
+        }
+
+        int[] selectedIndices = list.getSelectedIndices();
+        if (selectedIndices.length == 0)
+            return -1;
+        return selectedIndices[selectedIndices.length - 1];
     }
 
     @Override

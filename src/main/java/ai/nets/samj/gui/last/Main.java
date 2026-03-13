@@ -130,10 +130,11 @@ public class Main extends MainGUI {
 
 		this.consumer.setPromptBridge(promptBridge);
 		
-        this.consumer.setGuiCallback(() -> {
+        this.consumer.setGuiCallback((Boolean isMainImage) -> {
         	SwingUtilities.invokeLater(() -> {
                 selectionPanel.cmbImages.updateList();
-                imageListener.imageActionsOnImageChanged();
+                if (isMainImage)
+                	imageListener.imageActionsOnImageChanged();
         	});
 		});
         this.consumer.setCallback(consumerCallback);

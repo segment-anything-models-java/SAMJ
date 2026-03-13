@@ -117,7 +117,7 @@ public abstract class ComboBoxItem {
      * {@inheritDoc}
      */
     public String toString() {
-    	if (value == null) return SELECT_IMAGE_STR;
+    	if (this.getValue() == null) return SELECT_IMAGE_STR;
         return getImageName();
     }
 }

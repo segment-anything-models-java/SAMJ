@@ -22,6 +22,7 @@ package ai.nets.samj.ui;
 import java.awt.Rectangle;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.communication.model.SAMModel;
@@ -48,7 +49,7 @@ public abstract class ConsumerInterface {
 		
 		}
 	
-	protected Runnable guiCallback;
+	protected Consumer<Boolean> guiCallback;
 	
 	protected ConsumerCallback callback;
 
@@ -104,7 +105,7 @@ public abstract class ConsumerInterface {
 		this.selectedModel = model;
 	}
 	
-	public void setGuiCallback(Runnable guiCallback) {
+	public void setGuiCallback(Consumer<Boolean> guiCallback) {
 		this.guiCallback = guiCallback;
 	}
 	

@@ -91,10 +91,17 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 	
 	protected void updateList() {
 		try {
+			Object selectedVal = null;
+			if (selected != null)
+				selectedVal = selected.getValue();
 	        List<ComboBoxItem> openSeqs = consumer.getListOfOpenImages();
 	        ComboBoxItem[] objects = new ComboBoxItem[openSeqs.size()];
 	        for (int i = 0; i < objects.length; i ++) objects[i] = openSeqs.get(i);
 	        DefaultComboBoxModel<ComboBoxItem> comboBoxModel = new DefaultComboBoxModel<ComboBoxItem>(objects);
+	        if (selectedVal == null && objects.length != 0)
+	        	selected = objects[0];
+	        else if (selectedVal == null)
+	        	selected = null;
 	        if (selected != null && objects.length != 0)
 	        	comboBoxModel.setSelectedItem(selected);
 	        if (objects.length == 0)

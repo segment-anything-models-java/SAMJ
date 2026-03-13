@@ -562,6 +562,10 @@ public class EfficientTamJ extends AbstractSamJ {
 			isSlice = true;
 		} else if (dims.length == 4 && dims[2] == 3 && dims[3] == 1 && this.nFrames == 1 && this.nSlices == 1) {
 			isSlice = true;
+		} else if (dims.length == 4 && dims[2] == 3 && dims[3] > 1 && this.nFrames != 1 && this.nSlices == 1) {
+			isSlice = false;
+		} else if (dims.length == 4 && dims[2] == 3 && dims[3] > 1 && this.nFrames == 1 && this.nSlices != 1) {
+			isSlice = true;
 		} else if (dims.length == 4 && dims[2] > 1 && dims[3] == 1 && this.nFrames > 1 && this.nSlices == 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 0, 2}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );

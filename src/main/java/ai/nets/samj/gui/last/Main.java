@@ -278,7 +278,7 @@ public class Main extends MainGUI {
                 consumer.deselectImage();
 
                 if (Main.this.selectionPanel.cmbImages.getSelectedObject() == null) {
-                    Main.this.selectionPanel.go.setEnabled(false);
+                    Main.this.manageInstalled(false);
                     Main.this.drawersPanel.imageDrawerPanel.roiManager.block(true);
                     return;
                 }
@@ -327,8 +327,10 @@ public class Main extends MainGUI {
                     if (Thread.currentThread().isInterrupted()) return;
 
                     SwingUtilities.invokeLater(() -> {
-                        if (installed) {
+                    	if (installed && Main.this.selectionPanel.cmbImages.getSelectedObject() != null) {
                             Main.this.manageLoaded(false);
+                        } else if (installed) {
+                            Main.this.manageInstalled(false);
                         } else {
                             Main.this.setModelDrawerOpen(true);
                             Main.this.manageInstalled(false);

@@ -133,18 +133,8 @@ public class Main extends MainGUI {
         this.consumer.setGuiCallback(() -> {
         	SwingUtilities.invokeLater(() -> {
                 selectionPanel.cmbImages.updateList();
-                if (selectionPanel.cmbImages.getSelectedObject() == null)
-                	return;
-                selectionPanel.go.setEnabled(false);
-                selectionPanel.go.showAnimation(true);
+                imageListener.imageActionsOnImageChanged();
         	});
-            new Thread(() -> {
-            	boolean isInstalled = selectionPanel.cmbModels.getSelectedModel().isInstalled();
-            	SwingUtilities.invokeLater(() -> {
-                	selectionPanel.go.setEnabled(isInstalled);
-                	selectionPanel.go.showAnimation(false);
-            	});
-            }).start();
 		});
         this.consumer.setCallback(consumerCallback);
         

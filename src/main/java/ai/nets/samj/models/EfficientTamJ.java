@@ -548,8 +548,6 @@ public class EfficientTamJ extends AbstractSamJ {
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, dims[2] - 1, 2}) );
 			rai = Utils.rearangeAxes(rai, new int[] {0, 1, 3, 2});
 			isSlice = true;
-		} else if (dims.length == 3 && this.nSlices != 1 & this.nFrames != 1) {
-			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s", Arrays.toString(dims), nSlices, nFrames));
 		} else if (dims.length == 4 && dims[2] == 1 && dims[3] == 1) {
 			rai = Views.interval( Views.expandMirrorDouble(rai, new long[] {0, 0, 2, 0}), 
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
@@ -619,7 +617,8 @@ public class EfficientTamJ extends AbstractSamJ {
 					Intervals.createMinMax(new long[] {0, 0, 0, 0, dims[0] - 1, dims[1] - 1, 2, dims[3] - 1}) );
 			isSlice = false;
 		} else {
-			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s", Arrays.toString(dims), nSlices, nFrames));
+			throw new IllegalArgumentException(String.format("Invalid array shape configuration, shape %s, slices: %s, frames: %s."
+					+ " Images must always be grayscale (2 channel) or RGB (3 channels)", Arrays.toString(dims), nSlices, nFrames));
 		}
 		
 		dims = rai.dimensionsAsLongArray();

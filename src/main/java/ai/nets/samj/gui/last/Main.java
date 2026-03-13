@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apposed.appose.TaskException;
@@ -28,6 +29,7 @@ import ai.nets.samj.gui.roimanager.RoiManagerConsumer;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.ConsumerInterface;
 import ai.nets.samj.ui.ConsumerInterface.ConsumerCallback;
+import io.bioimage.modelrunner.system.PlatformDetection;
 import ai.nets.samj.ui.PromptBridge;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
@@ -159,7 +161,7 @@ public class Main extends MainGUI {
         this.centerPanel.batchCard.btnBatchSAMize.addActionListener(e -> batchSAMize());
         this.centerPanel.batchCard.stopProgressBtn.addActionListener(null);
         this.close.addActionListener(e -> close());
-		this.bottomPanel.acceleratorEnabled.addActionListener((e) -> System.err.println("If already laoded warn"));
+		this.bottomPanel.acceleratorEnabled.addActionListener((e) -> warnIfLoaded());
 		this.help.addActionListener(e -> System.err.println("Not implemented"));
 		SwingUtilities.invokeLater(() -> changeGUI());
         
@@ -205,6 +207,26 @@ public class Main extends MainGUI {
 	            }
 	        }).start();
         });
+    }
+    
+    protected void warnIfLoaded() {
+    	SAMModel selectedModel = selectionPanel.cmbModels.getSelectedModel();
+    	if (!selectedModel.isLoaded())
+    		return;
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Changing the device will require reloading the model on the new device." + System.lineSeparator()
+                + "Do you want to continue?",
+                "Change device",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+
+            if (choice != JOptionPane.YES_OPTION) {
+                return;
+            }
+    	selectedModel.closeProcess();
+    	modelListener.changeDrawerPanel(selectedModel);
     }
     
     protected < T extends RealType< T > & NativeType< T > > void batchSAMize() {
@@ -280,6 +302,14 @@ public class Main extends MainGUI {
         modelListener = new ModelSelectionListener() {
             @Override
             public void changeDrawerPanel(SAMModel selected) {
+            	boolean cudaSupported = selected.getInstallationManger().getPixiEnv() == "cuda";
+            	boolean isMps = PlatformDetection.isMacOS() && PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64);
+            	if (!cudaSupported && !isMps) {
+            		bottomPanel.acceleratorEnabled.setSelected(false);
+            		bottomPanel.acceleratorEnabled.setEnabled(false);
+            	} else {
+            		bottomPanel.acceleratorEnabled.setEnabled(true);
+            	}
                 if (Main.this.isDrawerOpen 
                 		&& Main.this.selectionPanel.cmbModels.getSelectedModel() == selected
                 		&& selected.isLoaded()) {

@@ -124,7 +124,7 @@ public class EfficientTamJ extends AbstractSamJ {
 			+ "    offload_video_to_cpu: bool," + System.lineSeparator()
 			+ "    img_mean=(0.485, 0.456, 0.406)," + System.lineSeparator()
 			+ "    img_std=(0.229, 0.224, 0.225)," + System.lineSeparator()
-			+ "    compute_device=torch.device(\"cuda\")," + System.lineSeparator()
+			+ "    compute_device=device," + System.lineSeparator()
 			+ "):" + System.lineSeparator()
 			+ "    \"\"\"" + System.lineSeparator()
 			+ "    Convert a uint8 numpy array of shape (x, y, 3, z) into the same output format as" + System.lineSeparator()

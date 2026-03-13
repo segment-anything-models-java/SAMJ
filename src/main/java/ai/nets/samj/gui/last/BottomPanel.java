@@ -29,21 +29,21 @@ public class BottomPanel extends JPanel {
 	private static final int    GAP_Y = 2;          // gap between rows
 	private static final double BTN_H_RATIO = 1.2;  // button row is 20% taller
 
-	private static final String CUDA_ACCELERATOR = "CUDA";
+	private static final String CUDA_ACCELERATOR = "CUDA acceleration";
 	private static final String MPS_ACCELERATOR = "MPS acceleration";
     
 	public BottomPanel() {
 		setLayout(null);
         setBorder(new LineBorder(Color.BLACK));
         
-        if (PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64)) {
+        if (PlatformDetection.getArch().equals(PlatformDetection.ARCH_ARM64) && PlatformDetection.isMacOS()) {
         	acceleratorEnabled = new JCheckBox(MPS_ACCELERATOR, false);
         	isMPS = true;
         } else {
         	acceleratorEnabled = new JCheckBox(CUDA_ACCELERATOR, false);
         	isCUDA = true;
         }
-        acceleratorEnabled.setEnabled(true);
+        acceleratorEnabled.setEnabled(false);
         
         add(returnLargest);
         add(acceleratorEnabled);

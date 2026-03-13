@@ -98,10 +98,15 @@ public class RoiManager extends RoiManagerGUI implements ListSelectionListener, 
     }
     
     private void handlePointsAction(String command) {
-        if ("Points+".equals(command)) {
-            complicate();
-        } else if ("Points-".equals(command)) {
-        	simplify();
+        list.setValueIsAdjusting(true);
+        try {
+            if ("Points+".equals(command)) {
+                complicate();
+            } else if ("Points-".equals(command)) {
+            	simplify();
+            }
+        } finally {
+            list.setValueIsAdjusting(false);
         }
     }
 

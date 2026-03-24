@@ -70,6 +70,11 @@ public class ModelSelection extends ComboBoxButtonComp<String> implements ItemLi
 		selected.closeProcess();
 	}
 
+	/**
+	 * Reacts to model selection changes and updates the GUI state.
+	 *
+	 * @param e item event describing the selection change
+	 */
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {

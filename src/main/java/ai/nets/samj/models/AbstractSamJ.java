@@ -611,10 +611,29 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		}
 	}
 	
+	/**
+	 * Processes a batch of point prompts and returns every generated mask.
+	 *
+	 * @param points point prompts expressed as {@code [x, y]} coordinates
+	 * @return the masks generated from the batch
+	 * @throws IOException if the Python-side processing cannot be started
+	 * @throws RuntimeException if the model execution fails
+	 * @throws InterruptedException if execution is interrupted
+	 */
 	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, RuntimeException, InterruptedException {
 		return processBatchOfPoints(points, true);
 	}
 	
+	/**
+	 * Processes a batch of point prompts.
+	 *
+	 * @param pointsList point prompts expressed as {@code [x, y]} coordinates
+	 * @param returnAll whether to return every generated mask or only the main one
+	 * @return the masks generated from the batch
+	 * @throws IOException if the Python-side processing cannot be started
+	 * @throws RuntimeException if the model execution fails
+	 * @throws InterruptedException if execution is interrupted
+	 */
 	public List<Mask> processBatchOfPoints(List<int[]> pointsList, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		List<Mask> polys = processBatchOfPrompts(pointsList, null, null, returnAll);
@@ -665,6 +684,18 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return processPoints(pointsList, rect, returnAll);
 	}
 
+	/**
+	 * Processes positive point prompts within a given encoding area.
+	 *
+	 * @param pointsList point prompts expressed as {@code [x, y]} coordinates
+	 * @param encodingArea image area to encode before segmentation
+	 * @param returnAll whether to return every generated mask or only the main one
+	 * @return the masks generated from the supplied prompts
+	 * @throws IOException if the Python-side processing cannot be started
+	 * @throws RuntimeException if the model execution fails
+	 * @throws InterruptedException if execution is interrupted
+	 * @throws NullPointerException if {@code encodingArea} is {@code null}
+	 */
 	public List<Mask> processPoints(List<int[]> pointsList, Rectangle encodingArea, boolean returnAll)
 			throws IOException, RuntimeException, InterruptedException {
 		Objects.requireNonNull(encodingArea, "Second argument cannot be null. Use the method "
@@ -699,6 +730,18 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return processPoints(pointsList, pointsNegList, rect, true);
 	}
 	
+	/**
+	 * Processes positive and negative point prompts using a preselected zoomed
+	 * image area.
+	 *
+	 * @param pointsList positive point prompts expressed as {@code [x, y]}
+	 * @param pointsNegList negative point prompts expressed as {@code [x, y]}
+	 * @param zoomedArea image area that should be used for encoding
+	 * @return the masks generated from the supplied prompts
+	 * @throws IOException if the Python-side processing cannot be started
+	 * @throws RuntimeException if the model execution fails
+	 * @throws InterruptedException if execution is interrupted
+	 */
 	public List<Mask> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
 			Rectangle zoomedArea)
 			throws IOException, RuntimeException, InterruptedException {
@@ -1197,6 +1240,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		});
 	}
 
+	/**
+	 * Persists the current image encoding in the Python process.
+	 *
+	 * @return the generated identifier that can be used to select the encoding later
+	 * @throws IOException if the Python task cannot be started
+	 * @throws InterruptedException if the persistence task is interrupted
+	 */
 	public String persistEncoding() throws IOException, InterruptedException {
 		String uuid = UUID.randomUUID().toString();
 		String saveEncodings = persistEncodingScript(uuid);
@@ -1216,6 +1266,14 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		return uuid;
 	}
 
+	/**
+	 * Selects a previously persisted encoding as the active one.
+	 *
+	 * @param encodingName identifier of the persisted encoding to activate
+	 * @throws IOException if the Python task cannot be started
+	 * @throws InterruptedException if the selection task is interrupted
+	 * @throws IllegalArgumentException if the requested encoding is unknown
+	 */
 	public void selectEncoding(String encodingName) throws IOException, InterruptedException {
 		if (!this.savedEncodings.contains(encodingName))
 			throw new IllegalArgumentException("No saved encoding found with name: " + encodingName);
@@ -1235,7 +1293,13 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		
 	}
 
-
+	/**
+	 * Deletes a previously persisted encoding.
+	 *
+	 * @param encodingName identifier of the encoding to remove
+	 * @throws IOException if the Python task cannot be started
+	 * @throws InterruptedException if the deletion task is interrupted
+	 */
 	public void deleteEncoding(String encodingName) throws IOException, InterruptedException {
 		if (!this.savedEncodings.contains(encodingName))
 			return;
@@ -1255,6 +1319,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		this.savedEncodings.remove(encodingName);
 	}
 	
+	/**
+	 * Returns the task-update token used to report contour progress.
+	 *
+	 * @return the contour progress token
+	 */
 	public static String getProgressString() {
 		return UPDATE_ID_CONTOUR;
 	}

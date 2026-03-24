@@ -109,6 +109,11 @@ public class LoadingButton extends JButton {
         });
 	}
 	
+	/**
+	 * Updates the visual state of the button when it becomes enabled or disabled.
+	 *
+	 * @param isEnabled whether the button should be enabled
+	 */
 	@Override
 	public void setEnabled(boolean isEnabled) {
 		textLabel.setText(String.format(BTN_TEXT_HTML, isEnabled ? ENABLED_COLOR : DISABLED_COLOR, text));

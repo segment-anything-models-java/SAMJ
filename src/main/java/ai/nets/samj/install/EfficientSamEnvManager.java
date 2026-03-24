@@ -409,11 +409,21 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 		return ESAM_SMALL_WEIGHTS_NAME;
 	}
 
+	/**
+	 * Returns the absolute path to the EfficientSAM weights file.
+	 *
+	 * @return the EfficientSAM weights path
+	 */
 	@Override
 	public String getModelWeigthPath() {
 		return Paths.get(this.path, "envs", ESAM_ENV_NAME, ESAM_NAME, "weights", ESAM_SMALL_WEIGHTS_NAME).toAbsolutePath().toString();
 	}
 
+	/**
+	 * Checks whether all EfficientSAM runtime requirements are installed.
+	 *
+	 * @return {@code true} when the full EfficientSAM runtime is installed
+	 */
 	@Override
 	public boolean checkEverythingInstalled() {
 		if (!this.checkMambaInstalled()) return false;
@@ -427,6 +437,9 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 		return true;
 	}
 
+	/**
+	 * Removes the installed EfficientSAM environment from disk.
+	 */
 	@Override
 	public void uninstall() {
 		Files.deleteFolder(new File(this.getModelEnv()));

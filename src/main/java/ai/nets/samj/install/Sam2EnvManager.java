@@ -404,6 +404,11 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		}
 	}
 
+	/**
+	 * Returns the absolute path to the SAM2 weights file.
+	 *
+	 * @return the SAM2 weights path
+	 */
 	@Override
 	public String getModelWeigthPath() {
 		File file;
@@ -416,6 +421,11 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		return file.getAbsolutePath();
 	}
 
+	/**
+	 * Checks whether all SAM2 runtime requirements are installed.
+	 *
+	 * @return {@code true} when the full SAM2 runtime is installed
+	 */
 	@Override
 	public boolean checkEverythingInstalled() {
 		if (!this.checkMambaInstalled()) return false;
@@ -427,6 +437,9 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		return true;
 	}
 
+	/**
+	 * Removes the installed SAM2 weights or environment from disk.
+	 */
 	@Override
 	public void uninstall() {
 		if (new File(this.getModelWeigthPath()).getParentFile().list().length != 1)

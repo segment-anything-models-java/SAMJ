@@ -118,14 +118,29 @@ public abstract class ConsumerInterface {
 	 */
 	public abstract void notifyBatchSamize(String modelName, String maskPrompt);
 	
+	/**
+	 * Updates the model currently selected in the UI.
+	 *
+	 * @param model selected SAM model
+	 */
 	public void setModel(SAMModel model) {
 		this.selectedModel = model;
 	}
 	
+	/**
+	 * Sets the callback invoked when the GUI needs to refresh itself.
+	 *
+	 * @param guiCallback GUI refresh callback
+	 */
 	public void setGuiCallback(Runnable guiCallback) {
 		this.guiCallback = guiCallback;
 	}
 	
+	/**
+	 * Sets the callback used to push events from the consumer to the GUI.
+	 *
+	 * @param callback consumer callback implementation
+	 */
 	public void setCallback(ConsumerCallback callback) {
 		this.callback = callback;
 	}

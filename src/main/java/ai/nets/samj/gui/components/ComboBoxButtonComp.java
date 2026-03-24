@@ -11,7 +11,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-
 public class ComboBoxButtonComp<T> extends JPanel {
 
     private static final long serialVersionUID = 2478618937640492286L;
@@ -20,6 +19,11 @@ public class ComboBoxButtonComp<T> extends JPanel {
     protected JButton btn = new JButton("▶");
     private static final double RATIO_CBX_BTN = 10.0;
 
+    /**
+     * Creates the composite control around the supplied combo box.
+     *
+     * @param modelCombobox combo box to embed
+     */
     public ComboBoxButtonComp(JComboBox<T> modelCombobox) {
         this.cmbBox = modelCombobox;
         btn.setMargin(new Insets(2, 3, 2, 2));
@@ -52,6 +56,9 @@ public class ComboBoxButtonComp<T> extends JPanel {
         });
     }
 
+    /**
+     * Lays out the combo box and the side button according to the configured size ratio.
+     */
     @Override
     public void doLayout() {
         int inset = 2; // Separation between components and edges
@@ -122,6 +129,11 @@ public class ComboBoxButtonComp<T> extends JPanel {
         btn.setVerticalAlignment(JButton.CENTER);
     }
 
+    /**
+     * Launches a small demo frame for this component.
+     *
+     * @param args ignored command-line arguments
+     */
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
             javax.swing.JFrame frame = new javax.swing.JFrame("Model Selection");

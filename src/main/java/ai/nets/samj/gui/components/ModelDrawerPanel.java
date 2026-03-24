@@ -78,6 +78,13 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		this.uninstall.addActionListener(this);
 	}
 	
+	/**
+	 * Creates a model drawer panel with the given width and listener.
+	 *
+	 * @param hSize preferred width in pixels
+	 * @param listener listener notified about drawer events
+	 * @return a new {@link ModelDrawerPanel}
+	 */
 	public static ModelDrawerPanel create(int hSize, ModelDrawerPanelListener listener) {
 		return new ModelDrawerPanel(hSize, listener);
 	}
@@ -128,6 +135,11 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
         return thirdComponent;
     }
     
+    /**
+     * Updates the drawer to display information for the supplied model.
+     *
+     * @param model selected model
+     */
     public void setSelectedModel(SAMModel model) {
     	this.model = model;
     	setTitle(model.getName());
@@ -166,6 +178,11 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 		infoThread.start();
     }
     
+    /**
+     * Shows or hides the drawer and interrupts background threads when hidden.
+     *
+     * @param visible whether the drawer should be visible
+     */
     @Override
     public void setVisible(boolean visible) {
     	if (!visible)
@@ -173,6 +190,11 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
     	super.setVisible(visible);
     }
 
+	/**
+	 * Handles clicks on the install and uninstall buttons.
+	 *
+	 * @param e action event describing the button press
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == this.install) {
@@ -346,7 +368,9 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	    }
 	}
 
-	
+	/**
+	 * Interrupts background threads started by the drawer panel.
+	 */
 	public void interruptThreads() {
 		if (infoThread != null)
 			this.infoThread.interrupt();
@@ -361,9 +385,19 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 	    void setGUIEnabled(boolean enabled);
 	}
 
+	/**
+	 * Registers a listener for drawer events.
+	 *
+	 * @param listener listener to add
+	 */
 	public void addModelDrawerPanelListener(ModelDrawerPanelListener listener) {
 		 this.listeners.add(listener);
 	}
+	/**
+	 * Unregisters a listener from drawer events.
+	 *
+	 * @param listener listener to remove
+	 */
 	public void removeModelDrawerPanelListener(ModelDrawerPanelListener listener) {
 		this.listeners.remove(listener);
 	}

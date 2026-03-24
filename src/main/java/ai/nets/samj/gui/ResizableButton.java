@@ -74,11 +74,22 @@ public class ResizableButton extends JButton {
         setFont(getFont().deriveFont((float) fontSize));
     }
 
+    /**
+     * Returns the custom insets used by the button.
+     *
+     * @return the configured button insets
+     */
     @Override
     public Insets getInsets() {
         return new Insets(verticalInset, horizontalInset, verticalInset, horizontalInset);
     }
 
+    /**
+     * Returns the custom insets used by the button.
+     *
+     * @param insets ignored template insets instance
+     * @return the configured button insets
+     */
     @Override
     public Insets getInsets(Insets insets) {
         return new Insets(verticalInset, horizontalInset, verticalInset, horizontalInset);

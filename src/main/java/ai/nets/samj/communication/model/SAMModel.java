@@ -180,16 +180,50 @@ public abstract class SAMModel {
 		this.onlyBiggest = onlyBiggest;
 	}
 
+	/**
+	 * Processes a batch of point prompts against the currently loaded image.
+	 *
+	 * @param points point prompts expressed as {@code [x, y]} coordinates
+	 * @return the masks generated for the batch
+	 * @throws IOException if the Python-side processing cannot be started
+	 * @throws RuntimeException if the model execution fails
+	 * @throws InterruptedException if execution is interrupted
+	 */
 	public List<Mask> processBatchOfPoints(List<int[]> points) throws IOException, RuntimeException, InterruptedException {
 		return samj.processBatchOfPoints(points, !onlyBiggest);
 	}
 
+	/**
+	 * Processes a mixed batch of point, rectangle, and mask prompts.
+	 *
+	 * @param <T> ImgLib2 pixel type of the optional mask prompt
+	 * @param points point prompts expressed as {@code [x, y]} coordinates
+	 * @param rects rectangle prompts
+	 * @param rai optional raster mask prompt
+	 * @return the masks generated for the batch
+	 * @throws IOException if the Python-side processing cannot be started
+	 * @throws RuntimeException if the model execution fails
+	 * @throws InterruptedException if execution is interrupted
+	 */
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai) 
 			throws IOException, RuntimeException, InterruptedException {
 		return samj.processBatchOfPrompts(points, rects, rai, !onlyBiggest);
 	}
 
+	/**
+	 * Processes a mixed batch of prompts and streams progress through a callback.
+	 *
+	 * @param <T> ImgLib2 pixel type of the optional mask prompt
+	 * @param points point prompts expressed as {@code [x, y]} coordinates
+	 * @param rects rectangle prompts
+	 * @param rai optional raster mask prompt
+	 * @param callback callback notified while the batch is processed
+	 * @return the masks generated for the batch
+	 * @throws IOException if the Python-side processing cannot be started
+	 * @throws RuntimeException if the model execution fails
+	 * @throws InterruptedException if execution is interrupted
+	 */
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> points, List<Rectangle> rects, RandomAccessibleInterval<T> rai, BatchCallback callback) 
 			throws IOException, RuntimeException, InterruptedException {

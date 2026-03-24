@@ -29,7 +29,8 @@ public class DouglasPeucker {
      *
      * @param points  Original list of points (ordered, endpoints included).
      * @param epsilon Max allowed perpendicular distance (in same units as your coords).
-     * @return A new List<Point2D> containing only the “significant” vertices.
+     * @return a new {@code List<Point2D>} containing only the significant
+     *         vertices
      */
     public static List<Point2D> simplify(List<Point2D> points, double epsilon) {
         if (points == null || points.size() < 3) {
@@ -87,7 +88,11 @@ public class DouglasPeucker {
         return cross / mag;
     }
 
-    // Example usage
+    /**
+     * Runs a small example of the contour simplification workflow.
+     *
+     * @param args ignored command-line arguments
+     */
     public static void main(String[] args) {
         List<Point2D> contour = new ArrayList<>();
         // ... populate contour with one Point2D per pixel along your ROI boundary ...

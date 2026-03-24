@@ -65,10 +65,20 @@ public class Mask {
 		memory.put(simplification, contour);
 	}
 	
+	/**
+	 * Creates a mask wrapper from a polygon contour and its run-length encoding.
+	 *
+	 * @param contour polygon describing the mask contour
+	 * @param rleEncoding run-length encoded representation of the mask
+	 * @return a new {@link Mask} instance
+	 */
 	public static Mask build(Polygon contour, long[] rleEncoding) {
 		return new Mask(contour, rleEncoding);
 	}
 	
+	/**
+	 * Applies one simplification step to the current contour if possible.
+	 */
 	public void simplify() {
 		if (this.memory.get((this.simplification + COMPLEXITY_DELTA)) != null) {
 			simplification += COMPLEXITY_DELTA;
@@ -104,6 +114,9 @@ public class Mask {
 		memory.put(simplification, contour);
 	}
 	
+	/**
+	 * Restores the previous simplification level when a cached contour exists.
+	 */
 	public void complicate() {
 		if (this.memory.get((this.simplification - COMPLEXITY_DELTA)) != null) {
 			simplification -= COMPLEXITY_DELTA;
@@ -113,23 +126,49 @@ public class Mask {
 		}
 	}
 	
+	/**
+	 * Returns the user-defined name associated with this mask.
+	 *
+	 * @return the mask name, or {@code null} if none has been assigned
+	 */
 	public String getName() {
 		return name;
 	}
 	
+	/**
+	 * Assigns a user-facing name to this mask.
+	 *
+	 * @param name non-null name for the mask
+	 * @throws NullPointerException if {@code name} is {@code null}
+	 */
 	public void setName(String name) {
 		Objects.requireNonNull(name, "argument 'name' cannot be null");
 		this.name = name;
 	}
 	
+	/**
+	 * Returns the unique identifier assigned to this mask instance.
+	 *
+	 * @return the mask UUID
+	 */
 	public String getUUID() {
 		return uuid;
 	}
 	
+	/**
+	 * Returns the current contour associated with this mask.
+	 *
+	 * @return the contour polygon
+	 */
 	public Polygon getContour() {
 		return this.contour;
 	}
 	
+	/**
+	 * Returns the run-length encoded representation of the mask.
+	 *
+	 * @return the RLE mask data
+	 */
 	public long[] getRLEMask() {
 		if (this.rleValid)
 			return this.rleEncoding;
@@ -138,6 +177,11 @@ public class Mask {
 		return this.rleEncoding;
 	}
 	
+	/**
+	 * Returns the current contour simplification level.
+	 *
+	 * @return the accumulated simplification value
+	 */
 	public double getComplicationLevel() {
 		return this.simplification;
 	}
@@ -168,6 +212,9 @@ public class Mask {
 		return (ArrayImgs.unsignedShorts(arr, new long[] {width, height}));
 	}
 
+	/**
+	 * Clears the stored contour, cached simplifications, and RLE data.
+	 */
 	public void clear() {
 		this.contour = null;
 		this.memory = new HashMap<>();
@@ -176,6 +223,11 @@ public class Mask {
 		this.simplification = 0;
 	}
 
+	/**
+	 * Replaces the contour and resets cached derived data.
+	 *
+	 * @param pol new contour polygon
+	 */
 	public void setContour(Polygon pol) {
 		this.clear();
 		this.contour = pol;		

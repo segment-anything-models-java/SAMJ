@@ -499,11 +499,21 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 		return modelType + ".pt";
 	}
 
+	/**
+	 * Returns the absolute path to the EfficientViTSAM weights file.
+	 *
+	 * @return the EfficientViTSAM weights path
+	 */
 	@Override
 	public String getModelWeigthPath() {
 		return Paths.get(this.path, "envs", EVITSAM_ENV_NAME, EVITSAM_NAME, "weights", "efficientvit_sam_" + modelType + ".pt").toAbsolutePath().toString();
 	}
 
+	/**
+	 * Checks whether all EfficientViTSAM runtime requirements are installed.
+	 *
+	 * @return {@code true} when the full EfficientViTSAM runtime is installed
+	 */
 	@Override
 	public boolean checkEverythingInstalled() {
 		if (!this.checkMambaInstalled()) return false;
@@ -517,6 +527,9 @@ public class EfficientViTSamEnvManager extends SamEnvManagerAbstract {
 		return true;
 	}
 
+	/**
+	 * Removes the installed EfficientViTSAM weights or environment from disk.
+	 */
 	@Override
 	public void uninstall() {
 		if (new File(this.getModelWeightsPath()).getParentFile().list().length != 1)

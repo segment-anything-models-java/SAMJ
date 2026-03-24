@@ -20,6 +20,12 @@ public class JSwitchButton extends AbstractButton {
     private int minHeight = 30; // Default minimum height
     private boolean initialized = false;
 
+    /**
+     * Creates a switch button with labels for the enabled and disabled states.
+     *
+     * @param trueLabel label to display when selected
+     * @param falseLabel label to display when unselected
+     */
     public JSwitchButton(String trueLabel, String falseLabel) {
         this.trueLabel = trueLabel;
         this.falseLabel = falseLabel;
@@ -45,6 +51,9 @@ public class JSwitchButton extends AbstractButton {
         });
     }
 
+    /**
+     * Finalizes initialization once the component is attached to a container.
+     */
     @Override
     public void addNotify() {
         super.addNotify();
@@ -69,6 +78,14 @@ public class JSwitchButton extends AbstractButton {
         }
     }
 
+    /**
+     * Enforces the minimum size for the switch button.
+     *
+     * @param x new x position
+     * @param y new y position
+     * @param width requested width
+     * @param height requested height
+     */
     @Override
     public void setBounds(int x, int y, int width, int height) {
         width = Math.max(width, minWidth);
@@ -76,6 +93,11 @@ public class JSwitchButton extends AbstractButton {
         super.setBounds(x, y, width, height);
     }
 
+    /**
+     * Updates the switch state and the corresponding label and background color.
+     *
+     * @param b {@code true} to select the switch
+     */
     @Override
     public void setSelected(boolean b) {
         if(b) {
@@ -172,6 +194,11 @@ public class JSwitchButton extends AbstractButton {
         */
     }
     
+    /**
+     * Updates the colors used to render the enabled or disabled state.
+     *
+     * @param enabled whether the component should be enabled
+     */
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);

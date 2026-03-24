@@ -23,26 +23,56 @@ public class HTMLPane extends JEditorPane {
     private String color = "#333333";
     private String background = "#FFFFFF";
 
+    /**
+     * Creates an HTML pane using the default font and no preferred size.
+     */
     public HTMLPane() {
         create();
     }
 
+    /**
+     * Creates an HTML pane using the specified font family.
+     *
+     * @param font font family to use in the generated HTML
+     */
     public HTMLPane(String font) {
         this.font = font;
         create();
     }
 
+    /**
+     * Creates an HTML pane with a preferred size.
+     *
+     * @param width preferred width in pixels
+     * @param height preferred height in pixels
+     */
     public HTMLPane(int width, int height) {
         this.dim = new Dimension(width, height);
         create();
     }
 
+    /**
+     * Creates an HTML pane with a custom font and preferred size.
+     *
+     * @param font font family to use in the generated HTML
+     * @param width preferred width in pixels
+     * @param height preferred height in pixels
+     */
     public HTMLPane(String font, int width, int height) {
         this.font = font;
         this.dim = new Dimension(width, height);
         create();
     }
 
+    /**
+     * Creates an HTML pane with custom colors, font, and preferred size.
+     *
+     * @param font font family to use in the generated HTML
+     * @param color text color as a CSS value
+     * @param background background color as a CSS value
+     * @param width preferred width in pixels
+     * @param height preferred height in pixels
+     */
     public HTMLPane(String font, String color, String background, int width, int height) {
         this.font = font;
         this.dim = new Dimension(width, height);
@@ -51,6 +81,11 @@ public class HTMLPane extends JEditorPane {
         create();
     }
 
+    /**
+     * Returns the plain text currently stored in the document.
+     *
+     * @return the document text
+     */
     @Override
     public String getText() {
         Document doc = this.getDocument();
@@ -62,6 +97,9 @@ public class HTMLPane extends JEditorPane {
         }
     }
 
+    /**
+     * Removes all HTML body content from the pane.
+     */
     public void clear() {
         html = "";
         append("");
@@ -110,6 +148,11 @@ public class HTMLPane extends JEditorPane {
         this.setBorder(BorderFactory.createEmptyBorder());
     }
 
+    /**
+     * Appends raw HTML content to the document body.
+     *
+     * @param content HTML fragment to append
+     */
     public void append(String content) {
         html += content;
         setText(header + html + footer);
@@ -119,6 +162,12 @@ public class HTMLPane extends JEditorPane {
         setCaretPosition(0);
     }
 
+    /**
+     * Appends content wrapped in the supplied HTML tag.
+     *
+     * @param tag HTML tag name to wrap around the content
+     * @param content text or HTML fragment to append
+     */
     public void append(String tag, String content) {
         html += "<" + tag + ">" + content + "</" + tag + ">";
         setText(header + html + footer);
@@ -128,6 +177,11 @@ public class HTMLPane extends JEditorPane {
         setCaretPosition(0);
     }
 
+    /**
+     * Returns this editor pane wrapped in a scroll pane.
+     *
+     * @return a scroll pane containing this HTML pane
+     */
     public JScrollPane getPane() {
         JScrollPane scroll = new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);

@@ -81,32 +81,110 @@ public abstract class SamEnvManagerAbstract {
 			+ ((!PlatformDetection.isMacOS() || !PlatformDetection.isUsingRosseta()) ? PlatformDetection.getArch()
 			: PlatformDetection.ARCH_ARM64 )).getAbsolutePath();
 
-	
+	/**
+	 * Checks whether all resources required to run the model are installed.
+	 *
+	 * @return {@code true} when the runtime is fully installed
+	 */
 	public abstract boolean checkEverythingInstalled();
 	
+	/**
+	 * Checks whether the shared SAM runtime dependencies are installed.
+	 *
+	 * @return {@code true} when the SAM dependencies are present
+	 */
 	public abstract boolean checkSAMDepsInstalled();
 	
+	/**
+	 * Installs the shared SAM runtime dependencies when missing.
+	 *
+	 * @throws IOException if a filesystem operation fails
+	 * @throws InterruptedException if the installation is interrupted
+	 * @throws ArchiveException if an archive cannot be unpacked
+	 * @throws URISyntaxException if a dependency URL is invalid
+	 * @throws MambaInstallException if Micromamba reports an installation error
+	 */
 	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
 
+	/**
+	 * Installs the shared SAM runtime dependencies, optionally forcing a reinstall.
+	 *
+	 * @param force whether existing dependencies should be reinstalled
+	 * @throws IOException if a filesystem operation fails
+	 * @throws InterruptedException if the installation is interrupted
+	 * @throws ArchiveException if an archive cannot be unpacked
+	 * @throws URISyntaxException if a dependency URL is invalid
+	 * @throws MambaInstallException if Micromamba reports an installation error
+	 */
 	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
 
+	/**
+	 * Checks whether the model weights are installed.
+	 *
+	 * @return {@code true} when the model weights are present
+	 */
 	public abstract boolean checkModelWeightsInstalled();
 	
+	/**
+	 * Installs the model weights when missing.
+	 *
+	 * @throws IOException if a download or filesystem operation fails
+	 * @throws InterruptedException if the installation is interrupted
+	 */
 	public abstract void installModelWeigths() throws IOException, InterruptedException;
 	
+	/**
+	 * Installs the model weights, optionally forcing a reinstall.
+	 *
+	 * @param force whether existing weights should be replaced
+	 * @throws IOException if a download or filesystem operation fails
+	 * @throws InterruptedException if the installation is interrupted
+	 */
 	public abstract void installModelWeigths(boolean force) throws IOException, InterruptedException;
 	
+	/**
+	 * Installs the full runtime required for the model, including dependencies
+	 * and weights.
+	 *
+	 * @throws IOException if a filesystem operation fails
+	 * @throws InterruptedException if the installation is interrupted
+	 * @throws ArchiveException if an archive cannot be unpacked
+	 * @throws URISyntaxException if a dependency URL is invalid
+	 * @throws MambaInstallException if Micromamba reports an installation error
+	 */
 	public abstract void installEverything() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
 	
+	/**
+	 * Returns the expected model-weights file name.
+	 *
+	 * @return the model-weights file name
+	 */
 	public abstract String getModelWeigthsName();
 	
+	/**
+	 * Returns the absolute path to the model-weights file.
+	 *
+	 * @return the model-weights path
+	 */
 	public abstract String getModelWeigthPath();
 	
+	/**
+	 * Returns the absolute path to the Python environment used by the model.
+	 *
+	 * @return the environment path
+	 */
 	public abstract String getModelEnv();
 	
+	/**
+	 * Removes the installed model runtime from disk.
+	 */
 	public abstract void uninstall();
 	
-	
+	/**
+	 * Sets the consumer used to report installation progress messages.
+	 *
+	 * @param consumer consumer that receives progress output
+	 */
 	public void setConsumer(Consumer<String> consumer) {
 		this.consumer = consumer;
 		this.mamba.setConsoleOutputConsumer(this.consumer);
@@ -234,6 +312,11 @@ public abstract class SamEnvManagerAbstract {
 		return this.mamba.getMicromambaDownloadProgress();
 	}
 	
+	/**
+	 * Returns the latest environment-creation progress message.
+	 *
+	 * @return the environment-creation progress message
+	 */
 	public String getEnvCreationProgress() {
 		return this.getEnvCreationProgress();
 	}

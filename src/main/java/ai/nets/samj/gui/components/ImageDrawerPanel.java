@@ -32,6 +32,12 @@ public class ImageDrawerPanel extends JPanel {
 		createDrawerPanel();
 	}
 	
+	/**
+	 * Creates a drawer panel with the requested preferred width.
+	 *
+	 * @param hSize preferred width in pixels
+	 * @return a new {@link ImageDrawerPanel}
+	 */
 	public static ImageDrawerPanel create(int hSize) {
 		return new ImageDrawerPanel(hSize);
 	}
@@ -77,10 +83,20 @@ public class ImageDrawerPanel extends JPanel {
         return thirdComponent;
     }
     
+    /**
+     * Updates the title shown at the top of the drawer.
+     *
+     * @param title title text to display
+     */
     public void setTitle(String title) {
         drawerTitle.setText(String.format(MODEL_TITLE, title));
     }
     
+    /**
+     * Shows or hides the drawer panel.
+     *
+     * @param visible whether the drawer should be visible
+     */
     @Override
     public void setVisible(boolean visible) {
     	super.setVisible(visible);

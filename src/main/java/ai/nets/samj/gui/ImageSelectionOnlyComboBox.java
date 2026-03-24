@@ -63,11 +63,21 @@ public class ImageSelectionOnlyComboBox extends ComboBoxComp<ComboBoxItem> imple
 		}
 	}
 
+	/**
+	 * Refreshes the list of open images before the popup becomes visible.
+	 *
+	 * @param e popup event
+	 */
 	@Override
 	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 		updateList();
 	}
 
+	/**
+	 * Updates the selected image and notifies listeners when it changes.
+	 *
+	 * @param e popup event
+	 */
 	@Override
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 		try {
@@ -87,6 +97,11 @@ public class ImageSelectionOnlyComboBox extends ComboBoxComp<ComboBoxItem> imple
 		}
 	}
 
+	/**
+	 * Handles popup-cancel events.
+	 *
+	 * @param e popup event
+	 */
 	@Override
 	public void popupMenuCanceled(PopupMenuEvent e) {
 		

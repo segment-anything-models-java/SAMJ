@@ -26,6 +26,15 @@ public class CustomInsetsJLabel extends JLabel {
     private int bottom;
     private int right;
 
+    /**
+     * Creates a label whose icon respects the supplied custom insets.
+     *
+     * @param icon icon to display
+     * @param top top inset in pixels
+     * @param left left inset in pixels
+     * @param bottom bottom inset in pixels
+     * @param right right inset in pixels
+     */
     public CustomInsetsJLabel(Icon icon, int top, int left, int bottom, int right) {
         super(icon);
         this.top = top;
@@ -36,11 +45,21 @@ public class CustomInsetsJLabel extends JLabel {
         setVerticalAlignment(CENTER);
     }
 
+    /**
+     * Returns the custom insets used to position the icon.
+     *
+     * @return the configured insets
+     */
     @Override
     public Insets getInsets() {
         return new Insets(top, left, bottom, right);
     }
 
+    /**
+     * Computes the preferred size including icon, insets, and border.
+     *
+     * @return the preferred component size
+     */
     @Override
     public Dimension getPreferredSize() {
         // Calculate the preferred size based on icon size, insets, and border
@@ -92,6 +111,11 @@ public class CustomInsetsJLabel extends JLabel {
         }
     }
     
+    /**
+     * Launches a small demo frame for this component.
+     *
+     * @param args ignored command-line arguments
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Icon icon = UIManager.getIcon("OptionPane.questionIcon");

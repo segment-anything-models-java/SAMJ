@@ -93,10 +93,21 @@ public class MainGUI extends JFrame {
         DEFAULT_MODEL_LIST.add(new EfficientViTSAML2());
     }
 
+    /**
+     * Creates the GUI with the default list of available models.
+     *
+     * @param consumer bridge used to interact with the host application
+     */
     public MainGUI(ConsumerInterface consumer) {
         this(null, consumer);
     }
 
+    /**
+     * Creates the GUI with an explicit list of models.
+     *
+     * @param modelList models to expose in the UI, or {@code null} to use the defaults
+     * @param consumer bridge used to interact with the host application
+     */
     public MainGUI(List<SAMModel> modelList, ConsumerInterface consumer) {
         super(Constants.JAR_NAME + "-" + Constants.SAMJ_VERSION);
 
@@ -688,6 +699,11 @@ public class MainGUI extends JFrame {
         };
     }
 
+    /**
+     * Launches the standalone SAMJ GUI.
+     *
+     * @param args ignored command-line arguments
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainGUI(null, null));
     }

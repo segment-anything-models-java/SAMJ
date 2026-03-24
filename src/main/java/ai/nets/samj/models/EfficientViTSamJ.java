@@ -448,16 +448,34 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	}
 
 	@Override
+	/**
+	 * Builds the Python snippet that stores the current encoding.
+	 *
+	 * @param encodingName identifier to associate with the persisted encoding
+	 * @return Python code that stores the current encoding under the provided name
+	 */
 	public String persistEncodingScript(String encodingName) {
 		return "encodings_map['" + encodingName + "'] = predictor.features";
 	}
 
 	@Override
+	/**
+	 * Builds the Python snippet that restores a previously saved encoding.
+	 *
+	 * @param encodingName identifier of the encoding to restore
+	 * @return Python code that selects the requested encoding
+	 */
 	public String selectEncodingScript(String encodingName) {
 		return "predictor.features = encodings_map['" + encodingName + "']";		
 	}
 
 	@Override
+	/**
+	 * Builds the Python snippet that removes a saved encoding.
+	 *
+	 * @param encodingName identifier of the encoding to remove
+	 * @return Python code that deletes the requested encoding
+	 */
 	public String deleteEncodingScript(String encodingName) {
 		return "del encodings_map['" + encodingName + "']";
 	}

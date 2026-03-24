@@ -6,13 +6,17 @@ import java.awt.Insets;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-
 public class ComboBoxComp<T> extends JPanel {
 
     private static final long serialVersionUID = 2478618937640492286L;
 
     protected final JComboBox<T> cmbBox;
 
+    /**
+     * Creates the component around the supplied combo box.
+     *
+     * @param modelCombobox combo box to embed
+     */
     public ComboBoxComp(JComboBox<T> modelCombobox) {
         this.cmbBox = modelCombobox;
 
@@ -31,6 +35,9 @@ public class ComboBoxComp<T> extends JPanel {
         add(cmbBox, gbc);
     }
 
+    /**
+     * Lays out the combo box inside the available horizontal space.
+     */
     @Override
     public void doLayout() {
         int inset = 2; // Separation between components and edges
@@ -51,6 +58,11 @@ public class ComboBoxComp<T> extends JPanel {
         cmbBox.setBounds(x, y, availableWidth, componentHeight);
     }
 
+    /**
+     * Launches a small demo frame for this component.
+     *
+     * @param args ignored command-line arguments
+     */
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
             javax.swing.JFrame frame = new javax.swing.JFrame("Model Selection");

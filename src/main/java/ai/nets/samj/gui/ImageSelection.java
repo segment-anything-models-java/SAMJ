@@ -48,6 +48,11 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 		return ((ComboBoxItem) this.cmbBox.getSelectedItem()).getImageAsImgLib2();
 	}
 
+	/**
+	 * Refreshes the list of open images before the popup becomes visible.
+	 *
+	 * @param e popup event
+	 */
 	@Override
 	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 		try {
@@ -63,6 +68,11 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 		}
 	}
 
+	/**
+	 * Updates the selected image and notifies listeners when it changes.
+	 *
+	 * @param e popup event
+	 */
 	@Override
 	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 		try {
@@ -77,6 +87,11 @@ public class ImageSelection extends ComboBoxButtonComp<ComboBoxItem> implements 
 		}
 	}
 
+	/**
+	 * Handles popup-cancel events.
+	 *
+	 * @param e popup event
+	 */
 	@Override
 	public void popupMenuCanceled(PopupMenuEvent e) {
 		

@@ -322,8 +322,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 		script += "im_shm.unlink()" + System.lineSeparator();
 		//code += "box_shm.close()" + System.lineSeparator();
 		script += ""
-			+ "task.update(str(im.shape))" + System.lineSeparator()
-			+ "predictor.set_image(im)";
+			+ "with torch.no_grad():" + System.lineSeparator()
+			+ "  predictor.set_image(im)";
 	}
 
 	@Override

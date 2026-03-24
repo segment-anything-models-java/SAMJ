@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>41.0.0</version>
+		<version>44.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -145,7 +145,7 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
-		<dl-modelrunner.version>0.6.1</dl-modelrunner.version>
+		<dl-modelrunner.version>0.6.3</dl-modelrunner.version>
 	</properties>
 
 	<dependencies>
@@ -153,16 +153,6 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
 		</dependency>
-		<!-- 
-		<dependency>
-			<groupId>org.apposed</groupId>
-			<artifactId>appose</artifactId>
-			<version>0.1.1</version>
-		</dependency>
-		NOTE: dl-modelrunner @ 0.5.10 (which is what is used here)
-		copied-in the apposed project and thus the dependency
-		on apposed is not necessary here.
-		-->
 		<dependency>
 			<groupId>io.bioimage</groupId>
 			<artifactId>dl-modelrunner</artifactId>

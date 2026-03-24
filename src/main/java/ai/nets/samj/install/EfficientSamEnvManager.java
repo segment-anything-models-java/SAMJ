@@ -36,7 +36,6 @@ import java.util.zip.ZipInputStream;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
-import org.apache.commons.compress.archivers.ArchiveException;
 
 import ai.nets.samj.gui.tools.Files;
 import io.bioimage.modelrunner.apposed.appose.Mamba;
@@ -254,11 +253,10 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * 
 	 * @throws IOException if there is any file error installing any of the requirements
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if there is any error decompressing the micromamba installer files
 	 * @throws URISyntaxException if there is any error witht the URL to download micromamba
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
-	public void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException {
+	public void installSAMDeps() throws IOException, InterruptedException, URISyntaxException, MambaInstallException {
 		installSAMDeps(false);
 	}
 	
@@ -366,12 +364,11 @@ public class EfficientSamEnvManager extends SamEnvManagerAbstract {
 	 * 
 	 * @throws IOException if there is any file related error in the model installation
 	 * @throws InterruptedException if the model installation is interrupted
-	 * @throws ArchiveException if there is any error decompressing the micromamba installer
 	 * @throws URISyntaxException if there is any error with the URL to the micromamba installer download page
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installEverything() throws IOException, InterruptedException, 
-													ArchiveException, URISyntaxException, MambaInstallException {
+													URISyntaxException, MambaInstallException {
 		if (!this.checkMambaInstalled()) this.installMambaPython();
 		
 		if (!this.checkSAMDepsInstalled()) this.installSAMDeps();

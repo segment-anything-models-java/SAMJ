@@ -34,8 +34,6 @@ import java.util.zip.ZipInputStream;
 
 import io.bioimage.modelrunner.system.PlatformDetection;
 
-import org.apache.commons.compress.archivers.ArchiveException;
-
 import io.bioimage.modelrunner.apposed.appose.Mamba;
 import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
 
@@ -100,11 +98,10 @@ public abstract class SamEnvManagerAbstract {
 	 *
 	 * @throws IOException if a filesystem operation fails
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if an archive cannot be unpacked
 	 * @throws URISyntaxException if a dependency URL is invalid
 	 * @throws MambaInstallException if Micromamba reports an installation error
 	 */
-	public abstract void installSAMDeps() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+	public abstract void installSAMDeps() throws IOException, InterruptedException, URISyntaxException, MambaInstallException;
 
 	/**
 	 * Installs the shared SAM runtime dependencies, optionally forcing a reinstall.
@@ -112,11 +109,10 @@ public abstract class SamEnvManagerAbstract {
 	 * @param force whether existing dependencies should be reinstalled
 	 * @throws IOException if a filesystem operation fails
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if an archive cannot be unpacked
 	 * @throws URISyntaxException if a dependency URL is invalid
 	 * @throws MambaInstallException if Micromamba reports an installation error
 	 */
-	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+	public abstract void installSAMDeps(boolean force) throws IOException, InterruptedException, URISyntaxException, MambaInstallException;
 
 	/**
 	 * Checks whether the model weights are installed.
@@ -148,11 +144,10 @@ public abstract class SamEnvManagerAbstract {
 	 *
 	 * @throws IOException if a filesystem operation fails
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if an archive cannot be unpacked
 	 * @throws URISyntaxException if a dependency URL is invalid
 	 * @throws MambaInstallException if Micromamba reports an installation error
 	 */
-	public abstract void installEverything() throws IOException, InterruptedException, ArchiveException, URISyntaxException, MambaInstallException;
+	public abstract void installEverything() throws IOException, InterruptedException, URISyntaxException, MambaInstallException;
 	
 	/**
 	 * Returns the expected model-weights file name.
@@ -276,17 +271,16 @@ public abstract class SamEnvManagerAbstract {
 	 * 
 	 * @throws IOException if there is any file related error during the installation
 	 * @throws InterruptedException if the installation is interrupted
-	 * @throws ArchiveException if there is any error decompressing the micromamba installer files
 	 * @throws URISyntaxException if there is any error with the url that points to the micromamba instance to download
 	 * @throws MambaInstallException if there is any error installing micromamba
 	 */
 	public void installMambaPython() throws IOException, InterruptedException, 
-	ArchiveException, URISyntaxException, MambaInstallException{
+	URISyntaxException, MambaInstallException{
 		if (checkMambaInstalled()) return;
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- INSTALLING MICROMAMBA");
 		try {
 			mamba.installMicromamba();
-		} catch (IOException | InterruptedException | ArchiveException | URISyntaxException e) {
+		} catch (IOException | InterruptedException | URISyntaxException e) {
 			thread.interrupt();
 			passToConsumer(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED MICROMAMBA INSTALLATION");
 			throw e;

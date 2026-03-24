@@ -217,7 +217,7 @@ public class ModelDrawerPanel extends JPanel implements ActionListener {
 			    	setButtons();
 					listeners.forEach(l -> l.setGUIEnabled(true));
 				});
-			} catch (IOException | InterruptedException | ArchiveException | URISyntaxException
+			} catch (IOException | InterruptedException | URISyntaxException
 					| MambaInstallException e) {
 				e.printStackTrace();
 				SwingUtilities.invokeLater(() -> {

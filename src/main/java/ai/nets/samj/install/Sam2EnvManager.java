@@ -122,7 +122,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 			modelType = "base_plus";
 		this.modelType = modelType;
 	    final String pixiTemplate = readClasspathResourceAsString("/pixi.toml");
-	    final String cudaVersion = pickCudaVersion(pixiTemplate);
+	    final String cudaVersion = GpuCompatibility.pickCudaVersion(COMPAT_CUDAS);
 
 	    final String renderedPixi;
 	    if (cudaVersion == null) {
@@ -384,19 +384,6 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	        baos.write(buffer, 0, len);
 	    }
 	    return baos.toByteArray();
-	}
-
-	/**
-	 * Pick the first compatible CUDA version based on your template.
-	 * Adjust this to match what GpuCompatibility actually needs.
-	 */
-	private String pickCudaVersion(String pixiTemplate) {
-	    for (String cv : COMPAT_CUDAS) {
-	        if (GpuCompatibility.canInstallCudaInEnv(cv)) {
-	            return cv;
-	        }
-	    }
-	    return null;
 	}
 	
 	/**

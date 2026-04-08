@@ -290,6 +290,28 @@ public final class GpuCompatibility {
         return result;
     }
 
+    /**
+     * Returns the first CUDA version from the provided list that can be installed
+     * in the current environment.
+     *
+     * <p>The versions are checked in order, and the first one for which
+     * {@code GpuCompatibility.canInstallCudaInEnv(String)} returns {@code true}
+     * is returned.</p>
+     *
+     * @param compatibleCudas
+     *     the list of compatible CUDA versions to evaluate, in priority order
+     * @return the first installable CUDA version, or {@code null} if none of the
+     *     provided versions can be installed
+     */
+    public static String pickCudaVersion(List<String> compatibleCudas) {
+        for (String cv : compatibleCudas) {
+            if (GpuCompatibility.canInstallCudaInEnv(cv)) {
+                return cv;
+            }
+        }
+        return null;
+    }
+
     // ---------- Helpers & internals ----------
 
     private enum OsFamily { WINDOWS, LINUX, MAC, OTHER }

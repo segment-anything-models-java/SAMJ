@@ -360,7 +360,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	 * Reads a classpath resource fully as UTF-8 text.
 	 * Wraps IO/resource errors as BuildException so callers don't need to handle IOException.
 	 */
-	private String readClasspathResourceAsString(String absoluteResourcePath) throws BuildException {
+	private static String readClasspathResourceAsString(String absoluteResourcePath) throws BuildException {
 	    Objects.requireNonNull(absoluteResourcePath, "absoluteResourcePath");
 
 	    try (InputStream is = Sam2EnvManager.class.getResourceAsStream(absoluteResourcePath)) {

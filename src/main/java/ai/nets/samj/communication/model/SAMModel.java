@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import org.apposed.appose.BuildException;
 import org.apposed.appose.TaskException;
+import org.apposed.appose.util.Messages;
 
 import ai.nets.samj.annotation.Mask;
 import ai.nets.samj.install.SamEnvManagerAbstract;
@@ -345,7 +346,7 @@ public abstract class SAMModel {
 			};
 			return samj.processBox(bbox, slice, frame, propagate, !onlyBiggest);
 		} catch (IOException | InterruptedException | TaskException e) {
-			log.error(getName()+", providing empty result because of some trouble: "+Types.stackTrace(e));
+			log.error(getName()+", providing empty result because of some trouble: "+Messages.stackTrace(e));
 			throw e;
 		}
 	}

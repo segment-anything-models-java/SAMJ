@@ -359,12 +359,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			else if (task.status == TaskStatus.CRASHED)
 				throw new TaskException(task.error, task);
 			this.shma.close();
-		} catch (IOException | InterruptedException | TaskException e) {
-			try {
+		} catch (InterruptedException | TaskException e) {
 				this.shma.close();
-			} catch (IOException e1) {
-				throw new IOException(e.toString() + System.lineSeparator() + e1.toString());
-			}
 			throw e;
 		}
 	}

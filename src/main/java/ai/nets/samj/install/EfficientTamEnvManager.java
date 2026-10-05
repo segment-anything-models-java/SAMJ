@@ -75,7 +75,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 	/**
 	 * URL to download the EFFICIENTTAM model 
 	 */
-	final static private String EFFTAM_URL = "https://huggingface.co/yunyangx/efficient-track-anything/resolve/main/efficienttam_%s.pt?download=true";
+	final static private String EFFTAM_URL = "https://huggingface.co/yunyangx/efficient-track-anything/resolve/main/efficienttam_%s.pt";
 	/**
 	 * URL to download the EFFICIENTTAM model 
 	 */
@@ -207,9 +207,9 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 			throw new IllegalArgumentException("The provided model is not one of the supported EfficientTAM models: " 
 												+ EfficientTamJ.getListOfSupportedVariants());
         try {
-    		File file = Paths.get(path, SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, modelType))).toFile();
+    		File file = Paths.get(path, SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)))).toFile();
     		file.getParentFile().mkdirs();
-    		URL url = FileDownloader.redirectedURL(new URL(String.format(EFFTAM_URL, modelType)));
+    		URL url = FileDownloader.redirectedURL(new URL(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType))));
     		Thread parentThread = Thread.currentThread();
     		FileDownloader fd = new FileDownloader(url.toString(), file, false);
     		long size = fd.getOnlineFileSize();
@@ -227,7 +227,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
             throw ex;
         } catch (URISyntaxException e1) {
         	this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EfficientTAM WEIGHTS INSTALLATION");
-            throw new IOException("Unable to find the download URL for EfficientTAM " + modelType + ": " + String.format(EFFTAM_URL, modelType));
+            throw new IOException("Unable to find the download URL for EfficientTAM " + modelType + ": " + String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)));
 		} catch (ExecutionException e) {
             this.errConsumer.accept(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- FAILED EfficientTAM WEIGHTS INSTALLATION");
             throw new RuntimeException(e);
@@ -310,9 +310,9 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 	 */
 	public String getModelWeigthsName() {
 		try {
-			return FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, modelType));
+			return FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)));
 		} catch (MalformedURLException e) {
-			return String.format(EFFTAM_FNAME, modelType);
+			return String.format(EFFTAM_FNAME, EfficientTamJ.abbreviateModelType(modelType));
 		}
 	}
 

@@ -8,7 +8,6 @@ import org.apposed.appose.Service;
 import org.apposed.appose.Service.Task;
 import org.apposed.appose.TaskException;
 
-import io.bioimage.modelrunner.apposed.appose.MambaInstallException;
 
 public class DependencyChecker {
 	
@@ -28,7 +27,7 @@ public class DependencyChecker {
 	 * 	An example list: "numpy", "numba&gt;=0.43.1", "torch==1.6", "torch&gt;=1.6, &lt;2.0"
 	 * @return true if the packages are installed or false otherwise
 	 */
-	public static boolean checkAllDependenciesInEnv(Environment env, List<String> dependencies) throws MambaInstallException {
+	public static boolean checkAllDependenciesInEnv(Environment env, List<String> dependencies) {
 		return checkUninstalledDependenciesInEnv(env, dependencies).size() == 0;
 	}
 	

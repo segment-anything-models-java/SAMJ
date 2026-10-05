@@ -369,7 +369,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 		reencodeCrop(null);
 	}
 	
-	private void reencodeCrop(long[] cropSize) throws IOException, InterruptedException, TaskException {
+	private void reencodeCrop(long[] cropSize) throws InterruptedException, TaskException {
 		this.script = "";
 		sendCropAsNp(cropSize);
 		createEncodeImageScript();
@@ -383,12 +383,8 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			else if (task.status == TaskStatus.CRASHED)
 				throw new TaskException(task.error, task);
 			this.shma.close();
-		} catch (IOException | InterruptedException | TaskException e) {
-			try {
+		} catch (InterruptedException | TaskException e) {
 				this.shma.close();
-			} catch (IOException e1) {
-				throw new IOException(e.toString() + System.lineSeparator() + e1.toString());
-			}
 			throw e;
 		}
 		
@@ -586,7 +582,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			List<Mask> polys = processAndRetrieveContours(inputs, callback);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
-		} catch (IOException | InterruptedException ex) {
+		} catch (InterruptedException ex) {
 			if (maskShma != null)
 				maskShma.close();
 			throw ex;
@@ -601,7 +597,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	
 	public <T extends RealType<T> & NativeType<T>>
 	List<Mask> processBatchOfPrompts(List<int[]> pointsList, List<Rectangle> rects, RandomAccessibleInterval<T> rai, boolean returnAll) 
-			throws IOException, InterruptedException, TaskException {
+			throws InterruptedException, TaskException {
 		if ((pointsList == null || pointsList.size() == 0) && (rects == null || rects.size() == 0) && (rai == null))
 			return new ArrayList<Mask>();
 		checkPrompts(pointsList, rects, rai);
@@ -627,7 +623,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 			recalculatePolys(polys, encodeCoords);
 			if (PlatformDetection.isWindows() && maskShma != null) maskShma.close();
 			return polys;
-		} catch (IOException | InterruptedException ex) {
+		} catch (InterruptedException | TaskException ex) {
 			if (maskShma != null)
 				maskShma.close();
 			throw ex;
@@ -697,11 +693,10 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
 	 * @throws IOException if any of the files needed to run the Python script is missing 
-	 * @throws InterruptedException if the process in interrupted
 	 * @throws TaskException  if teh appose task fails
 	 */
 	public List<Mask> processPoints(List<int[]> pointsList, boolean returnAll)
-			throws IOException, InterruptedException, TaskException{
+			throws InterruptedException, TaskException{
 		Rectangle rect = new Rectangle();
 		rect.x = -1;
 		rect.y = -1;
@@ -711,7 +706,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	}
 
 	public List<Mask> processPoints(List<int[]> pointsList, Rectangle encodingArea, boolean returnAll)
-			throws IOException, InterruptedException, TaskException {
+			throws InterruptedException, TaskException {
 		Objects.requireNonNull(encodingArea, "Second argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
@@ -795,13 +790,12 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @param returnAll
 	 * 	whether to return all the polygons created by EfficientSAM of only the biggest
 	 * @return a list of polygons where each polygon is the contour of a mask that has been found by EfficientSAM
-	 * @throws IOException if any of the files needed to run the Python script is missing 
 	 * @throws TaskException if the appose task fails
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> processPoints(List<int[]> pointsList, List<int[]> pointsNegList, 
 			Rectangle encodingArea, boolean returnAll)
-			throws IOException, InterruptedException, TaskException {
+			throws InterruptedException, TaskException {
 		Objects.requireNonNull(encodingArea, "Third argument cannot be null. Use the method "
 				+ "'processPoints(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle zoomedArea, boolean returnAll)'"
 				+ " instead");
@@ -1020,12 +1014,11 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	 * @param pointsList
 	 * @param pointsNegList
 	 * @param rect
-	 * @throws IOException
 	 * @throws InterruptedException
 	 * @throws TaskException 
 	 */
 	private void evaluateReencodingNeeded(List<int[]> pointsList, List<int[]> pointsNegList, Rectangle rect) 
-			throws IOException, InterruptedException, TaskException {
+			throws InterruptedException, TaskException {
 		Rectangle extendedRect = extendRect(rect, 20);
 		
 		Rectangle alreadyEncoded = getCurrentlyEncodedArea();

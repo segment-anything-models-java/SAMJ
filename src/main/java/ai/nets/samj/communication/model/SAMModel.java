@@ -34,7 +34,6 @@ import ai.nets.samj.install.SamEnvManagerAbstract;
 import ai.nets.samj.models.AbstractSamJ;
 import ai.nets.samj.models.AbstractSamJ.BatchCallback;
 import ai.nets.samj.ui.SAMJLogger;
-import io.bioimage.modelrunner.apposed.appose.Types;
 import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
@@ -305,7 +304,7 @@ public abstract class SAMModel {
 	 * @throws InterruptedException if the process in interrupted
 	 */
 	public List<Mask> fetch2dSegmentation(List<Localizable> listOfPoints2D, List<Localizable> listOfNegPoints2D,
-			Rectangle zoomedRectangle, int slice, int frame, boolean propagate) throws IOException, TaskException, InterruptedException {
+			Rectangle zoomedRectangle, int slice, int frame, boolean propagate) throws TaskException, InterruptedException {
 		try {
 			List<int[]> list = listOfPoints2D.stream()
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
@@ -313,7 +312,7 @@ public abstract class SAMModel {
 					.map(i -> new int[] {(int) i.positionAsDoubleArray()[0], (int) i.positionAsDoubleArray()[1]}).collect(Collectors.toList());
 			if (negList.size() == 0) return samj.processPoints(list, zoomedRectangle, !onlyBiggest);
 			else return samj.processPoints(list, negList, zoomedRectangle, !onlyBiggest);
-		} catch (IOException | InterruptedException | TaskException e) {
+		} catch (InterruptedException | TaskException e) {
 			log.error(getName()+", providing empty result because of some trouble: "+e.getMessage());
 			throw e;
 		}

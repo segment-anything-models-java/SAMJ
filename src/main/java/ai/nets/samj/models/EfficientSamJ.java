@@ -30,7 +30,6 @@ import org.apposed.appose.Service.Task;
 import org.apposed.appose.Service.TaskStatus;
 import org.apposed.appose.TaskException;
 
-import ai.nets.samj.install.EfficientSamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
@@ -546,5 +545,17 @@ public class EfficientSamJ extends AbstractSamJ {
 			code += "shm_mask.unlink()" + System.lineSeparator();
 		}
 		this.script = code;
+	}
+
+	@Override
+	protected void processPointsWithSAMAndPropagate(int nPoints, int nNegPoints) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void processBoxWithSAMAndPropagate() {
+		// TODO Auto-generated method stub
+		
 	}
 }

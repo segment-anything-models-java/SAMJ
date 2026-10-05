@@ -39,11 +39,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apposed.appose.BuildException;
+import org.apposed.appose.util.Messages;
 
 import ai.nets.samj.gui.tools.FileUtils;
 import ai.nets.samj.models.EfficientTamJ;
 import ai.nets.samj.models.Sam2;
-import io.bioimage.modelrunner.apposed.appose.Types;
 import io.bioimage.modelrunner.download.FileDownloader;
 
 /*
@@ -300,7 +300,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 			installWheelFromResource("/" + EFFTAM_WHEEL, pixi.build());
 		} catch (IOException e) {
 			throw new BuildException("Failed to install EfficientTAM from wheel: " 
-									+ System.lineSeparator() + Types.stackTrace(e));
+									+ System.lineSeparator() + Messages.stackTrace(e));
 		}	
 	}
 	

@@ -48,8 +48,8 @@ import org.apposed.appose.Appose;
 import org.apposed.appose.BuildException;
 import org.apposed.appose.builder.PixiBuilderFactory;
 import org.apposed.appose.tool.Pixi;
+import org.apposed.appose.util.Messages;
 
-import io.bioimage.modelrunner.apposed.appose.Types;
 import io.bioimage.modelrunner.download.FileDownloader;
 
 /*
@@ -352,7 +352,7 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 			installWheelFromResource("/" + SAM2_WHEEL, pixi.environment(installEnv).build());
 		} catch (IOException e) {
 			throw new BuildException("Failed to install SAM2 from wheel: " 
-									+ System.lineSeparator() + Types.stackTrace(e));
+									+ System.lineSeparator() + Messages.stackTrace(e));
 		}	
 	}
 	

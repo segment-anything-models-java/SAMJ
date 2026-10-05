@@ -68,7 +68,7 @@ public abstract class AbstractSamJ implements AutoCloseable {
 	/**
 	 * TODO rethink maximum size
 	 */
-	public static long MAX_ENCODED_AREA_RS = 512;
+	public static long MAX_ENCODED_AREA_RS = 1024;
 	
 	public static long MIN_ENCODED_AREA_SIDE = 128;
 	

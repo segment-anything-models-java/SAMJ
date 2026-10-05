@@ -33,6 +33,7 @@ import java.util.UUID;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.view.Views;
 
 /**
  * Class that contains the information required to create the contour and mask about the object annotated in an image
@@ -177,24 +178,36 @@ public class Mask {
 	 * 	width of the image
 	 * @param height
 	 * 	height of the image
+	 * @param depth
+	 * 	number of slices; mask slice indices are zero-based
+	 * @param frames
+	 * 	number of frames; mask frame indices are zero-based
 	 * @param masks
 	 * 	all the masks of the objects image
-	 * @return the whole mask with all the objects
+	 * @return the whole mask with dimensions [width, height, depth, frames]
 	 */
-	public static RandomAccessibleInterval<UnsignedShortType> getMask(long width, long height, List<Mask> masks) {
-		short[] arr = new short[(int) (width * height)];
+	public static RandomAccessibleInterval<UnsignedShortType> getMask(long width, long height, int depth, int frames, List<Mask> masks) {
+		int planeSize = Math.toIntExact(Math.multiplyExact(width, height));
+		short[][] planes = new short[Math.multiplyExact(depth, frames)][planeSize];
 		int n = 1;
 		for (Mask mask : masks) {
 			long[] rle = mask.getRLEMask();
+			short[] arr = planes[mask.getFrame() * depth + mask.getSlice()];
 			for (int i = 0; i < rle.length; i += 2) {
-				int start = (int) mask.getRLEMask()[i];
-				int len = (int) mask.getRLEMask()[i+ 1];
+				int start = (int) rle[i];
+				int len = (int) rle[i + 1];
 				Arrays.fill(arr, start, start + len, (short) n);
 			}
 			n ++;
 		}
-		//return Utils.transpose(ArrayImgs.unsignedBytes(arr, new long[] {height, width}));
-		return (ArrayImgs.unsignedShorts(arr, new long[] {width, height}));
+		List<RandomAccessibleInterval<UnsignedShortType>> frameStacks = new ArrayList<>(frames);
+		for (int frame = 0; frame < frames; frame ++) {
+			List<RandomAccessibleInterval<UnsignedShortType>> slices = new ArrayList<>(depth);
+			for (int slice = 0; slice < depth; slice ++)
+				slices.add(ArrayImgs.unsignedShorts(planes[frame * depth + slice], width, height));
+			frameStacks.add(Views.stack(slices));
+		}
+		return Views.stack(frameStacks);
 	}
 
 	public void clear() {

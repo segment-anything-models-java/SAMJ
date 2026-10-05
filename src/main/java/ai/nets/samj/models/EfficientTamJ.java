@@ -79,7 +79,7 @@ public class EfficientTamJ extends AbstractSamJ {
 	 * String to find the config file used to load EfficientTAM
 	 */
 	private static final String CONFIG_STR = "configs/efficienttam/efficienttam_%s.yaml";
-	private static final int DEFAULT_MAX_PROPAGATION_RADIUS = 11;
+	private static final int DEFAULT_MAX_PROPAGATION_RADIUS = 1000;
 	/**
 	 * All the Python imports and configurations needed to start using EfficientViTSAM.
 	 */

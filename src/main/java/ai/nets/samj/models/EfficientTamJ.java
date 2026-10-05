@@ -325,8 +325,13 @@ public class EfficientTamJ extends AbstractSamJ {
 							+ MODELS_LIST);
 		this.debugPrinter = debugPrinter;
 
-		this.env = Appose.pixi().environment(manager.getPixiEnv()).wrap(new File(manager.getModelEnv()));
-		python = env.python();
+		/**
+		 * 
+		this.env = Appose.pixi().file(manager.getModelEnv()).build();
+		python = env.activate(manager.getPixiEnv()).python();
+		 */
+		this.env = Appose.pixi().wrap(new File(manager.getModelEnv())).activate(manager.getPixiEnv());
+		python = this.env.python();
 		python.debug(debugPrinter::printText);
 
 		python.init("import numpy as np");

@@ -238,7 +238,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		
 		List<String> uninstalled = new ArrayList<String>();
 		try {
-			uninstalled = DependencyChecker.checkUninstalledDependenciesInEnv(pixi.environment(installEnv).build(), CHECK_DEPS);
+			uninstalled = DependencyChecker.checkUninstalledDependenciesInEnv(
+				    pixi.build().activate(installEnv), CHECK_DEPS);
 		} catch (Exception e) {
 			return false;
 		}
@@ -343,13 +344,13 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 	    	pixi.subscribeError(this.errConsumer);
 	    if (this.pixiConsumer != null)
 	    	pixi.subscribeProgress(this.pixiConsumer);
-	    pixi.environment(installEnv).build();
+	    pixi.build().activate(installEnv);
 	    installSAM2Wheel();
 	}
 
 	private void installSAM2Wheel() throws BuildException {
 		try {
-			installWheelFromResource("/" + SAM2_WHEEL, pixi.environment(installEnv).build());
+			installWheelFromResource("/" + SAM2_WHEEL, pixi.build().activate(installEnv));
 		} catch (IOException e) {
 			throw new BuildException("Failed to install SAM2 from wheel: " 
 									+ System.lineSeparator() + Messages.stackTrace(e));

@@ -145,7 +145,7 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
-		<dl-modelrunner.version>0.6.4</dl-modelrunner.version>
+		<dl-modelrunner.version>0.6.4-SNAPSHOT</dl-modelrunner.version>
 	</properties>
 
 	<dependencies>
@@ -156,13 +156,14 @@
 		<dependency>
 			<groupId>org.apposed</groupId>
 		    <artifactId>appose</artifactId>
-		    <version>0.11.0</version>
+		    <version>0.12.0</version>
 		</dependency>
+		<!--
 		<dependency>
 			<groupId>io.bioimage</groupId>
 			<artifactId>dl-modelrunner</artifactId>
 			<version>${dl-modelrunner.version}</version>
-		</dependency>
+		</dependency> -->
 	</dependencies>
 
 	<repositories>

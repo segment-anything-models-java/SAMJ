@@ -207,7 +207,7 @@ public class EfficientTamEnvManager extends Sam2EnvManager {
 			throw new IllegalArgumentException("The provided model is not one of the supported EfficientTAM models: " 
 												+ EfficientTamJ.getListOfSupportedVariants());
         try {
-    		File file = Paths.get(path, SAM2_ENV_NAME, SAM2_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)))).toFile();
+    		File file = Paths.get(path, SAM2_ENV_NAME, EFFTAM_NAME, "weights", FileDownloader.getFileNameFromURLString(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType)))).toFile();
     		file.getParentFile().mkdirs();
     		URL url = FileDownloader.redirectedURL(new URL(String.format(EFFTAM_URL, EfficientTamJ.abbreviateModelType(modelType))));
     		Thread parentThread = Thread.currentThread();

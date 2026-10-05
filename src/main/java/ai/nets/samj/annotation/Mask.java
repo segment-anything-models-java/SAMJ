@@ -189,16 +189,21 @@ public class Mask {
 	public static RandomAccessibleInterval<UnsignedShortType> getMask(long width, long height, int depth, int frames, List<Mask> masks) {
 		int planeSize = Math.toIntExact(Math.multiplyExact(width, height));
 		short[][] planes = new short[Math.multiplyExact(depth, frames)][planeSize];
-		int n = 1;
+		int n = 0;
+		HashMap<String, Integer> objectMap = new HashMap<String, Integer>();
 		for (Mask mask : masks) {
+			if (objectMap.get(mask.objectID) == null) {
+				n ++;
+				objectMap.put(mask.objectID, Integer.valueOf(n));
+			}
+			Integer val = objectMap.get(mask.objectID);
 			long[] rle = mask.getRLEMask();
 			short[] arr = planes[mask.getFrame() * depth + mask.getSlice()];
 			for (int i = 0; i < rle.length; i += 2) {
 				int start = (int) rle[i];
 				int len = (int) rle[i + 1];
-				Arrays.fill(arr, start, start + len, (short) n);
+				Arrays.fill(arr, start, start + len, (short) val.shortValue());
 			}
-			n ++;
 		}
 		List<RandomAccessibleInterval<UnsignedShortType>> frameStacks = new ArrayList<>(frames);
 		for (int frame = 0; frame < frames; frame ++) {

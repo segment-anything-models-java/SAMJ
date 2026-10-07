@@ -28,7 +28,6 @@ import org.apposed.appose.Appose;
 import org.apposed.appose.BuildException;
 import org.apposed.appose.TaskException;
 
-import ai.nets.samj.install.EfficientViTSamEnvManager;
 import ai.nets.samj.install.SamEnvManagerAbstract;
 
 import java.io.File;
@@ -40,14 +39,12 @@ import org.apposed.appose.Service.TaskStatus;
 import io.bioimage.modelrunner.tensor.shm.SharedMemoryArray;
 import io.bioimage.modelrunner.utils.CommonUtils;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Cast;
 import net.imglib2.util.Intervals;
-import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 /**
@@ -160,13 +157,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			throw new IllegalArgumentException("The model type should be one of hte following: " 
 							+ MODELS_DICT.keySet().stream().collect(Collectors.toList()));
 		this.debugPrinter = debugPrinter;
-		this.isDebugging = printPythonCode;
 
-		this.env = Appose.mamba().wrap(new File(manager.getModelEnv()));
-		python = env.python();
+		this.env = Appose.pixi().wrap(new File(manager.getModelEnv())).activate(manager.getPixiEnv());
+		python = this.env.python();
 		python.debug(debugPrinter::printText);
 		IMPORTS_FORMATED = String.format(IMPORTS,
-									manager.getModelEnv() + File.separator + EfficientViTSamEnvManager.EVITSAM_NAME,
+									manager.getModelEnv() + File.separator, // TODO remove  + EfficientViTSamEnvManager.EVITSAM_NAME,
 									MODELS_DICT.get(type), MODELS_DICT.get(type), manager.getModelWeigthPath());
 		
 		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
@@ -265,7 +261,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	initializeSam(SamEnvManagerAbstract manager,
 	              final DebugTextPrinter debugPrinter,
 	              final boolean printPythonCode) throws InterruptedException, BuildException, TaskException {
-		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager, debugPrinter, printPythonCode);
+		// TODO remove return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager, debugPrinter, printPythonCode);
+		return initializeSam("", manager, debugPrinter, printPythonCode);
 	}
 
 	/**
@@ -285,7 +282,8 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	 */
 	public static EfficientViTSamJ
 	initializeSam(SamEnvManagerAbstract manager) throws InterruptedException, BuildException, TaskException {
-		return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager);
+		// TODO remove return initializeSam(EfficientViTSamEnvManager.DEFAULT_EVITSAM, manager);
+		return null;
 	}
 
 	@Override
@@ -407,6 +405,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	
 	private <T extends RealType<T> & NativeType<T>>
 	void adaptImageToModel(RandomAccessibleInterval<T> ogImg, RandomAccessibleInterval<T> targetImg) {
+		/** TODO
 		if (ogImg.numDimensions() == 3 && ogImg.dimensionsAsLongArray()[2] == 3) {
 			for (int i = 0; i < 3; i ++) 
 				RealTypeConverters.copyFromTo( ImgLib2Utils.convertViewToRGB(Views.hyperSlice(ogImg, 2, i), this.debugPrinter), 
@@ -423,6 +422,7 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			throw new IllegalArgumentException("Currently SAMJ only supports 1-channel (grayscale) or 3-channel (RGB, BGR, ...) 2D images."
 					+ "The image dimensions order should be 'yxc', first dimension height, second width and third channels.");
 		}
+		*/
 	}
 	
 	/**
@@ -437,10 +437,12 @@ public class EfficientViTSamJ extends AbstractSamJ {
 	public static void main(String[] args) throws InterruptedException, BuildException, TaskException, IOException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
+		/** TODO
 		try (EfficientViTSamJ sam = initializeSam(EfficientViTSamEnvManager.create())) {
 			sam.setImage(img);
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
+		*/
 	}
 
 	@Override
@@ -598,5 +600,17 @@ public class EfficientViTSamJ extends AbstractSamJ {
 			code += "shm_mask.unlink()" + System.lineSeparator();
 		}
 		this.script = code;
+	}
+
+	@Override
+	protected void processPointsWithSAMAndPropagate(int nPoints, int nNegPoints) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void processBoxWithSAMAndPropagate() {
+		// TODO Auto-generated method stub
+		
 	}
 }

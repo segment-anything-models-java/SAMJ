@@ -119,13 +119,12 @@ public class EfficientSamJ extends AbstractSamJ {
 	                      final boolean printPythonCode) throws BuildException, InterruptedException, TaskException {
 
 		this.debugPrinter = debugPrinter;
-		this.isDebugging = printPythonCode;
 
-		this.env = Appose.mamba().wrap(new File(manager.getModelEnv()));
-		python = env.python();
+		this.env = Appose.pixi().wrap(new File(manager.getModelEnv())).activate(manager.getPixiEnv());
+		python = this.env.python();
 		python.debug(debugPrinter::printText);
 		String IMPORTS_FORMATED = String.format(IMPORTS,
-				manager.getModelEnv() + File.separator + EfficientSamEnvManager.ESAM_NAME,
+				manager.getModelEnv() + File.separator, // TODO + EfficientSamEnvManager.ESAM_NAME,
 				manager.getModelWeigthPath());
 		//printScript(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES, "Edges tracing code");
 		Task task = python.task(IMPORTS_FORMATED + PythonMethods.RLE_METHOD + PythonMethods.TRACE_EDGES);
@@ -337,10 +336,12 @@ public class EfficientSamJ extends AbstractSamJ {
 	public static void main(String[] args) throws IOException, RuntimeException, InterruptedException, BuildException, TaskException {
 		RandomAccessibleInterval<UnsignedByteType> img = ArrayImgs.unsignedBytes(new long[] {50, 50, 3});
 		img = Views.addDimension(img, 1, 2);
+		/** TODO
 		try (EfficientSamJ sam = initializeSam(EfficientSamEnvManager.create())) {
 			sam.setImage(img);
 			sam.processBox(new int[] {0, 5, 10, 26});
 		}
+		*/
 	}
 
 	@Override

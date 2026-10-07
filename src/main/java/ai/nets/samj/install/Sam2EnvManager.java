@@ -325,7 +325,8 @@ public class Sam2EnvManager extends SamEnvManagerAbstract {
 		if (!checkMambaInstalled())
 			throw new IllegalArgumentException("Unable to install Python without first installing Mamba. ");
 		Thread thread = reportProgress(LocalDateTime.now().format(DATE_FORMAT).toString() + " -- CREATING THE SAM2 PYTHON ENVIRONMENT WITH ITS DEPENDENCIES");
-		String[] pythonArgs = new String[] {"-c", "conda-forge", "python=3.11", "-c", "pytorch"};
+		String[] pythonArgs = new String[] {"--override-channels", "--channel-priority",
+				"flexible", "-c", "pytorch", "-c", "conda-forge", "python=3.11",};
 		String[] args = new String[pythonArgs.length + INSTALL_CONDA_DEPS.size()];
 		int c = 0;
 		for (String ss : pythonArgs) args[c ++] = ss;
